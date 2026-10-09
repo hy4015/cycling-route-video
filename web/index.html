@@ -1982,51 +1982,82 @@
         const numWindows = mediaItems.length;
         let activeVideoSoundPlaying = false;
 
+        // Schedule bottom appearance (tEnter) and single-play audio window (tAudioStart to tAudioEnd)
+        // Window k top coordinate: wy = k * STRIDE - yScroll + 298
+        // Top reaches screen bottom (CH = 1080) when wy <= 1080:
+        // k * STRIDE - vScroll * t + 298 <= 1080 => vScroll * t >= k * STRIDE - 782
+        let lastAudioEnd = 0;
+        const itemSchedules = mediaItems.map((item, k) => {
+          const tEnter = (vScroll > 0)
+            ? Math.max(0, (k * STRIDE - 782) / vScroll)
+            : 0;
+          const clipDur = item.duration || 5.0;
+          let tAudioStart = tEnter;
+          let tAudioEnd = tEnter + clipDur;
+
+          if (item.isVideo && item.audioEnabled !== false) {
+            tAudioStart = Math.max(tEnter, lastAudioEnd);
+            tAudioEnd = tAudioStart + clipDur;
+            lastAudioEnd = tAudioEnd;
+          }
+          return { tEnter, tAudioStart, tAudioEnd, clipDur };
+        });
+
         mediaItems.forEach((item, k) => {
           const wy = Math.round(k * STRIDE - yScroll + 298);
           const isVisible = (wy + WIN_H > 0 && wy < CH);
+          const sched = itemSchedules[k];
+          const tEnter = sched.tEnter;
+          const tAudioStart = sched.tAudioStart;
+          const tAudioEnd = sched.tAudioEnd;
+          const clipDur = sched.clipDur;
 
-          // Center timestamp calculation:
-          // Window k center is: centerY = wy + WIN_H / 2 = k * STRIDE - yScroll + 540
-          // Reaches screen center (540) exactly when yScroll = k * STRIDE
-          // Since yScroll = vScroll * t, tCenter = (k / (numWindows - 1)) * contentDuration
-          const tCenter = (numWindows > 1 && contentDuration > 0)
-            ? (k / (numWindows - 1)) * contentDuration
-            : 0;
-          const clipDur = item.duration || 5.0;
-
-          // Video Playback & Audio Synchronization (3-Phase Non-blocking State Machine)
+          // Video Playback & Audio Synchronization (Bottom Entrance Trigger + Single-Play Audio + Loop Video)
           const isLive = (isPreviewPlaying || isExportRecording);
           if (item.isVideo && item.videoEl) {
             if (isSingleClipPlaying && activePreviewIndex === k) {
               // Auditioning single clip: handled by playSingleClip loop
               if (item.audioEnabled !== false) activeVideoSoundPlaying = true;
             } else if (isLive) {
-              const elapsed = t - tCenter;
-              const clipDur = item.duration || 5.0;
+              const elapsedFromEnter = t - tEnter;
 
-              if (elapsed < 0) {
-                // Phase 1 (未到中间): 保持静音动态循环播放
-                if (item._playState !== 'pre_center') {
-                  item._playState = 'pre_center';
-                  item.videoEl.loop = true;
+              if (elapsedFromEnter < 0) {
+                // Phase 1 (未从下方出现): 处于屏幕底沿下方之外，保持静音待命
+                if (item._playState !== 'before_enter') {
+                  item._playState = 'before_enter';
+                  if (!item.videoEl.paused) item.videoEl.pause();
                   item.videoEl.muted = true;
                   if (item.gainNode) item.gainNode.gain.value = 0;
                   item.videoEl.volume = 0;
-                  if (item.videoEl.paused) {
-                    item.videoEl.play().catch(e => console.warn('Pre-center play:', e));
+                  if (Math.abs(item.videoEl.currentTime) > 0.05) {
+                    try { item.videoEl.currentTime = 0; } catch (e) {}
                   }
                 }
-              } else if (elapsed <= clipDur) {
-                // Phase 2 (滑动到正中间): 从第1帧开始播放，同时原声同步释放（只播放一遍）
-                if (item._playState !== 'center_play') {
-                  item._playState = 'center_play';
-                  // Snap to Frame 1 (currentTime = 0) upon reaching center
-                  const targetT = (elapsed < 0.25) ? 0 : Math.min(clipDur, elapsed);
-                  try { item.videoEl.currentTime = targetT; } catch (e) {}
-                  item.videoEl.loop = false; // 只播放一遍
+              } else if (wy + WIN_H < -50) {
+                // Phase 4 (已完全滚出屏幕顶端): 离开视口，暂停并静音
+                if (item._playState !== 'off_screen') {
+                  item._playState = 'off_screen';
+                  if (!item.videoEl.paused) item.videoEl.pause();
+                  item.videoEl.muted = true;
+                  if (item.gainNode) item.gainNode.gain.value = 0;
+                  item.videoEl.volume = 0;
+                }
+              } else {
+                // Phase 2 & 3: 已经在屏幕内（从下方出现后，画面全程循环播放）
+                const isAudioActive = (item.audioEnabled !== false && t >= tAudioStart && t < tAudioEnd);
 
-                  if (item.audioEnabled !== false) {
+                if (isAudioActive) {
+                  // Phase 2 (下方出现并释放原声): 从第1帧开始播放，原声同步释放（只播放一遍）
+                  if (item._playState !== 'playing_audio') {
+                    item._playState = 'playing_audio';
+                    item.videoEl.loop = true; // 画面循环播放
+                    const audioElapsed = Math.max(0, t - tAudioStart);
+                    // 首次进入时精准对齐到第1帧
+                    if (audioElapsed < 0.25 || Math.abs(item.videoEl.currentTime - audioElapsed) > 0.4) {
+                      try { item.videoEl.currentTime = audioElapsed % clipDur; } catch (e) {}
+                    }
+
+                    // 原声同步释放
                     item.videoEl.muted = false;
                     const effGain = item.normalizedGain || 1.0;
                     if (item.gainNode) {
@@ -2035,43 +2066,27 @@
                     } else {
                       item.videoEl.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * effGain));
                     }
-                  } else {
-                    item.videoEl.muted = true;
+
+                    if (item.videoEl.paused) {
+                      item.videoEl.play().catch(e => console.warn('Enter play:', e));
+                    }
+                  }
+
+                  activeVideoSoundPlaying = true; // 触发 BGM 动态闪避 ducking
+                } else {
+                  // Phase 3 (音频播放完毕后，或未在音频区间): 画面继续循环播放，但原声静音
+                  if (item._playState !== 'loop_muted') {
+                    item._playState = 'loop_muted';
+                    item.videoEl.loop = true; // 画面始终循环播放
+                    item.videoEl.muted = true; // 但原声静音
                     if (item.gainNode) item.gainNode.gain.value = 0;
                     item.videoEl.volume = 0;
+                    if (item.videoEl.paused) {
+                      item.videoEl.play().catch(e => console.warn('Loop muted play:', e));
+                    }
                   }
-
-                  if (item.videoEl.paused) {
-                    item.videoEl.play().catch(e => console.warn('Center play:', e));
-                  }
+                  // activeVideoSoundPlaying 保持 false，BGM 音量平滑恢复
                 }
-
-                if (item.audioEnabled !== false) {
-                  activeVideoSoundPlaying = true;
-                }
-
-                // If video ended naturally during Phase 2 (playthrough completed):
-                if (item.videoEl.ended) {
-                  item._playState = 'post_center';
-                  item.videoEl.loop = true;
-                  item.videoEl.muted = true;
-                  if (item.gainNode) item.gainNode.gain.value = 0;
-                  item.videoEl.volume = 0;
-                  item.videoEl.play().catch(e => {});
-                }
-              } else {
-                // Phase 3 (视频播放完毕后): 继续循环播放画面，但原声静音
-                if (item._playState !== 'post_center') {
-                  item._playState = 'post_center';
-                  item.videoEl.loop = true; // 循环播放
-                  item.videoEl.muted = true; // 但原声静音
-                  if (item.gainNode) item.gainNode.gain.value = 0;
-                  item.videoEl.volume = 0;
-                  if (item.videoEl.paused) {
-                    item.videoEl.play().catch(e => console.warn('Post-center loop:', e));
-                  }
-                }
-                // activeVideoSoundPlaying is false, allowing BGM ducking to restore
               }
             } else {
               // Not live (paused or scrubber seeking while paused)
@@ -2082,9 +2097,8 @@
                 if (item.gainNode) item.gainNode.gain.value = 0;
                 item.videoEl.volume = 0;
               }
-              const elapsed = t - tCenter;
-              const clipDur = item.duration || 5.0;
-              const targetTime = elapsed < 0 ? 0 : (elapsed <= clipDur ? elapsed : (elapsed % clipDur));
+              const elapsedFromEnter = t - tEnter;
+              const targetTime = elapsedFromEnter < 0 ? 0 : (elapsedFromEnter % clipDur);
               if (Math.abs(item.videoEl.currentTime - targetTime) > 0.08) {
                 try { item.videoEl.currentTime = targetTime; } catch (e) {}
               }
@@ -2472,7 +2486,7 @@
         });
       }
 
-      // Reset play state for all media items to smoothly trigger pre_center / center_play phases
+      // Reset play state for all media items to smoothly trigger bottom entrance and single-play audio
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
           item._playState = null;
