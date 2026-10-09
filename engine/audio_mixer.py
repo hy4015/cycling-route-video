@@ -16,7 +16,7 @@ def mix_master_audio(bgm_path, total_duration, output_audio_path, video_clips_ti
         '-stream_loop', '-1',
         '-i', bgm_path,
         '-t', str(total_duration),
-        '-af', f'afade=t=in:ss=0:d=1.5,afade=t=out:st={max(0, total_duration - 2.5)}:d=2.5,volume=0.85',
+        '-af', f'loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=in:ss=0:d=1.5,afade=t=out:st={max(0, total_duration - 2.5)}:d=2.5,volume=0.85',
         '-c:a', 'aac',
         '-b:a', '256k',
         output_audio_path

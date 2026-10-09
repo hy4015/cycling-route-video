@@ -401,7 +401,7 @@
   </main>
 
   <!-- Audio Player Instance (Hidden) -->
-  <audio id="globalAudioPlayer" preload="auto"></audio>
+  <audio id="globalAudioPlayer" preload="auto" src="./audio/bgm_acoustic_highway.mp3" loop></audio>
 
   <!-- Scripts -->
   <script>
@@ -410,7 +410,91 @@
     let mediaItems = []; // Array of { id, file, isVideo, thumbUrl, imgEl, videoEl, duration, name, size }
     let currentBgmPath = './audio/bgm_acoustic_highway.mp3';
     const audioPlayer = document.getElementById('globalAudioPlayer');
+    audioPlayer.src = currentBgmPath;
+    audioPlayer.volume = 1.0;
+    audioPlayer.loop = true;
     let playingBgmBtn = null;
+
+    // Web Audio Bus & EBU R128 Loudness Normalization (Calibrated to 80% of BGM loudness)
+    const BGM_TARGET_VOLUME = 1.0;
+    const VIDEO_TARGET_RATIO = 0.80; // 80% of BGM loudness (vlog golden ratio)
+    let webAudioCtx = null;
+    let masterVideoBus = null;
+    let loudnessCompressor = null;
+
+    function getAudioContext() {
+      if (!webAudioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        webAudioCtx = new AudioCtx();
+
+        // 1. Master Video Bus Gain Node (Calibrated to 80% BGM)
+        masterVideoBus = webAudioCtx.createGain();
+        masterVideoBus.gain.value = VIDEO_TARGET_RATIO;
+
+        // 2. Broadcast-grade Dynamics Compressor (EBU R128 loudness leveler & peak limiter)
+        loudnessCompressor = webAudioCtx.createDynamicsCompressor();
+        loudnessCompressor.threshold.value = -24.0; // dB
+        loudnessCompressor.knee.value = 30.0;       // dB (smooth soft knee)
+        loudnessCompressor.ratio.value = 12.0;      // 12:1 compression
+        loudnessCompressor.attack.value = 0.003;    // 3ms attack
+        loudnessCompressor.release.value = 0.25;    // 250ms release
+
+        masterVideoBus.connect(loudnessCompressor);
+        loudnessCompressor.connect(webAudioCtx.destination);
+      }
+      if (webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(e => console.warn(e));
+      }
+      return webAudioCtx;
+    }
+
+    function attachVideoAudioNodes(item) {
+      if (!item.isVideo || !item.videoEl || item._audioAttached) return;
+      try {
+        const ctx = getAudioContext();
+        item.sourceNode = ctx.createMediaElementSource(item.videoEl);
+        item.gainNode = ctx.createGain();
+        const baseGain = (item.audioEnabled !== false) ? (item.normalizedGain || 1.0) : 0;
+        item.gainNode.gain.value = baseGain;
+
+        item.sourceNode.connect(item.gainNode);
+        item.gainNode.connect(masterVideoBus);
+        item._audioAttached = true;
+      } catch (err) {
+        console.warn('Web Audio node attach fallback:', item.name, err);
+      }
+    }
+
+    function updateUnifiedLoudness() {
+      const activeVideos = mediaItems.filter(item => item.isVideo && item.audioEnabled !== false);
+      if (activeVideos.length === 0) return;
+
+      const TARGET_RMS = 0.075;
+      const validRms = activeVideos
+        .map(v => v.measuredRms)
+        .filter(r => typeof r === 'number' && r > 0.002);
+
+      let targetRef = TARGET_RMS;
+      if (validRms.length > 0) {
+        const avgRms = validRms.reduce((a, b) => a + b, 0) / validRms.length;
+        targetRef = Math.max(0.04, Math.min(0.12, avgRms));
+      }
+
+      activeVideos.forEach(item => {
+        let gain = 1.0;
+        if (item.measuredRms && item.measuredRms > 0.002) {
+          gain = targetRef / item.measuredRms;
+          gain = Math.max(0.35, Math.min(2.2, gain));
+        }
+        item.normalizedGain = gain;
+        if (item.gainNode) {
+          item.gainNode.gain.value = gain;
+        }
+        if (item.videoEl) {
+          item.videoEl.volume = Math.max(0, Math.min(1.0, VIDEO_TARGET_RATIO * gain));
+        }
+      });
+    }
 
     // Custom HUD Title & Style Settings
     let customRouteTitle = 'CYCLING ROUTE RECAP';
@@ -731,6 +815,9 @@
             name: f.name,
             size: f.size,
             isVideo: true,
+            audioEnabled: true,
+            measuredRms: vidData.measuredRms,
+            normalizedGain: 1.0,
             thumbUrl: vidData.thumbUrl,
             videoEl: vidData.videoEl,
             duration: vidData.duration
@@ -742,16 +829,36 @@
         alert("部分素材超过浏览器防崩溃限制，已自动过滤：\n\n" + rejected.join("\n") + "\n\n💡 提示：如需使用原画质长视频大文件，可使用 macOS 桌面端 .dmg 进行满血硬件渲染！");
       }
 
+      updateUnifiedLoudness();
       updateDurationBasedOnMedia();
       renderMediaGrid();
       renderFrameAt(previewTime);
     }
 
-    function extractVideoMetadataAndThumb(file) {
+    async function extractVideoMetadataAndThumb(file) {
+      // Background Audio RMS Loudness Analysis
+      let measuredRms = null;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuffer = await file.arrayBuffer();
+        const audioBuf = await new Promise((res, rej) => audioCtx.decodeAudioData(arrayBuffer.slice(0), res, rej));
+        const ch = audioBuf.getChannelData(0);
+        let sumSquares = 0;
+        const step = Math.max(1, Math.floor(ch.length / 8000));
+        let count = 0;
+        for (let i = 0; i < ch.length; i += step) {
+          sumSquares += ch[i] * ch[i];
+          count++;
+        }
+        measuredRms = Math.sqrt(sumSquares / Math.max(1, count));
+      } catch (err) {
+        measuredRms = null;
+      }
+
       return new Promise((resolve) => {
         const video = document.createElement('video');
         video.preload = 'auto';
-        video.muted = true;
+        video.muted = true; // Temporary muted for silent thumbnail extraction
         video.playsInline = true;
         video.loop = true;
         const url = URL.createObjectURL(file);
@@ -771,13 +878,24 @@
           const scale = Math.max(c.width / vw, c.height / vh);
           const dw = vw * scale;
           const dh = vh * scale;
-          cx.drawImage(video, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+          cx.drawImage(video, (c.width - dw) / 2, (c.height - dw) / 2, dw, dh);
           const thumbUrl = c.toDataURL('image/jpeg', 0.85);
-          resolve({ thumbUrl, videoEl: video, duration: video.duration || 5.0 });
+
+          // Restore unmuted audio state for master video playback
+          video.muted = false;
+          video.volume = 0.8;
+          video.currentTime = 0;
+
+          resolve({
+            thumbUrl,
+            videoEl: video,
+            duration: video.duration || 5.0,
+            measuredRms: measuredRms
+          });
         };
 
         video.onerror = () => {
-          resolve({ thumbUrl: '', videoEl: video, duration: 0 });
+          resolve({ thumbUrl: '', videoEl: video, duration: 0, measuredRms: null });
         };
       });
     }
@@ -825,12 +943,38 @@
         badge.innerText = `#${idx + 1}`;
         card.appendChild(badge);
 
-        // Video tag badge on bottom-left
+        // Video tag badge on bottom-left & sound toggle button on bottom-right
         if (item.isVideo) {
           const vtag = document.createElement('span');
-          vtag.className = 'absolute bottom-1.5 left-1.5 bg-rose-600/90 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold shadow';
+          vtag.className = 'absolute bottom-1.5 left-1.5 bg-rose-600/90 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold shadow select-none';
           vtag.innerText = `🎬 ${item.duration ? item.duration.toFixed(0) + 's' : '视频'}`;
           card.appendChild(vtag);
+
+          const sndBtn = document.createElement('button');
+          const isAudOn = item.audioEnabled !== false;
+          sndBtn.className = `absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center space-x-1 shadow transition backdrop-blur-md cursor-pointer select-none ${
+            isAudOn 
+              ? 'bg-emerald-600/90 hover:bg-emerald-500 text-white border border-emerald-400/40' 
+              : 'bg-slate-700/90 hover:bg-slate-600 text-slate-300 border border-slate-600/40'
+          }`;
+          sndBtn.title = isAudOn ? '视频原声：已开启 (点击静音此视频)' : '视频原声：已关闭 (点击开启此视频声音)';
+          sndBtn.innerHTML = isAudOn 
+            ? '<span>🔊</span><span class="hidden sm:inline">原声</span>' 
+            : '<span>🔇</span><span class="hidden sm:inline">静音</span>';
+          sndBtn.onclick = (e) => {
+            e.stopPropagation();
+            item.audioEnabled = item.audioEnabled === false ? true : false;
+            if (item.gainNode) {
+              item.gainNode.gain.value = item.audioEnabled ? (item.normalizedGain || 1.0) : 0;
+            }
+            if (item.videoEl) {
+              item.videoEl.muted = !item.audioEnabled;
+              item.videoEl.volume = item.audioEnabled ? Math.min(1.0, VIDEO_TARGET_RATIO * (item.normalizedGain || 1.0)) : 0;
+            }
+            updateUnifiedLoudness();
+            renderMediaGrid();
+          };
+          card.appendChild(sndBtn);
         }
 
         // Delete button on top-right (❌)
@@ -932,15 +1076,30 @@
     }
 
     audioPlayer.addEventListener('ended', () => {
-      if (playingBgmBtn) {
+      if (isPreviewPlaying) {
+        audioPlayer.currentTime = 0;
+        audioPlayer.play().catch(e => console.warn(e));
+      } else if (playingBgmBtn) {
         playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
         playingBgmBtn = null;
+      }
+    });
+
+    audioPlayer.addEventListener('error', () => {
+      console.warn('Audio element error on src:', audioPlayer.src);
+      if (currentBgmPath.endsWith('.mp3')) {
+        const fallback = currentBgmPath.replace('.mp3', '.m4a');
+        if (audioPlayer.src !== fallback) {
+          audioPlayer.src = fallback;
+          currentBgmPath = fallback;
+        }
       }
     });
 
     document.querySelectorAll('.bgm-play-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (isPreviewPlaying) pausePreview();
         playTrack(btn.getAttribute('data-audio'), btn);
       });
     });
@@ -957,7 +1116,22 @@
         card.classList.remove('border-slate-800', 'bg-slate-900/40');
 
         const btn = card.querySelector('.bgm-play-btn');
-        if (btn) playTrack(btn.getAttribute('data-audio'), btn);
+        if (btn) {
+          const audioSrc = btn.getAttribute('data-audio');
+          currentBgmPath = audioSrc;
+          if (isPreviewPlaying) {
+            audioPlayer.src = audioSrc;
+            audioPlayer.loop = true;
+            try {
+              if (audioPlayer.readyState >= 1 && audioPlayer.duration) {
+                audioPlayer.currentTime = previewTime % audioPlayer.duration;
+              }
+            } catch (err) {}
+            audioPlayer.play().catch(e => console.warn(e));
+          } else {
+            playTrack(audioSrc, btn);
+          }
+        }
       });
     });
 
@@ -967,7 +1141,12 @@
         currentBgmPath = URL.createObjectURL(f);
         audioPlayer.src = currentBgmPath;
         audioPlayer.volume = 1.0;
-        audioPlayer.play().catch(e => console.warn(e));
+        audioPlayer.loop = true;
+        if (isPreviewPlaying) {
+          audioPlayer.play().catch(e => console.warn(e));
+        } else {
+          audioPlayer.play().catch(e => console.warn(e));
+        }
         alert(`已加载自定义背景音乐: ${f.name}`);
       }
     });
@@ -1202,7 +1381,39 @@
       // 1. Draw Media Windows
       mediaItems.forEach((item, k) => {
         const wy = Math.round(k * STRIDE - yScroll + 298);
-        if (wy + WIN_H <= 0 || wy >= CH) return;
+        const isVisible = (wy + WIN_H > 0 && wy < CH);
+
+        // Active Audio Management: Only visible video plays sound at normalized 80% loudness
+        if (item.isVideo && item.videoEl) {
+          if (isVisible) {
+            if (isPreviewPlaying && item.videoEl.paused) {
+              item.videoEl.play().catch(e => console.warn(e));
+            }
+            if (item.audioEnabled !== false) {
+              const centerY = wy + WIN_H / 2;
+              const dist = Math.abs(centerY - CH / 2);
+              const fade = Math.max(0.2, Math.min(1.0, 1.0 - (dist - 180) / 360));
+              const effectiveGain = (item.normalizedGain || 1.0) * fade;
+
+              if (item.gainNode) {
+                item.gainNode.gain.value = effectiveGain;
+              }
+              item.videoEl.muted = false;
+              item.videoEl.volume = Math.max(0, Math.min(1.0, VIDEO_TARGET_RATIO * effectiveGain));
+            } else {
+              item.videoEl.muted = true;
+              if (item.gainNode) item.gainNode.gain.value = 0;
+              item.videoEl.volume = 0;
+            }
+          } else {
+            // Off-screen: silence
+            item.videoEl.muted = true;
+            if (item.gainNode) item.gainNode.gain.value = 0;
+            item.videoEl.volume = 0;
+          }
+        }
+
+        if (!isVisible) return;
 
         const rx = W_HALF + 44;
         const rw = 872;
@@ -1353,9 +1564,54 @@
       document.getElementById('togglePlayIcon').innerText = '⏸';
       document.getElementById('togglePlayText').innerText = '暂停预览';
 
+      // Ensure default BGM source is loaded
+      if (!audioPlayer.src || audioPlayer.src === '' || audioPlayer.src.endsWith('/')) {
+        audioPlayer.src = currentBgmPath;
+      }
+
+      // If standalone audition button was showing pause, reset it
+      if (playingBgmBtn) {
+        playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+        playingBgmBtn = null;
+      }
+
+      // Initialize Web Audio Context and attach video audio nodes
+      getAudioContext();
+      mediaItems.forEach(item => {
+        if (item.isVideo) {
+          attachVideoAudioNodes(item);
+          if (item.videoEl) {
+            item.videoEl.muted = (item.audioEnabled === false);
+          }
+        }
+      });
+      updateUnifiedLoudness();
+
       // Play BGM & Videos
-      audioPlayer.currentTime = previewTime % (audioPlayer.duration || totalDuration);
-      audioPlayer.play().catch(e => console.warn(e));
+      try {
+        if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
+          audioPlayer.currentTime = previewTime % audioPlayer.duration;
+        } else {
+          audioPlayer.currentTime = 0;
+        }
+      } catch (err) {
+        console.warn('Audio seek warning:', err);
+      }
+
+      audioPlayer.volume = 1.0;
+      audioPlayer.loop = true;
+      const playPromise = audioPlayer.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.warn('Audio preview auto-fallback:', e);
+          if (currentBgmPath.endsWith('.mp3')) {
+            const fallback = currentBgmPath.replace('.mp3', '.m4a');
+            audioPlayer.src = fallback;
+            currentBgmPath = fallback;
+            audioPlayer.play().catch(err => console.warn('BGM fallback play error:', err));
+          }
+        });
+      }
 
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
@@ -1373,8 +1629,17 @@
       document.getElementById('togglePlayText').innerText = '点击预览';
 
       audioPlayer.pause();
+      if (playingBgmBtn) {
+        playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+        playingBgmBtn = null;
+      }
+
       mediaItems.forEach(item => {
-        if (item.isVideo && item.videoEl) item.videoEl.pause();
+        if (item.isVideo && item.videoEl) {
+          item.videoEl.pause();
+          item.videoEl.muted = true;
+          if (item.gainNode) item.gainNode.gain.value = 0;
+        }
       });
 
       if (animFrameId) cancelAnimationFrame(animFrameId);
@@ -1410,12 +1675,18 @@
     document.getElementById('togglePlayBtn').addEventListener('click', togglePreviewPlayback);
     document.getElementById('restartPlayBtn').addEventListener('click', () => {
       previewTime = 0;
+      try { audioPlayer.currentTime = 0; } catch (err) {}
       renderFrameAt(0);
       startPreview();
     });
 
     document.getElementById('previewScrubber').addEventListener('input', (e) => {
       previewTime = (parseFloat(e.target.value) / 100.0) * totalDuration;
+      try {
+        if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
+          audioPlayer.currentTime = previewTime % audioPlayer.duration;
+        }
+      } catch (err) {}
       renderFrameAt(previewTime);
     });
 
@@ -1473,15 +1744,34 @@
       const stream = masterCanvas.captureStream(30);
       let combinedStream = stream;
 
-      // Audio mixing into stream if AudioContext supported
+      // Audio mixing into stream with Web Audio API (BGM + Normalized Master Video Bus)
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioCtx = getAudioContext();
         const dest = audioCtx.createMediaStreamDestination();
         audioPlayer.currentTime = 0;
         audioPlayer.volume = 1.0;
-        const source = audioCtx.createMediaElementSource(audioPlayer);
-        source.connect(dest);
-        source.connect(audioCtx.destination);
+        if (!audioPlayer._sourceNode) {
+          audioPlayer._sourceNode = audioCtx.createMediaElementSource(audioPlayer);
+          audioPlayer._sourceNode.connect(audioCtx.destination);
+        }
+        audioPlayer._sourceNode.connect(dest);
+
+        // Connect Master Video Bus (with loudness compressor!) to export destination
+        loudnessCompressor.connect(dest);
+
+        // Ensure all videos have nodes attached
+        mediaItems.forEach(item => {
+          if (item.isVideo) {
+            attachVideoAudioNodes(item);
+            if (item.videoEl) {
+              item.videoEl.currentTime = 0;
+              item.videoEl.muted = (item.audioEnabled === false);
+              item.videoEl.play().catch(e => console.warn(e));
+            }
+          }
+        });
+        updateUnifiedLoudness();
+
         combinedStream = new MediaStream([
           ...stream.getVideoTracks(),
           ...dest.stream.getAudioTracks()
