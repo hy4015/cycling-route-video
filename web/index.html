@@ -266,56 +266,107 @@
         </div>
 
         <!-- Audio Player Options -->
-        <div class="space-y-2.5" id="bgmOptionsContainer">
-          <!-- Track 1 (Default) -->
-          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-rose-500/40 bg-rose-500/5 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_acoustic_highway">
+        <div class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar" id="bgmOptionsContainer">
+          <!-- Track 1: 周杰伦 ·《稻香》 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-rose-500/40 bg-rose-500/5 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_rice_field">
             <div class="flex items-center space-x-3">
-              <button class="bgm-play-btn w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_acoustic_highway.mp3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_rice_field.mp3">
                 <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               </button>
               <div>
                 <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
-                  <span>公路风原声吉他 (默认推荐)</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">阳光自由</span>
+                  <span>周杰伦 · 稻香 (热播推荐)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">阳光田园</span>
                 </div>
-                <div class="text-xs text-slate-400">轻快木吉他扫弦 · 台湾环岛同款原版 BGM · 免商用版权</div>
+                <div class="text-xs text-slate-400">轻快木吉他扫弦 + 蟋蟀微风 · 骑行穿过乡村稻田的治愈天花板</div>
               </div>
             </div>
-            <input type="radio" name="bgmSelect" value="bgm_acoustic_highway" checked class="accent-rose-500 w-4 h-4">
+            <input type="radio" name="bgmSelect" value="bgm_rice_field" checked class="accent-rose-500 w-4 h-4">
           </div>
 
-          <!-- Track 2 -->
-          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_coastal_beat">
+          <!-- Track 2: 范逸臣 ·《国境之南》 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_south_border">
             <div class="flex items-center space-x-3">
-              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_coastal_beat.mp3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_south_border.mp3">
                 <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               </button>
               <div>
                 <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
-                  <span>海滨公路轻快节奏</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">海风刷街</span>
+                  <span>范逸臣 · 国境之南</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">海岛公路</span>
                 </div>
-                <div class="text-xs text-slate-400">Chillwave 电子氛围合成器 + 节奏鼓点 · 适合海风巡航</div>
+                <div class="text-xs text-slate-400">电影《海角七号》恒春沿海公路主题曲 · 太平洋海浪与夏日海风</div>
               </div>
             </div>
-            <input type="radio" name="bgmSelect" value="bgm_coastal_beat" class="accent-rose-500 w-4 h-4">
+            <input type="radio" name="bgmSelect" value="bgm_south_border" class="accent-rose-500 w-4 h-4">
           </div>
 
-          <!-- Track 3 -->
-          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_epic_mountain">
+          <!-- Track 3: 陈绮贞 ·《旅行的意义》 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_travel_meaning">
             <div class="flex items-center space-x-3">
-              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_epic_mountain.mp3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_travel_meaning.mp3">
                 <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               </button>
               <div>
                 <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
-                  <span>山野热血摇滚攻顶</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">热血攻顶</span>
+                  <span>陈绮贞 · 旅行的意义</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">流浪民谣</span>
                 </div>
-                <div class="text-xs text-slate-400">动感 Indie Rock 电吉他 + 贝斯鼓点 · 适合坡道攻顶与挑战回顾</div>
+                <div class="text-xs text-slate-400">纯净木吉他指弹 + 清澈嗓音 · 公路电影感与单车旅行经典白月光</div>
               </div>
             </div>
-            <input type="radio" name="bgmSelect" value="bgm_epic_mountain" class="accent-rose-500 w-4 h-4">
+            <input type="radio" name="bgmSelect" value="bgm_travel_meaning" class="accent-rose-500 w-4 h-4">
+          </div>
+
+          <!-- Track 4: 苏打绿 ·《当我们一起走过》 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_together">
+            <div class="flex items-center space-x-3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_together.mp3">
+                <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              </button>
+              <div>
+                <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
+                  <span>苏打绿 · 当我们一起走过</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-400 border border-pink-500/30">温情同行</span>
+                </div>
+                <div class="text-xs text-slate-400">温暖坚定弦乐渐进 · 记录并肩同行、翻山越岭攻顶后的感动</div>
+              </div>
+            </div>
+            <input type="radio" name="bgmSelect" value="bgm_together" class="accent-rose-500 w-4 h-4">
+          </div>
+
+          <!-- Track 5: 周杰伦 ·《晴天》 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_sunny_day">
+            <div class="flex items-center space-x-3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_sunny_day.mp3">
+                <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              </button>
+              <div>
+                <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
+                  <span>周杰伦 · 晴天</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">单车青春</span>
+                </div>
+                <div class="text-xs text-slate-400">经典微风吉他扫弦前奏 · 满载盛夏与单车飞驰的青春回忆</div>
+              </div>
+            </div>
+            <input type="radio" name="bgmSelect" value="bgm_sunny_day" class="accent-rose-500 w-4 h-4">
+          </div>
+
+          <!-- Track 6: 公路风原声木吉他 (Acoustic Highway) -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_acoustic_highway">
+            <div class="flex items-center space-x-3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_acoustic_highway.mp3">
+                <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              </button>
+              <div>
+                <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
+                  <span>公路风原声吉他 (纯音乐)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-300 border border-slate-500/30">免商用版权</span>
+                </div>
+                <div class="text-xs text-slate-400">轻快木吉他扫弦纯音乐 · 台湾环岛同款原版 BGM · 干净不抢戏</div>
+              </div>
+            </div>
+            <input type="radio" name="bgmSelect" value="bgm_acoustic_highway" class="accent-rose-500 w-4 h-4">
           </div>
         </div>
 
@@ -452,14 +503,14 @@
   </main>
 
   <!-- Audio Player Instance (Hidden) -->
-  <audio id="globalAudioPlayer" preload="auto" src="./audio/bgm_acoustic_highway.mp3" loop></audio>
+  <audio id="globalAudioPlayer" preload="auto" src="./audio/bgm_rice_field.mp3" loop></audio>
 
   <!-- Scripts -->
   <script>
     // State & Personalization
     let gpxData = null;
     let mediaItems = []; // Array of { id, file, isVideo, thumbUrl, imgEl, videoEl, duration, name, size }
-    let currentBgmPath = './audio/bgm_acoustic_highway.mp3';
+    let currentBgmPath = './audio/bgm_rice_field.mp3';
     const audioPlayer = document.getElementById('globalAudioPlayer');
     audioPlayer.src = currentBgmPath;
     let playingBgmBtn = null;
