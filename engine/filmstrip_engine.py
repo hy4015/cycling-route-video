@@ -165,11 +165,21 @@ def render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, m
         badge_y = wy0 - 180
         if badge_y > -40:
             badge_txt = f"{brand_text} · LEADER NO. 01"
-            bb = font_leader_badge.getbbox(badge_txt)
-            bw = bb[2] - bb[0]
-            draw.rounded_rectangle((cx - bw//2 - 14, badge_y - 12, cx + bw//2 + 14, badge_y + 14),
-                                   radius=12, fill=(20, 24, 36), outline=accent_col, width=1)
-            draw.text((cx - bw//2, badge_y - 7), badge_txt, fill=accent_col, font=font_leader_badge)
+            tb = font_leader_badge.getbbox(badge_txt)
+            text_w = tb[2] - tb[0]
+            dot_r = 3
+            dot_gap = 8
+            pad_x = 14
+            pill_h = 26
+            content_w = (dot_r * 2) + dot_gap + text_w
+            pill_w = content_w + pad_x * 2
+            pill_x = int(round(cx - pill_w / 2))
+            pill_y = int(round(badge_y - pill_h / 2))
+
+            draw.rounded_rectangle((pill_x, pill_y, pill_x + pill_w, pill_y + pill_h),
+                                   radius=pill_h // 2, fill=(15, 20, 30), outline=accent_col, width=1)
+            draw.ellipse((pill_x + pad_x, pill_y + pill_h//2 - dot_r, pill_x + pad_x + dot_r*2, pill_y + pill_h//2 + dot_r), fill=accent_col)
+            draw.text((pill_x + pad_x + dot_r*2 + dot_gap, pill_y + 6), badge_txt, fill=accent_col, font=font_leader_badge)
             
         # B. Main Route Title (包含线路左上角抬头文字)
         title_y = wy0 - 125

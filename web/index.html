@@ -1612,21 +1612,39 @@
       if (wy0 > -50) {
         const cx = W_HALF + W_HALF / 2;
 
-        // A. Top Film Stock Pill Badge
+        // A. Top Film Stock Pill Badge (mathematically locked inside pill)
         const badgeY = wy0 - 180;
         if (badgeY > -40) {
-          const badgeText = `🎞️ ${film.brand} · LEADER NO. 01`;
-          ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          const bw = ctx.measureText(badgeText).width;
+          const brandText = `${film.brand} · LEADER NO. 01`;
+          ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          const textWidth = ctx.measureText(brandText).width;
+          const dotRadius = 3;
+          const dotGap = 8;
+          const padX = 14;
+          const pillHeight = 26;
+          const contentWidth = (dotRadius * 2) + dotGap + textWidth;
+          const pillWidth = contentWidth + padX * 2;
+          const pillX = Math.round(cx - pillWidth / 2);
+          const pillY = Math.round(badgeY - pillHeight / 2);
 
-          ctx.fillStyle = 'rgba(20, 24, 36, 0.9)';
+          // 1. Draw rounded pill background and border
+          ctx.fillStyle = 'rgba(15, 20, 30, 0.92)';
           ctx.strokeStyle = film.accent;
           ctx.lineWidth = 1.2;
-          roundRect(ctx, cx - bw / 2 - 14, badgeY - 14, bw + 28, 28, 14, true, true);
+          roundRect(ctx, pillX, pillY, pillWidth, pillHeight, pillHeight / 2, true, true);
 
+          // 2. Draw glowing accent dot
           ctx.fillStyle = film.accent;
-          ctx.textAlign = 'center';
-          ctx.fillText(badgeText, cx, badgeY + 5);
+          ctx.beginPath();
+          ctx.arc(pillX + padX + dotRadius, pillY + pillHeight / 2, dotRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 3. Draw text strictly inside the pill
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = film.accent;
+          ctx.fillText(brandText, pillX + padX + (dotRadius * 2) + dotGap, pillY + pillHeight / 2);
+          ctx.textBaseline = 'alphabetic'; // restore default baseline
         }
 
         // B. Main Route Title (包含线路左上角抬头文字)
