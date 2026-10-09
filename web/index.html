@@ -46,8 +46,8 @@
   </style>
 </head>
 <body class="bg-darkbg text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand selection:text-white">
-  <!-- Hidden Worker Pool for video decoders (ensures Safari hardware acceleration) -->
-  <div id="videoWorkerPool" style="position:fixed; top:-9999px; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none; z-index:-9999; overflow:hidden;"></div>
+  <!-- Hidden Worker Pool for video decoders (ensures Safari/Chrome hardware GPU decode acceleration) -->
+  <div id="videoWorkerPool" style="position:fixed; top:0; left:0; width:320px; height:180px; opacity:0.01; pointer-events:none; z-index:-9999; overflow:hidden;"></div>
 
   <!-- Header -->
   <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
@@ -951,6 +951,8 @@
 
           const url = URL.createObjectURL(f);
           const video = document.createElement('video');
+          video.width = 320;
+          video.height = 180;
           video.preload = 'auto'; // Load frame buffers for instant canvas capture
           video.muted = true; // Essential for autoplay & decode policies
           video.playsInline = true;
@@ -970,13 +972,14 @@
             normalizedGain: 1.0,
             thumbUrl: '',
             thumbImg: null,
+            isPlaceholderThumb: false,
             videoEl: video,
             duration: 5.0
           };
           mediaItems.push(item);
 
-          // Asynchronous parallel video frame capture (never blocks the UI!)
-          extractAndApplyVideoThumb(item);
+          // Enqueue for controlled sequential decoding (never chokes GPU decoders!)
+          enqueueVideoThumb(item);
         }
       }
 
@@ -991,10 +994,37 @@
       renderFrameAt(previewTime);
     }
 
-    function extractAndApplyVideoThumb(item) {
+    // Controlled Queue for Video Thumbnail Extraction (Max 2 concurrent decoders, prevents GPU overload)
+    const thumbQueue = [];
+    let activeThumbWorkers = 0;
+    const MAX_CONCURRENT_THUMB = 2;
+
+    function enqueueVideoThumb(item) {
+      thumbQueue.push(item);
+      processThumbQueue();
+    }
+
+    function processThumbQueue() {
+      while (activeThumbWorkers < MAX_CONCURRENT_THUMB && thumbQueue.length > 0) {
+        const nextItem = thumbQueue.shift();
+        activeThumbWorkers++;
+        extractAndApplyVideoThumb(nextItem, () => {
+          activeThumbWorkers--;
+          processThumbQueue();
+        });
+      }
+    }
+
+    function extractAndApplyVideoThumb(item, onDone) {
       const video = item.videoEl;
       let captured = false;
-      let seekAttempts = 0;
+      let finished = false;
+
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        if (typeof onDone === 'function') onDone();
+      };
 
       // Sample pixels to verify canvas is NOT an unbuffered black screen
       function isFrameBlack(cx, width, height) {
@@ -1006,7 +1036,7 @@
             const r = imgData[i];
             const g = imgData[i + 1];
             const b = imgData[i + 2];
-            if (r > 25 || g > 25 || b > 25) {
+            if (r > 20 || g > 20 || b > 20) {
               brightPixels++;
             }
           }
@@ -1017,8 +1047,8 @@
       }
 
       function captureCurrentFrame(force = false) {
-        if (captured) return true;
-        if (video.videoWidth <= 0 || video.videoHeight <= 0) return false;
+        if (captured && !item.isPlaceholderThumb) return true;
+        if (!video || video.videoWidth <= 0 || video.videoHeight <= 0) return false;
 
         try {
           const c = document.createElement('canvas');
@@ -1040,9 +1070,14 @@
           const thumbUrl = c.toDataURL('image/jpeg', 0.85);
           if (thumbUrl && thumbUrl.length > 200) {
             captured = true;
+            item.isPlaceholderThumb = false;
             item.thumbUrl = thumbUrl;
-            item.thumbImg = new Image();
-            item.thumbImg.src = thumbUrl;
+            const img = new Image();
+            img.onload = () => {
+              renderFrameAt(previewTime);
+            };
+            img.src = thumbUrl;
+            item.thumbImg = img;
 
             // Restore audio for preview playback
             video.muted = (item.audioEnabled === false);
@@ -1050,6 +1085,7 @@
 
             updateCardInGrid(item);
             renderFrameAt(previewTime);
+            finish();
             return true;
           }
         } catch (e) {
@@ -1058,18 +1094,36 @@
         return false;
       }
 
-      function doSeek() {
-        if (captured) return;
+      let seekAttempts = 0;
+      function doSeek(targetSec) {
+        if (captured && !item.isPlaceholderThumb) return;
         seekAttempts++;
-        // Target dynamic offset (e.g. 0.5s or 1.2s to bypass black lead-in)
         const dur = (video.duration && isFinite(video.duration)) ? video.duration : 3.0;
-        const targetTime = seekAttempts === 1 
-          ? Math.min(0.6, Math.max(0.2, dur * 0.25))
-          : Math.min(1.5, Math.max(0.5, dur * 0.6));
-        video.currentTime = targetTime;
+        const targetTime = (targetSec !== undefined) 
+          ? targetSec 
+          : (seekAttempts === 1 ? Math.min(0.5, dur * 0.3) : Math.min(1.2, dur * 0.6));
+        try {
+          video.currentTime = targetTime;
+        } catch (e) {
+          playAndCaptureFallback();
+        }
       }
 
-      // 1. On metadata: record duration, guard 10s rule, and start first seek
+      // 1. Instant check on loadeddata (Frame 0 is already in buffer for most videos!)
+      video.addEventListener('loadeddata', () => {
+        if (captured && !item.isPlaceholderThumb) return;
+        if (video.duration && isFinite(video.duration)) {
+          item.duration = video.duration;
+          updateCardInGrid(item);
+          updateDurationBasedOnMedia();
+        }
+        setTimeout(() => {
+          if (captureCurrentFrame(false)) return;
+          doSeek(0.5);
+        }, 40);
+      });
+
+      // 2. On metadata: record duration, guard 10s rule
       video.onloadedmetadata = () => {
         if (video.duration && isFinite(video.duration)) {
           item.duration = video.duration;
@@ -1082,44 +1136,37 @@
               renderMediaGrid();
               renderFrameAt(previewTime);
               alert(`视频素材 "${item.name}" 时长为 ${item.duration.toFixed(1)} 秒，超过规格上限（10 秒），已自动移除以保护浏览器稳定运行。`);
+              finish();
               return;
             }
           }
           updateCardInGrid(item);
           updateDurationBasedOnMedia();
         }
-        // Do NOT capture at metadata! Seek first!
-        doSeek();
-      };
-
-      // 2. On seeked: frame decoded, capture with compositor sync
-      video.onseeked = () => {
-        if (captured) return;
-
-        const onFrameReady = () => {
-          if (captured) return;
-          const ok = captureCurrentFrame(false);
-          if (!ok) {
-            if (seekAttempts < 2 && (video.duration || 1) > 0.8) {
-              // Try second timestamp
-              doSeek();
-            } else {
-              // Trigger micro-play to force Safari/Chrome GPU frame decode
-              playAndCaptureFallback();
-            }
-          }
-        };
-
-        if ('requestVideoFrameCallback' in video) {
-          video.requestVideoFrameCallback(onFrameReady);
-        } else {
-          setTimeout(onFrameReady, 120);
+        if (video.readyState >= 2) {
+          setTimeout(() => {
+            if (captureCurrentFrame(false)) return;
+            doSeek(0.5);
+          }, 30);
         }
       };
 
-      // 3. Fallback: Micro-play 80ms forces video hardware decode pipeline
+      // 3. On seeked: frame decoded, capture directly with 50ms buffer sync (NO requestVideoFrameCallback hang!)
+      video.addEventListener('seeked', () => {
+        if (captured && !item.isPlaceholderThumb) return;
+        setTimeout(() => {
+          if (captureCurrentFrame(false)) return;
+          if (seekAttempts < 2 && (video.duration || 1) > 1.0) {
+            doSeek(1.2);
+          } else {
+            playAndCaptureFallback();
+          }
+        }, 50);
+      });
+
+      // 4. Micro-play fallback (Hardware decoder pump for stubborn formats)
       function playAndCaptureFallback() {
-        if (captured) return;
+        if (captured && !item.isPlaceholderThumb) return;
         video.muted = true;
         video.playsInline = true;
 
@@ -1127,21 +1174,23 @@
           video.removeEventListener('timeupdate', onTime);
           video.pause();
           setTimeout(() => {
-            if (!captured) captureCurrentFrame(true);
-          }, 80);
+            if (captureCurrentFrame(true)) {
+              // Successfully captured via micro-play
+            }
+          }, 60);
         };
 
         video.addEventListener('timeupdate', onTime, { once: true });
         video.play().catch(() => {
           setTimeout(() => {
-            if (!captured) captureCurrentFrame(true);
+            captureCurrentFrame(true);
           }, 300);
         });
       }
 
-      // 4. Safety net: after 2.5s, generate styled card if decoder completely blocked
+      // 5. Responsive Safety net: after 3.5s, generate styled card if decoder blocked, BUT NEVER PERMANENTLY LOCK!
       setTimeout(() => {
-        if (!captured) {
+        if (!captured || item.isPlaceholderThumb) {
           if (!captureCurrentFrame(true)) {
             const c = document.createElement('canvas');
             c.width = 428;
@@ -1155,20 +1204,24 @@
             cx.fillStyle = '#f43f5e';
             cx.font = 'bold 44px sans-serif';
             cx.textAlign = 'center';
-            cx.fillText('🎬', 214, 220);
-            cx.fillStyle = '#e2e8f0';
-            cx.font = 'bold 16px sans-serif';
-            cx.textAlign = 'center';
-            cx.fillText(item.duration ? `视频 (${item.duration.toFixed(0)}s)` : '视频素材', 214, 268);
+            cx.fillText('🎬', 214, 210);
+            cx.fillStyle = '#94a3b8';
+            cx.font = 'bold 15px sans-serif';
+            cx.fillText(item.duration ? `视频 (${item.duration.toFixed(0)}s)` : '视频素材', 214, 260);
+            cx.fillStyle = '#64748b';
+            cx.font = '12px sans-serif';
+            cx.fillText('点击或预览时自动加载画面', 214, 288);
+
             item.thumbUrl = c.toDataURL('image/jpeg', 0.85);
             item.thumbImg = new Image();
             item.thumbImg.src = item.thumbUrl;
-            captured = true;
+            item.isPlaceholderThumb = true; // Mark as temporary!
             updateCardInGrid(item);
             renderFrameAt(previewTime);
           }
+          finish();
         }
-      }, 2500);
+      }, 3500);
     }
 
     function updateCardInGrid(item) {
@@ -1463,11 +1516,15 @@
         activePreviewIndex--;
       }
       const item = mediaItems[idx];
-      if (item && item.videoEl) {
-        item.videoEl.pause();
-        item.videoEl.src = '';
-        item.videoEl.load();
-        item.videoEl.remove();
+      if (item) {
+        const qIdx = thumbQueue.indexOf(item);
+        if (qIdx !== -1) thumbQueue.splice(qIdx, 1);
+        if (item.videoEl) {
+          item.videoEl.pause();
+          item.videoEl.src = '';
+          item.videoEl.load();
+          item.videoEl.remove();
+        }
       }
       mediaItems.splice(idx, 1);
       updateUnifiedLoudness();
@@ -1479,6 +1536,7 @@
     document.getElementById('clearMediaBtn').addEventListener('click', () => {
       stopSingleClipPreview();
       activePreviewIndex = null;
+      thumbQueue.length = 0;
       mediaItems.forEach(item => {
         if (item.videoEl) {
           item.videoEl.pause();
@@ -2050,6 +2108,26 @@
             const isPlayingNow = (isLive || isSingleClipPlaying) && !item.videoEl.paused;
             const isSeekedPastZero = item.videoEl && item.videoEl.currentTime > 0.08;
 
+            // Auto-heal & live upgrade: If card/monitor currently has a placeholder (or empty thumb), but videoEl has decoded a valid frame:
+            if ((!item.thumbUrl || item.isPlaceholderThumb) && hasDecoded) {
+              try {
+                const c = document.createElement('canvas');
+                c.width = 428;
+                c.height = 484;
+                const cx = c.getContext('2d');
+                const vw = item.videoEl.videoWidth, vh = item.videoEl.videoHeight;
+                const s = Math.max(c.width / vw, c.height / vh);
+                cx.drawImage(item.videoEl, (c.width - vw * s) / 2, (c.height - vh * s) / 2, vw * s, vh * s);
+                const url = c.toDataURL('image/jpeg', 0.85);
+                item.thumbUrl = url;
+                item.isPlaceholderThumb = false;
+                const img = new Image();
+                img.src = url;
+                item.thumbImg = img;
+                updateCardInGrid(item);
+              } catch (e) {}
+            }
+
             // 1. Live video frame when playing or when current frame is decoded past start
             if (hasDecoded && (isPlayingNow || isSeekedPastZero)) {
               try {
@@ -2065,7 +2143,37 @@
                 // fall through
               }
             }
-            // 2. High-quality static thumbnail (Frame 0) before center trigger or while buffering
+            // 2. High-quality static thumbnail (Frame 0) if GENUINE (not placeholder!)
+            if (!drawn && item.thumbImg && item.thumbImg.complete && item.thumbImg.naturalWidth > 0 && !item.isPlaceholderThumb) {
+              try {
+                const img = item.thumbImg;
+                const iw = img.naturalWidth || rw;
+                const ih = img.naturalHeight || rh;
+                const s = Math.max(rw / iw, rh / ih);
+                const dw = iw * s;
+                const dh = ih * s;
+                ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+                drawn = true;
+              } catch (e) {
+                // fall through
+              }
+            }
+            // 3. Fallback: draw decoded video element directly (bypasses any placeholder!)
+            if (!drawn && hasDecoded) {
+              try {
+                const v = item.videoEl;
+                const vw = v.videoWidth;
+                const vh = v.videoHeight;
+                const s = Math.max(rw / vw, rh / vh);
+                const dw = vw * s;
+                const dh = vh * s;
+                ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dw) / 2, dw, dh);
+                drawn = true;
+              } catch (e) {
+                // fall through
+              }
+            }
+            // 4. Last resort: draw placeholder thumbnail if video has completely failed to decode yet
             if (!drawn && item.thumbImg && item.thumbImg.complete && item.thumbImg.naturalWidth > 0) {
               try {
                 const img = item.thumbImg;
@@ -2075,21 +2183,6 @@
                 const dw = iw * s;
                 const dh = ih * s;
                 ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dw) / 2, dw, dh);
-                drawn = true;
-              } catch (e) {
-                // fall through
-              }
-            }
-            // 3. Fallback: try drawing video element directly
-            if (!drawn && hasDecoded) {
-              try {
-                const v = item.videoEl;
-                const vw = v.videoWidth;
-                const vh = v.videoHeight;
-                const s = Math.max(rw / vw, rh / vh);
-                const dw = vw * s;
-                const dh = vh * s;
-                ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
                 drawn = true;
               } catch (e) {
                 // fall through
