@@ -327,6 +327,46 @@
             <input type="file" id="customBgmInput" accept="audio/*" class="hidden">
           </label>
         </div>
+
+        <!-- Audio Mixing & Immersion Level Controls -->
+        <div class="mt-4 pt-3.5 border-t border-slate-800 space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-medium text-slate-300 flex items-center space-x-1.5">
+              <span>🎧</span>
+              <span>沉浸式声效混音比例</span>
+            </span>
+            <label class="flex items-center space-x-1.5 cursor-pointer text-slate-400 hover:text-slate-200">
+              <input type="checkbox" id="autoDuckingToggle" checked class="accent-rose-500 rounded">
+              <span class="text-[11px]">智能音频闪避 (Ducking)</span>
+            </label>
+          </div>
+
+          <!-- BGM Volume Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[11px] text-slate-400">
+              <span class="flex items-center space-x-1">
+                <span>🎵</span>
+                <span>背景音乐 (BGM) 音量</span>
+              </span>
+              <span id="bgmVolumeVal" class="font-mono text-rose-400 font-bold">35%</span>
+            </div>
+            <input type="range" id="bgmVolumeSlider" min="0" max="100" value="35" class="w-full h-1.5 bg-slate-800 rounded-lg accent-rose-500 cursor-pointer">
+            <div class="text-[10px] text-slate-500">建议 30%~40% 作为情绪铺底，不盖过真实路感环境音</div>
+          </div>
+
+          <!-- Video Audio Volume Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[11px] text-slate-400">
+              <span class="flex items-center space-x-1">
+                <span>🎙️</span>
+                <span>视频现场原声音量</span>
+              </span>
+              <span id="videoVolumeVal" class="font-mono text-emerald-400 font-bold">100%</span>
+            </div>
+            <input type="range" id="videoVolumeSlider" min="0" max="150" value="100" class="w-full h-1.5 bg-slate-800 rounded-lg accent-emerald-500 cursor-pointer">
+            <div class="text-[10px] text-slate-500">突出车轮破风、花鼓塔基声、呼吸与欢呼，沉浸感倍增</div>
+          </div>
+        </div>
       </section>
 
       <!-- Generate Actions -->
@@ -422,13 +462,16 @@
     let currentBgmPath = './audio/bgm_acoustic_highway.mp3';
     const audioPlayer = document.getElementById('globalAudioPlayer');
     audioPlayer.src = currentBgmPath;
-    audioPlayer.volume = 1.0;
-    audioPlayer.loop = true;
     let playingBgmBtn = null;
 
-    // Web Audio Bus & EBU R128 Loudness Normalization (Calibrated to 80% of BGM loudness)
-    const BGM_TARGET_VOLUME = 1.0;
-    const VIDEO_TARGET_RATIO = 0.80; // 80% of BGM loudness (vlog golden ratio)
+    // Audio Mixing & Immersion Golden Ratio (Default: BGM 35%, Video Sound 100%)
+    let bgmVolumeRatio = 0.35;        // 35% BGM volume (bed music)
+    let videoVolumeRatio = 1.0;       // 100% Video audio volume (foreground immersion)
+    let isAudioDuckingEnabled = true; // Auto Ducking enabled
+    let isAnyVideoAudioActive = false; // Live status for dynamic ducking
+    audioPlayer.volume = bgmVolumeRatio;
+    audioPlayer.loop = true;
+
     let webAudioCtx = null;
     let masterVideoBus = null;
     let loudnessCompressor = null;
@@ -438,9 +481,9 @@
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         webAudioCtx = new AudioCtx();
 
-        // 1. Master Video Bus Gain Node (Calibrated to 80% BGM)
+        // 1. Master Video Bus Gain Node (Calibrated to videoVolumeRatio)
         masterVideoBus = webAudioCtx.createGain();
-        masterVideoBus.gain.value = VIDEO_TARGET_RATIO;
+        masterVideoBus.gain.value = videoVolumeRatio;
 
         // 2. Broadcast-grade Dynamics Compressor (EBU R128 loudness leveler & peak limiter)
         loudnessCompressor = webAudioCtx.createDynamicsCompressor();
@@ -502,7 +545,7 @@
           item.gainNode.gain.value = gain;
         }
         if (item.videoEl) {
-          item.videoEl.volume = Math.max(0, Math.min(1.0, VIDEO_TARGET_RATIO * gain));
+          item.videoEl.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * gain));
         }
       });
     }
@@ -951,7 +994,7 @@
 
             // Restore audio for preview playback
             video.muted = (item.audioEnabled === false);
-            video.volume = Math.min(1.0, VIDEO_TARGET_RATIO * (item.normalizedGain || 1.0));
+            video.volume = Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0));
 
             updateCardInGrid(item);
             renderFrameAt(previewTime);
@@ -1173,7 +1216,7 @@
             }
             if (item.videoEl) {
               item.videoEl.muted = !item.audioEnabled;
-              item.videoEl.volume = item.audioEnabled ? Math.min(1.0, VIDEO_TARGET_RATIO * (item.normalizedGain || 1.0)) : 0;
+              item.videoEl.volume = item.audioEnabled ? Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0)) : 0;
             }
             updateUnifiedLoudness();
             renderMediaGrid();
@@ -1261,6 +1304,9 @@
           item.videoEl.onended = null;
         }
       });
+      if (!isPreviewPlaying) {
+        audioPlayer.volume = bgmVolumeRatio;
+      }
     }
 
     // Audition single media item on the monitor screen
@@ -1314,9 +1360,12 @@
         v.loop = false;
         v.muted = !isAudOn;
         if (isAudOn) {
-          v.volume = Math.min(1.0, VIDEO_TARGET_RATIO * (item.normalizedGain || 1.0));
+          v.volume = Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0));
           if (item.gainNode) {
             item.gainNode.gain.value = (item.normalizedGain || 1.0);
+          }
+          if (isAudioDuckingEnabled) {
+            audioPlayer.volume = bgmVolumeRatio * 0.40;
           }
         } else {
           v.volume = 0;
@@ -1406,7 +1455,7 @@
         playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
       }
 
-      audioPlayer.volume = 1.0;
+      audioPlayer.volume = bgmVolumeRatio;
       audioPlayer.src = audioSrc;
       currentBgmPath = audioSrc;
 
@@ -1493,7 +1542,7 @@
         const f = e.target.files[0];
         currentBgmPath = URL.createObjectURL(f);
         audioPlayer.src = currentBgmPath;
-        audioPlayer.volume = 1.0;
+        audioPlayer.volume = bgmVolumeRatio;
         audioPlayer.loop = true;
         if (isPreviewPlaying) {
           audioPlayer.play().catch(e => console.warn(e));
@@ -1501,6 +1550,43 @@
           audioPlayer.play().catch(e => console.warn(e));
         }
         alert(`已加载自定义背景音乐: ${f.name}`);
+      }
+    });
+
+    // Audio Mixer & Immersion Level Controls Event Handlers
+    const bgmVolumeSlider = document.getElementById('bgmVolumeSlider');
+    const bgmVolumeVal = document.getElementById('bgmVolumeVal');
+    const videoVolumeSlider = document.getElementById('videoVolumeSlider');
+    const videoVolumeVal = document.getElementById('videoVolumeVal');
+    const autoDuckingToggle = document.getElementById('autoDuckingToggle');
+
+    bgmVolumeSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      bgmVolumeRatio = val / 100.0;
+      bgmVolumeVal.innerText = `${val}%`;
+      if (!isSingleClipPlaying) {
+        audioPlayer.volume = (isAudioDuckingEnabled && isAnyVideoAudioActive) ? bgmVolumeRatio * 0.40 : bgmVolumeRatio;
+      }
+    });
+
+    videoVolumeSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      videoVolumeRatio = val / 100.0;
+      videoVolumeVal.innerText = `${val}%`;
+      if (masterVideoBus) {
+        masterVideoBus.gain.value = videoVolumeRatio;
+      }
+      mediaItems.forEach(item => {
+        if (item.isVideo && item.videoEl) {
+          item.videoEl.volume = item.audioEnabled !== false ? Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0)) : 0;
+        }
+      });
+    });
+
+    autoDuckingToggle.addEventListener('change', (e) => {
+      isAudioDuckingEnabled = e.target.checked;
+      if (!isSingleClipPlaying && isPreviewPlaying) {
+        audioPlayer.volume = (isAudioDuckingEnabled && isAnyVideoAudioActive) ? bgmVolumeRatio * 0.40 : bgmVolumeRatio;
       }
     });
 
@@ -1783,37 +1869,77 @@
           ctx.restore();
         }
       } else {
+        const numWindows = mediaItems.length;
+        let activeVideoSoundPlaying = false;
+
         mediaItems.forEach((item, k) => {
           const wy = Math.round(k * STRIDE - yScroll + 298);
           const isVisible = (wy + WIN_H > 0 && wy < CH);
 
-          // Active Audio Management: Only visible video plays sound at normalized 80% loudness
-          if (item.isVideo && item.videoEl) {
-            if (isVisible) {
-              if (isPreviewPlaying && !isSingleClipPlaying && item.videoEl.paused) {
-                item.videoEl.play().catch(e => console.warn(e));
-              }
-              if (item.audioEnabled !== false) {
-                const centerY = wy + WIN_H / 2;
-                const dist = Math.abs(centerY - CH / 2);
-                const fade = Math.max(0.2, Math.min(1.0, 1.0 - (dist - 180) / 360));
-                const effectiveGain = (item.normalizedGain || 1.0) * fade;
+          // Center timestamp calculation:
+          // Window k center is: centerY = wy + WIN_H / 2 = k * STRIDE - yScroll + 540
+          // Reaches screen center (540) exactly when yScroll = k * STRIDE
+          // Since yScroll = vScroll * t, tCenter = (k / (numWindows - 1)) * contentDuration
+          const tCenter = (numWindows > 1 && contentDuration > 0)
+            ? (k / (numWindows - 1)) * contentDuration
+            : 0;
+          const clipDur = item.duration || 5.0;
 
-                if (item.gainNode) {
-                  item.gainNode.gain.value = effectiveGain;
-                }
-                item.videoEl.muted = false;
-                item.videoEl.volume = Math.max(0, Math.min(1.0, VIDEO_TARGET_RATIO * effectiveGain));
-              } else {
+          // Video Playback & Audio Synchronization
+          if (item.isVideo && item.videoEl) {
+            if (isSingleClipPlaying && activePreviewIndex === k) {
+              // Auditioning single clip: handled by playSingleClip loop
+              if (item.audioEnabled !== false) activeVideoSoundPlaying = true;
+            } else if (isPreviewPlaying) {
+              const elapsed = t - tCenter;
+
+              if (elapsed < 0) {
+                // 1. Before reaching center: hold frame 1, pause, mute audio
+                if (!item.videoEl.paused) item.videoEl.pause();
+                try { item.videoEl.currentTime = 0; } catch (e) {}
                 item.videoEl.muted = true;
-                if (item.gainNode) item.gainNode.gain.value = 0;
                 item.videoEl.volume = 0;
+                if (item.gainNode) item.gainNode.gain.value = 0;
+              } else if (elapsed <= clipDur) {
+                // 2. Reached center: play from frame 1 with synchronized audio!
+                if (item.videoEl.paused) {
+                  try { item.videoEl.currentTime = Math.max(0, elapsed); } catch (e) {}
+                  item.videoEl.play().catch(e => console.warn(e));
+                }
+                // Resync if time drifted by > 0.35s
+                if (Math.abs(item.videoEl.currentTime - elapsed) > 0.35) {
+                  try { item.videoEl.currentTime = elapsed; } catch (e) {}
+                }
+                if (item.audioEnabled !== false) {
+                  item.videoEl.muted = false;
+                  const effGain = item.normalizedGain || 1.0;
+                  item.videoEl.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * effGain));
+                  if (item.gainNode) item.gainNode.gain.value = effGain;
+                  activeVideoSoundPlaying = true;
+                } else {
+                  item.videoEl.muted = true;
+                  item.videoEl.volume = 0;
+                  if (item.gainNode) item.gainNode.gain.value = 0;
+                }
+              } else {
+                // 3. Past clip duration: hold last frame, mute audio
+                if (!item.videoEl.paused) item.videoEl.pause();
+                item.videoEl.muted = true;
+                item.videoEl.volume = 0;
+                if (item.gainNode) item.gainNode.gain.value = 0;
               }
             } else {
-              // Off-screen: silence
+              // Not playing (paused / scrubber seeking / export)
+              const elapsed = t - tCenter;
+              if (elapsed < 0) {
+                try { item.videoEl.currentTime = 0; } catch (e) {}
+              } else {
+                try { item.videoEl.currentTime = Math.min(clipDur, elapsed); } catch (e) {}
+              }
+              if (!item.videoEl.paused) item.videoEl.pause();
               item.videoEl.muted = true;
-              if (item.gainNode) item.gainNode.gain.value = 0;
               item.videoEl.volume = 0;
+              if (item.gainNode) item.gainNode.gain.value = 0;
             }
           }
 
@@ -1830,8 +1956,12 @@
 
           if (item.isVideo) {
             let drawn = false;
-            // 1. Live video frame when preview is actively playing or single clip is auditioning
-            if ((isPreviewPlaying || isSingleClipPlaying) && item.videoEl && item.videoEl.videoWidth > 0 && !item.videoEl.paused && item.videoEl.readyState >= 2) {
+            const hasDecoded = item.videoEl && item.videoEl.videoWidth > 0 && item.videoEl.readyState >= 2;
+            const isPlayingNow = (isPreviewPlaying || isSingleClipPlaying) && !item.videoEl.paused;
+            const isSeekedPastZero = item.videoEl && item.videoEl.currentTime > 0.08;
+
+            // 1. Live video frame when playing or when current frame is decoded past start
+            if (hasDecoded && (isPlayingNow || isSeekedPastZero)) {
               try {
                 const v = item.videoEl;
                 const vw = v.videoWidth;
@@ -1845,7 +1975,7 @@
                 // fall through
               }
             }
-            // 2. High-quality static thumbnail when paused or video buffering
+            // 2. High-quality static thumbnail (Frame 0) before center trigger or while buffering
             if (!drawn && item.thumbImg && item.thumbImg.complete && item.thumbImg.naturalWidth > 0) {
               try {
                 const img = item.thumbImg;
@@ -1854,14 +1984,14 @@
                 const s = Math.max(rw / iw, rh / ih);
                 const dw = iw * s;
                 const dh = ih * s;
-                ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+                ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dw) / 2, dw, dh);
                 drawn = true;
               } catch (e) {
                 // fall through
               }
             }
-            // 3. Fallback: try drawing video element even when paused if decoded
-            if (!drawn && item.videoEl && item.videoEl.videoWidth > 0 && item.videoEl.readyState >= 2) {
+            // 3. Fallback: try drawing video element directly
+            if (!drawn && hasDecoded) {
               try {
                 const v = item.videoEl;
                 const vw = v.videoWidth;
@@ -1894,6 +2024,7 @@
           }
           ctx.restore();
         });
+        isAnyVideoAudioActive = activeVideoSoundPlaying;
       }
 
       // 3. Vintage Sprocket Holes (Luminous light perforations strictly below wy0!)
@@ -2143,7 +2274,7 @@
         console.warn('Audio seek warning:', err);
       }
 
-      audioPlayer.volume = 1.0;
+      audioPlayer.volume = bgmVolumeRatio;
       audioPlayer.loop = true;
       const playPromise = audioPlayer.play();
       if (playPromise !== undefined) {
@@ -2158,14 +2289,18 @@
         });
       }
 
+      // Initialize all videos paused at start; center-trigger will start each when it reaches screen center
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
-          item.videoEl.loop = true; // Restore loop for full recap playback
-          item.videoEl.currentTime = 0;
-          item.videoEl.play().catch(e => console.warn(e));
+          item.videoEl.loop = false;
+          item.videoEl.pause();
+          item.videoEl.muted = true;
+          if (item.gainNode) item.gainNode.gain.value = 0;
+          try { item.videoEl.currentTime = 0; } catch (e) {}
         }
       });
 
+      renderFrameAt(previewTime);
       animFrameId = requestAnimationFrame(previewLoop);
     }
 
@@ -2205,15 +2340,6 @@
         return;
       }
 
-      // Outro audio volume fade
-      const outroStart = totalDuration - OUTRO_DURATION;
-      if (previewTime >= outroStart) {
-        const fadeProgress = Math.min(1.0, Math.max(0, (previewTime - outroStart) / OUTRO_DURATION));
-        audioPlayer.volume = Math.max(0, 1.0 - fadeProgress);
-      } else {
-        audioPlayer.volume = 1.0;
-      }
-
       // Update scrubber & time
       const scrubber = document.getElementById('previewScrubber');
       scrubber.value = (previewTime / totalDuration) * 100;
@@ -2224,6 +2350,19 @@
       document.getElementById('timeDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} / ${tm.toString().padStart(2, '0')}:${ts.toString().padStart(2, '0')}`;
 
       renderFrameAt(previewTime);
+
+      // Dynamic Audio Ducking & Outro Volume Fade
+      const outroStart = totalDuration - OUTRO_DURATION;
+      let targetBgmVol = bgmVolumeRatio;
+      if (isAudioDuckingEnabled && isAnyVideoAudioActive) {
+        targetBgmVol = bgmVolumeRatio * 0.40; // Duck down by 60% to highlight bike hub, wind & nature sound
+      }
+      if (previewTime >= outroStart) {
+        const fadeProgress = Math.min(1.0, Math.max(0, (previewTime - outroStart) / OUTRO_DURATION));
+        targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
+      }
+      audioPlayer.volume = targetBgmVol;
+
       animFrameId = requestAnimationFrame(previewLoop);
     }
 
@@ -2237,7 +2376,7 @@
         c.classList.add('border-slate-700/80');
       });
       previewTime = 0;
-      audioPlayer.volume = 1.0;
+      audioPlayer.volume = bgmVolumeRatio;
       try { audioPlayer.currentTime = 0; } catch (err) {}
       renderFrameAt(0);
       startPreview();
@@ -2251,19 +2390,23 @@
         c.classList.add('border-slate-700/80');
       });
       previewTime = (parseFloat(e.target.value) / 100.0) * totalDuration;
+      renderFrameAt(previewTime);
+
       const outroStart = totalDuration - OUTRO_DURATION;
+      let targetBgmVol = bgmVolumeRatio;
+      if (isAudioDuckingEnabled && isAnyVideoAudioActive) {
+        targetBgmVol = bgmVolumeRatio * 0.40;
+      }
       if (previewTime >= outroStart) {
         const fadeProgress = Math.min(1.0, Math.max(0, (previewTime - outroStart) / OUTRO_DURATION));
-        audioPlayer.volume = Math.max(0, 1.0 - fadeProgress);
-      } else {
-        audioPlayer.volume = 1.0;
+        targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
       }
+      audioPlayer.volume = targetBgmVol;
       try {
         if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
           audioPlayer.currentTime = previewTime % audioPlayer.duration;
         }
       } catch (err) {}
-      renderFrameAt(previewTime);
     });
 
     // 6. Genuine Web Video Rendering with Detailed Stage Progress and Direct Download
@@ -2325,7 +2468,7 @@
         const audioCtx = getAudioContext();
         const dest = audioCtx.createMediaStreamDestination();
         audioPlayer.currentTime = 0;
-        audioPlayer.volume = 1.0;
+        audioPlayer.volume = bgmVolumeRatio;
         if (!audioPlayer._sourceNode) {
           audioPlayer._sourceNode = audioCtx.createMediaElementSource(audioPlayer);
           audioPlayer._sourceNode.connect(audioCtx.destination);
@@ -2335,14 +2478,14 @@
         // Connect Master Video Bus (with loudness compressor!) to export destination
         loudnessCompressor.connect(dest);
 
-        // Ensure all videos have nodes attached
+        // Ensure all videos have nodes attached and initialized paused
         mediaItems.forEach(item => {
           if (item.isVideo) {
             attachVideoAudioNodes(item);
             if (item.videoEl) {
               item.videoEl.currentTime = 0;
-              item.videoEl.muted = (item.audioEnabled === false);
-              item.videoEl.play().catch(e => console.warn(e));
+              item.videoEl.pause();
+              item.videoEl.muted = true;
             }
           }
         });
@@ -2375,14 +2518,6 @@
 
       mediaRecorder.start(100);
 
-      // Start playing videos during recording
-      mediaItems.forEach(item => {
-        if (item.isVideo && item.videoEl) {
-          item.videoEl.currentTime = 0;
-          item.videoEl.play().catch(e => console.warn(e));
-        }
-      });
-
       // Record frame-by-frame loop
       const renderFPS = 30;
       const totalFrames = Math.round(totalDuration * renderFPS);
@@ -2393,14 +2528,17 @@
         const t = (currFrame / totalFrames) * totalDuration;
         renderFrameAt(t);
 
-        // Audio fade out during outro
+        // Dynamic Audio Ducking & Outro Volume Fade during export
         const outroStart = totalDuration - OUTRO_DURATION;
+        let targetBgmVol = bgmVolumeRatio;
+        if (isAudioDuckingEnabled && isAnyVideoAudioActive) {
+          targetBgmVol = bgmVolumeRatio * 0.40;
+        }
         if (t >= outroStart) {
           const fadeProgress = Math.min(1.0, Math.max(0, (t - outroStart) / OUTRO_DURATION));
-          audioPlayer.volume = Math.max(0, 1.0 - fadeProgress);
-        } else {
-          audioPlayer.volume = 1.0;
+          targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
         }
+        audioPlayer.volume = targetBgmVol;
 
         const pct = Math.min(90, Math.round(35 + (currFrame / totalFrames) * 55));
         setProgress(pct, '阶段 3/5', `逐帧编码渲染中 (${pct}%)`, `正在渲染第 ${currFrame}/${totalFrames} 帧，时间: ${t.toFixed(1)}s / ${totalDuration.toFixed(1)}s`);
