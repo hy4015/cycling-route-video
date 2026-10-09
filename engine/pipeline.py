@@ -17,7 +17,7 @@ import imageio_ffmpeg
 from engine.gpx_parser import parse_gpx
 from engine.media_processor import scan_media_folder, organize_windows_auto, prepare_cache_for_window
 from engine.filmstrip_engine import render_filmstrip_frame, load_fonts as load_filmstrip_fonts, W_HALF, H, STRIDE, WIN_W, WIN_H, WIN_R_A, WIN_R_B, W_SUB
-from engine.map_engine import compute_track_projection, create_base_canvas, render_map_frame
+from engine.map_engine import compute_track_projection, create_base_canvas, render_map_frame, compute_route_landmarks
 from engine.audio_mixer import mix_master_audio
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
@@ -95,6 +95,7 @@ def run_pipeline(gpx_path, media_dir, output_path, bgm_choice='default', duratio
     
     # 4. Map Setup
     projected_pts = compute_track_projection(gpx_data['points'])
+    route_landmarks = compute_route_landmarks(gpx_data['points'], projected_pts)
     base_map_img = create_base_canvas(projected_pts)
     
     try:
@@ -123,7 +124,7 @@ def run_pipeline(gpx_path, media_dir, output_path, bgm_choice='default', duratio
         progress = min(1.0, t / duration)
         stage_idx = min(len(gpx_data['stages']) - 1, int(progress * len(gpx_data['stages'])))
         stage_info = gpx_data['stages'][stage_idx]
-        frame_im = render_map_frame(base_map_img, projected_pts, progress, f_idx, stage_info, gpx_data, map_fonts, hud_title=hud_title)
+        frame_im = render_map_frame(base_map_img, projected_pts, progress, f_idx, stage_info, gpx_data, map_fonts, hud_title=hud_title, landmarks=route_landmarks)
         proc_left.stdin.write(frame_im.tobytes())
     proc_left.stdin.close()
     proc_left.wait()

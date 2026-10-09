@@ -221,6 +221,28 @@
             </div>
           </div>
 
+          <!-- 3.5 Landmark Milestones (Cities & Towns) Selector -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-2 flex items-center justify-between">
+              <span>🏙️ 沿途城市与城镇地标 (一级核心城市与二级特色城镇)</span>
+              <span id="currentLandmarkModeLabel" class="text-[11px] text-emerald-400 font-medium">核心城市 + 特色城镇 (推荐)</span>
+            </label>
+            <div class="grid grid-cols-3 gap-2" id="landmarkModeBtnGroup">
+              <button type="button" class="landmark-mode-btn active px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-emerald-500/60 bg-emerald-500/10 text-emerald-300 shadow-sm" data-mode="all">
+                <span>📍</span>
+                <span>核心 + 城镇 (推荐)</span>
+              </button>
+              <button type="button" class="landmark-mode-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-mode="tier1">
+                <span>🏛️</span>
+                <span>仅一级核心城市</span>
+              </button>
+              <button type="button" class="landmark-mode-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-mode="none">
+                <span>🚫</span>
+                <span>不显示地标</span>
+              </button>
+            </div>
+          </div>
+
           <!-- 4. Film Stock Theme Selector -->
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-2 flex items-center justify-between">
@@ -641,6 +663,8 @@
     let customIntroTitle = 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
     let currentMapStyle = 'satellite';
     let currentFilmStyle = 'portra400';
+    let currentLandmarkMode = 'all'; // 'all' (核心+城镇, 推荐) | 'tier1' (仅一级核心城市) | 'none' (不显示)
+    let cachedRouteLandmarks = [];
 
     const MAP_PROVIDERS = {
       satellite: {
@@ -764,6 +788,395 @@
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    // Curated Geographic Landmarks Database (Tier 1 Core Cities & Tier 2 Classic Towns / Passes / Milestones)
+    const GEOGRAPHIC_LANDMARKS = [
+      // === TAIWAN TIER 1 CITIES (一级核心城市/县市首府) ===
+      { name: "台北", tier: 1, lat: 25.0330, lon: 121.5654 },
+      { name: "新北", tier: 1, lat: 25.0124, lon: 121.4657 },
+      { name: "桃园", tier: 1, lat: 24.9936, lon: 121.3010 },
+      { name: "新竹", tier: 1, lat: 24.8039, lon: 120.9647 },
+      { name: "苗栗", tier: 1, lat: 24.5602, lon: 120.8214 },
+      { name: "台中", tier: 1, lat: 24.1477, lon: 120.6736 },
+      { name: "彰化", tier: 1, lat: 24.0818, lon: 120.5385 },
+      { name: "嘉义", tier: 1, lat: 23.4800, lon: 120.4491 },
+      { name: "台南", tier: 1, lat: 22.9997, lon: 120.2270 },
+      { name: "高雄", tier: 1, lat: 22.6273, lon: 120.3014 },
+      { name: "屏东", tier: 1, lat: 22.6761, lon: 120.4941 },
+      { name: "台东", tier: 1, lat: 22.7583, lon: 121.1444 },
+      { name: "花莲", tier: 1, lat: 23.9872, lon: 121.6016 },
+      { name: "宜兰", tier: 1, lat: 24.7570, lon: 121.7530 },
+      { name: "基隆", tier: 1, lat: 25.1276, lon: 121.7392 },
+
+      // === TAIWAN TIER 2 TOWNS & MILESTONES (二级特色城镇/著名驿站) ===
+      { name: "南崁", tier: 2, lat: 25.0472, lon: 121.2910 },
+      { name: "竹围", tier: 2, lat: 25.1147, lon: 121.2483 },
+      { name: "永安渔港", tier: 2, lat: 24.9897, lon: 121.0183 },
+      { name: "南寮", tier: 2, lat: 24.8488, lon: 120.9275 },
+      { name: "香山", tier: 2, lat: 24.7867, lon: 120.9167 },
+      { name: "竹南", tier: 2, lat: 24.6865, lon: 120.8783 },
+      { name: "后龙", tier: 2, lat: 24.6166, lon: 120.7871 },
+      { name: "白沙屯", tier: 2, lat: 24.5667, lon: 120.7100 },
+      { name: "通霄", tier: 2, lat: 24.4921, lon: 120.6772 },
+      { name: "苑里", tier: 2, lat: 24.4428, lon: 120.6521 },
+      { name: "大甲", tier: 2, lat: 24.3489, lon: 120.6219 },
+      { name: "清水", tier: 2, lat: 24.2689, lon: 120.5683 },
+      { name: "鹿港", tier: 2, lat: 24.0558, lon: 120.4352 },
+      { name: "芳苑", tier: 2, lat: 23.9267, lon: 120.3167 },
+      { name: "西螺", tier: 2, lat: 23.7997, lon: 120.4633 },
+      { name: "斗南", tier: 2, lat: 23.6767, lon: 120.4800 },
+      { name: "民雄", tier: 2, lat: 23.5518, lon: 120.4294 },
+      { name: "水上", tier: 2, lat: 23.4333, lon: 120.4000 },
+      { name: "后壁", tier: 2, lat: 23.3667, lon: 120.3600 },
+      { name: "新营", tier: 2, lat: 23.3106, lon: 120.3168 },
+      { name: "麻豆", tier: 2, lat: 23.1818, lon: 120.2458 },
+      { name: "善化", tier: 2, lat: 23.1333, lon: 120.2944 },
+      { name: "冈山", tier: 2, lat: 22.7963, lon: 120.2949 },
+      { name: "楠梓", tier: 2, lat: 22.7297, lon: 120.3267 },
+      { name: "凤山", tier: 2, lat: 22.6267, lon: 120.3575 },
+      { name: "东港", tier: 2, lat: 22.4674, lon: 120.4533 },
+      { name: "林边", tier: 2, lat: 22.4333, lon: 120.5167 },
+      { name: "枋寮", tier: 2, lat: 22.3667, lon: 120.5947 },
+      { name: "枋山", tier: 2, lat: 22.2597, lon: 120.6558 },
+      { name: "枫港", tier: 2, lat: 22.1951, lon: 120.6908 },
+      { name: "车城", tier: 2, lat: 22.0725, lon: 120.7122 },
+      { name: "恒春", tier: 2, lat: 22.0042, lon: 120.7444 },
+      { name: "垦丁", tier: 2, lat: 21.9442, lon: 120.7972 },
+      { name: "鹅銮鼻", tier: 2, lat: 21.9022, lon: 120.8525 },
+      { name: "风吹砂", tier: 2, lat: 21.9367, lon: 120.8467 },
+      { name: "佳乐水", tier: 2, lat: 21.9867, lon: 120.8467 },
+      { name: "满州", tier: 2, lat: 22.0233, lon: 120.8383 },
+      { name: "牡丹", tier: 2, lat: 22.1267, lon: 120.7717 },
+      { name: "寿卡", tier: 2, lat: 22.2478, lon: 120.8647 },
+      { name: "达仁", tier: 2, lat: 22.2967, lon: 120.8867 },
+      { name: "大武", tier: 2, lat: 22.3397, lon: 120.8986 },
+      { name: "金仑", tier: 2, lat: 22.5333, lon: 120.9667 },
+      { name: "太麻里", tier: 2, lat: 22.6156, lon: 121.0069 },
+      { name: "知本", tier: 2, lat: 22.7000, lon: 121.0667 },
+      { name: "鹿野", tier: 2, lat: 22.9128, lon: 121.1350 },
+      { name: "关山", tier: 2, lat: 23.0456, lon: 121.1628 },
+      { name: "池上", tier: 2, lat: 23.1239, lon: 121.2178 },
+      { name: "富里", tier: 2, lat: 23.1783, lon: 121.2500 },
+      { name: "玉里", tier: 2, lat: 23.3364, lon: 121.3125 },
+      { name: "瑞穗", tier: 2, lat: 23.4975, lon: 121.3769 },
+      { name: "光复", tier: 2, lat: 23.6689, lon: 121.4217 },
+      { name: "凤林", tier: 2, lat: 23.7439, lon: 121.4514 },
+      { name: "寿丰", tier: 2, lat: 23.8703, lon: 121.5097 },
+      { name: "吉安", tier: 2, lat: 23.9583, lon: 121.5667 },
+      { name: "新城", tier: 2, lat: 24.1281, lon: 121.6508 },
+      { name: "和平", tier: 2, lat: 24.3097, lon: 121.7500 },
+      { name: "南澳", tier: 2, lat: 24.4633, lon: 121.8000 },
+      { name: "东澳", tier: 2, lat: 24.5167, lon: 121.8333 },
+      { name: "苏澳", tier: 2, lat: 24.5956, lon: 121.8519 },
+      { name: "冬山", tier: 2, lat: 24.6333, lon: 121.7917 },
+      { name: "罗东", tier: 2, lat: 24.6769, lon: 121.7689 },
+      { name: "礁溪", tier: 2, lat: 24.8272, lon: 121.7719 },
+      { name: "头城", tier: 2, lat: 24.8592, lon: 121.8233 },
+      { name: "福隆", tier: 2, lat: 25.0164, lon: 121.9442 },
+      { name: "三貂角", tier: 2, lat: 25.0083, lon: 122.0000 },
+      { name: "鼻头角", tier: 2, lat: 25.1267, lon: 121.9167 },
+      { name: "瑞芳", tier: 2, lat: 25.1089, lon: 121.8083 },
+      { name: "九份", tier: 2, lat: 25.1097, lon: 121.8447 },
+      { name: "野柳", tier: 2, lat: 25.2064, lon: 121.6908 },
+      { name: "金山", tier: 2, lat: 25.2217, lon: 121.6375 },
+      { name: "石门", tier: 2, lat: 25.2917, lon: 121.5683 },
+      { name: "淡水", tier: 2, lat: 25.1725, lon: 121.4439 },
+      { name: "八里", tier: 2, lat: 25.1469, lon: 121.3986 },
+      { name: "日月潭", tier: 2, lat: 23.8644, lon: 120.9167 },
+      { name: "武岭", tier: 2, lat: 24.1372, lon: 121.2758 },
+      { name: "阿里山", tier: 2, lat: 23.5100, lon: 120.8033 },
+      { name: "埔里", tier: 2, lat: 23.9667, lon: 120.9667 },
+
+      // === FAMOUS CYCLING ROUTES (青海湖 / 318川藏 / 海南岛 / 千岛湖 / 洱海) ===
+      { name: "西海镇", tier: 1, lat: 36.9583, lon: 100.9000 },
+      { name: "刚察", tier: 2, lat: 37.3308, lon: 100.1467 },
+      { name: "黑马河", tier: 2, lat: 36.7264, lon: 99.7850 },
+      { name: "茶卡", tier: 2, lat: 36.7867, lon: 99.0833 },
+      { name: "二郎剑", tier: 2, lat: 36.5786, lon: 100.5050 },
+      { name: "倒淌河", tier: 2, lat: 36.5911, lon: 101.0772 },
+      { name: "成都", tier: 1, lat: 30.5728, lon: 104.0668 },
+      { name: "雅安", tier: 1, lat: 29.9800, lon: 103.0000 },
+      { name: "康定", tier: 1, lat: 30.0500, lon: 101.9667 },
+      { name: "新都桥", tier: 2, lat: 30.0600, lon: 101.5300 },
+      { name: "理塘", tier: 2, lat: 29.9967, lon: 100.2700 },
+      { name: "巴塘", tier: 2, lat: 30.0033, lon: 99.1067 },
+      { name: "波密", tier: 2, lat: 29.8597, lon: 95.7711 },
+      { name: "林芝", tier: 1, lat: 29.6542, lon: 94.3619 },
+      { name: "拉萨", tier: 1, lat: 29.6525, lon: 91.1721 },
+      { name: "海口", tier: 1, lat: 20.0440, lon: 110.1999 },
+      { name: "文昌", tier: 2, lat: 19.6100, lon: 110.7500 },
+      { name: "琼海", tier: 2, lat: 19.2600, lon: 110.4700 },
+      { name: "万宁", tier: 2, lat: 18.7967, lon: 110.3889 },
+      { name: "陵水", tier: 2, lat: 18.5056, lon: 110.0389 },
+      { name: "三亚", tier: 1, lat: 18.2528, lon: 109.5120 },
+      { name: "东方", tier: 2, lat: 19.1000, lon: 108.6500 },
+      { name: "儋州", tier: 2, lat: 19.5200, lon: 109.5800 },
+      { name: "千岛湖", tier: 1, lat: 29.6083, lon: 119.0417 },
+      { name: "淳安", tier: 2, lat: 29.6000, lon: 119.0300 },
+      { name: "大理", tier: 1, lat: 25.6065, lon: 100.2676 },
+      { name: "双廊", tier: 2, lat: 25.9100, lon: 100.1900 },
+      { name: "喜洲", tier: 2, lat: 25.8500, lon: 100.1300 },
+      { name: "北京", tier: 1, lat: 39.9042, lon: 116.4074 },
+      { name: "上海", tier: 1, lat: 31.2304, lon: 121.4737 },
+      { name: "杭州", tier: 1, lat: 30.2741, lon: 120.1551 },
+      { name: "深圳", tier: 1, lat: 22.5431, lon: 114.0579 },
+      { name: "广州", tier: 1, lat: 23.1291, lon: 113.2644 }
+    ];
+
+    function computeRouteLandmarks() {
+      cachedRouteLandmarks = [];
+      if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
+      const { pts, zoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon, totalDist } = gpxData;
+
+      const latSpan = maxLat - minLat;
+      const lonSpan = maxLon - minLon;
+      const latPad = Math.max(0.12, latSpan * 0.20);
+      const lonPad = Math.max(0.12, lonSpan * 0.20);
+
+      // Proximity threshold from route: up to 24km for long tours, scaled for shorter trips
+      const maxProximityKm = Math.min(24.0, Math.max(8.0, totalDist * 0.08));
+
+      GEOGRAPHIC_LANDMARKS.forEach(lm => {
+        // 1. Broad Bounding Box Check
+        if (lm.lat < minLat - latPad || lm.lat > maxLat + latPad ||
+            lm.lon < minLon - lonPad || lm.lon > maxLon + lonPad) {
+          return;
+        }
+
+        // 2. Efficient closest point search
+        let minDist = Infinity;
+        let closestIdx = 0;
+        const step = pts.length > 4000 ? Math.floor(pts.length / 2000) : 1;
+        for (let i = 0; i < pts.length; i += step) {
+          const d = haversine(lm.lat, lm.lon, pts[i].lat, pts[i].lon);
+          if (d < minDist) {
+            minDist = d;
+            closestIdx = i;
+          }
+        }
+        if (step > 1) {
+          const sStart = Math.max(0, closestIdx - step);
+          const sEnd = Math.min(pts.length - 1, closestIdx + step);
+          for (let i = sStart; i <= sEnd; i++) {
+            const d = haversine(lm.lat, lm.lon, pts[i].lat, pts[i].lon);
+            if (d < minDist) {
+              minDist = d;
+              closestIdx = i;
+            }
+          }
+        }
+
+        const allowedDist = lm.tier === 1 ? maxProximityKm : Math.min(16.0, maxProximityKm);
+        if (minDist <= allowedDist) {
+          const sx = W_HALF / 2 + (lon2pix(lm.lon, zoom) - cxWorld);
+          const sy = CH / 2 + (lat2pix(lm.lat, zoom) - cyWorld);
+          cachedRouteLandmarks.push({
+            name: lm.name,
+            tier: lm.tier,
+            lat: lm.lat,
+            lon: lm.lon,
+            minDistKm: minDist,
+            closestIdx: closestIdx,
+            closestProgress: closestIdx / (pts.length - 1),
+            screenX: sx,
+            screenY: sy
+          });
+        }
+      });
+
+      // Sort landmarks in sequential traversal order along the ride
+      cachedRouteLandmarks.sort((a, b) => a.closestIdx - b.closestIdx);
+    }
+
+    function drawCityLandmarks(ctx, progress, currIdx, t) {
+      if (currentLandmarkMode === 'none') return;
+      if (!cachedRouteLandmarks || !cachedRouteLandmarks.length) return;
+      if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
+
+      const pts = gpxData.pts;
+      const passWindow = Math.max(16, Math.floor(pts.length * 0.012));
+
+      // Filter visible landmarks by mode and canvas bounds
+      const visible = cachedRouteLandmarks.filter(lm => {
+        if (currentLandmarkMode === 'tier1' && lm.tier !== 1) return false;
+        if (lm.screenX < 15 || lm.screenX > W_HALF - 15 || lm.screenY < 15 || lm.screenY > CH - 15) return false;
+        return true;
+      });
+      if (!visible.length) return;
+
+      // Determine real-time active status
+      visible.forEach(lm => {
+        const diff = Math.abs(currIdx - lm.closestIdx);
+        lm.isActive = diff <= passWindow;
+        lm.isPassed = currIdx > (lm.closestIdx + passWindow);
+        lm.activeIntensity = lm.isActive ? (1.0 - diff / passWindow) : 0;
+      });
+
+      // Collision Avoidance Setup: Priority = isActive > Tier 1 > Tier 2
+      const sorted = [...visible].sort((a, b) => {
+        if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+        if (a.tier !== b.tier) return a.tier - b.tier;
+        return a.minDistKm - b.minDistKm;
+      });
+
+      // Reserved zones: HUD Telemetry Card & Trophy Plaque
+      const occupied = [
+        { x: 38, y: 46, w: 340, h: 300 }
+      ];
+      if (progress >= 0.93) {
+        occupied.push({ x: 38, y: CH - 155, w: 540, h: 110 });
+      }
+
+      const drawList = [];
+      for (const lm of sorted) {
+        const isTier1 = lm.tier === 1;
+        const fontSz = lm.isActive ? 13 : (isTier1 ? 12.5 : 11);
+        ctx.font = `bold ${fontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+        const labelText = lm.isActive ? `📍 途经 · ${lm.name}` : lm.name;
+        const tw = ctx.measureText(labelText).width;
+        const padX = lm.isActive ? 8 : (isTier1 ? 6 : 5);
+        const boxW = Math.round(tw + padX * 2);
+        const boxH = Math.round(fontSz + 9);
+
+        const candRight = { x: Math.round(lm.screenX + 10), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'R' };
+        const candLeft  = { x: Math.round(lm.screenX - 10 - boxW), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'L' };
+        const candTop   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY - 14 - boxH), w: boxW, h: boxH, pos: 'T' };
+        const candBot   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY + 14), w: boxW, h: boxH, pos: 'B' };
+
+        const candidates = [candRight, candLeft, candTop, candBot];
+
+        function collides(b) {
+          if (b.x < 10 || b.x + b.w > W_HALF - 10 || b.y < 10 || b.y + b.h > CH - 10) return true;
+          for (const occ of occupied) {
+            if (!(b.x + b.w < occ.x || b.x > occ.x + occ.w || b.y + b.h < occ.y || b.y > occ.y + occ.h)) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        let chosen = null;
+        for (const cand of candidates) {
+          if (!collides(cand)) {
+            chosen = cand;
+            break;
+          }
+        }
+
+        if (!chosen) {
+          if (lm.isActive) {
+            chosen = candTop.y >= 10 ? candTop : candRight;
+          } else if (isTier1) {
+            chosen = (candRight.x + candRight.w <= W_HALF - 10) ? candRight : candLeft;
+          }
+        }
+
+        if (chosen) {
+          occupied.push({ x: chosen.x - 3, y: chosen.y - 3, w: chosen.w + 6, h: chosen.h + 6 });
+        }
+
+        drawList.push({
+          lm,
+          labelText,
+          fontSz,
+          box: chosen
+        });
+      }
+
+      // 1. Draw Pins & Dynamic Pulse
+      for (const item of drawList) {
+        const { lm } = item;
+        const isTier1 = lm.tier === 1;
+
+        if (lm.isActive) {
+          const pulse = Math.sin(t * 8.0);
+          const r1 = Math.max(3, 10 + 6 * pulse);
+          const r2 = Math.max(5, 18 + 10 * pulse);
+
+          ctx.beginPath();
+          ctx.arc(lm.screenX, lm.screenY, r2, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(6, 182, 212, ${0.40 * lm.activeIntensity})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(lm.screenX, lm.screenY, r1, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(56, 189, 248, ${0.80 * lm.activeIntensity})`;
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(lm.screenX, lm.screenY, 6, 0, Math.PI * 2);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        } else if (lm.isPassed) {
+          ctx.beginPath();
+          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 5 : 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = isTier1 ? '#10b981' : '#34d399';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = isTier1 ? 2 : 1.5;
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 4.5 : 3, 0, Math.PI * 2);
+          ctx.fillStyle = isTier1 ? 'rgba(255, 255, 255, 0.95)' : 'rgba(203, 213, 225, 0.75)';
+          ctx.fill();
+          ctx.strokeStyle = isTier1 ? 'rgba(30, 41, 59, 0.9)' : 'rgba(15, 23, 42, 0.8)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      }
+
+      // 2. Draw Pill Labels
+      for (const item of drawList) {
+        if (!item.box) continue;
+        const { lm, labelText, fontSz, box } = item;
+        const isTier1 = lm.tier === 1;
+
+        ctx.save();
+        ctx.font = `bold ${fontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+
+        if (lm.isActive) {
+          ctx.shadowColor = 'rgba(6, 182, 212, 0.85)';
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 2;
+          roundRect(ctx, box.x, box.y, box.w, box.h, 6, true, true);
+
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#38bdf8';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2);
+        } else if (isTier1) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+          ctx.strokeStyle = lm.isPassed ? 'rgba(16, 185, 129, 0.65)' : 'rgba(148, 163, 184, 0.65)';
+          ctx.lineWidth = 1.2;
+          roundRect(ctx, box.x, box.y, box.w, box.h, 5, true, true);
+
+          ctx.fillStyle = lm.isPassed ? '#a7f3d0' : '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2);
+        } else {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+          ctx.strokeStyle = lm.isPassed ? 'rgba(52, 211, 153, 0.45)' : 'rgba(71, 85, 105, 0.45)';
+          ctx.lineWidth = 1.0;
+          roundRect(ctx, box.x, box.y, box.w, box.h, 4, true, true);
+
+          ctx.fillStyle = lm.isPassed ? '#cbd5e1' : '#94a3b8';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2);
+        }
+        ctx.restore();
+      }
+    }
+
     function parseGpxText(xmlStr) {
       const parser = new DOMParser();
       const xml = parser.parseFromString(xmlStr, "application/xml");
@@ -825,6 +1238,7 @@
       });
 
       gpxData = { pts, totalDist, climb, maxEle, zoom: bestZoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon };
+      computeRouteLandmarks();
 
       // Update UI
       document.getElementById('statDist').innerText = `${totalDist.toFixed(1)} km`;
@@ -1810,6 +2224,30 @@
       });
     });
 
+    document.querySelectorAll('.landmark-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-mode');
+        if (mode === currentLandmarkMode) return;
+        currentLandmarkMode = mode;
+
+        document.querySelectorAll('.landmark-mode-btn').forEach(b => {
+          b.classList.remove('active', 'border-emerald-500/60', 'bg-emerald-500/10', 'text-emerald-300', 'shadow-sm');
+          b.classList.add('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+        });
+        btn.classList.add('active', 'border-emerald-500/60', 'bg-emerald-500/10', 'text-emerald-300', 'shadow-sm');
+        btn.classList.remove('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+
+        const labelEl = document.getElementById('currentLandmarkModeLabel');
+        if (labelEl) {
+          if (mode === 'all') labelEl.innerText = '核心城市 + 特色城镇 (推荐)';
+          else if (mode === 'tier1') labelEl.innerText = '仅一级核心城市';
+          else labelEl.innerText = '已关闭沿途地标';
+        }
+
+        renderFrameAt(previewTime);
+      });
+    });
+
     // 4. Live Monitor Frame Renderer (Full 1920x1080 master compositor)
     function renderFrameAt(t) {
       ctx.clearRect(0, 0, CW, CH);
@@ -1901,7 +2339,10 @@
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        // 4. HUD Telemetry Card (Top Left)
+        // 4. City and Town Landmarks (with Dynamic Passing Activation & Collision Avoidance)
+        drawCityLandmarks(ctx, progress, currIdx, t);
+
+        // 5. HUD Telemetry Card (Top Left)
         ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 2;
