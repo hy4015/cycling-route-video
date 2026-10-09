@@ -685,6 +685,7 @@
 
     // Preview Playback State
     let isPreviewPlaying = false;
+    let isExportRecording = false;
     let previewTime = 0.0;
     const OUTRO_DURATION = 3.0; // 3 seconds outro tail after last media asset
     let totalDuration = 33.0;
@@ -1936,32 +1937,37 @@
             : 0;
           const clipDur = item.duration || 5.0;
 
-          // Video Playback & Audio Synchronization (Non-blocking State Machine)
+          // Video Playback & Audio Synchronization (3-Phase Non-blocking State Machine)
+          const isLive = (isPreviewPlaying || isExportRecording);
           if (item.isVideo && item.videoEl) {
             if (isSingleClipPlaying && activePreviewIndex === k) {
               // Auditioning single clip: handled by playSingleClip loop
               if (item.audioEnabled !== false) activeVideoSoundPlaying = true;
-            } else if (isPreviewPlaying) {
+            } else if (isLive) {
               const elapsed = t - tCenter;
               const clipDur = item.duration || 5.0;
 
               if (elapsed < 0) {
-                // 1. Before reaching center: set idle state ONCE
-                if (item._playState !== 'idle') {
-                  item._playState = 'idle';
-                  if (!item.videoEl.paused) item.videoEl.pause();
-                  if (Math.abs(item.videoEl.currentTime) > 0.05) {
-                    try { item.videoEl.currentTime = 0; } catch (e) {}
-                  }
+                // Phase 1 (未到中间): 保持静音动态循环播放
+                if (item._playState !== 'pre_center') {
+                  item._playState = 'pre_center';
+                  item.videoEl.loop = true;
                   item.videoEl.muted = true;
                   if (item.gainNode) item.gainNode.gain.value = 0;
+                  item.videoEl.volume = 0;
+                  if (item.videoEl.paused) {
+                    item.videoEl.play().catch(e => console.warn('Pre-center play:', e));
+                  }
                 }
               } else if (elapsed <= clipDur) {
-                // 2. Active playing window: trigger play ONCE when entering center
-                if (item._playState !== 'playing') {
-                  item._playState = 'playing';
-                  try { item.videoEl.currentTime = Math.max(0, elapsed); } catch (e) {}
-                  item.videoEl.play().catch(e => console.warn('Preview video play fallback:', e));
+                // Phase 2 (滑动到正中间): 从第1帧开始播放，同时原声同步释放（只播放一遍）
+                if (item._playState !== 'center_play') {
+                  item._playState = 'center_play';
+                  // Snap to Frame 1 (currentTime = 0) upon reaching center
+                  const targetT = (elapsed < 0.25) ? 0 : Math.min(clipDur, elapsed);
+                  try { item.videoEl.currentTime = targetT; } catch (e) {}
+                  item.videoEl.loop = false; // 只播放一遍
+
                   if (item.audioEnabled !== false) {
                     item.videoEl.muted = false;
                     const effGain = item.normalizedGain || 1.0;
@@ -1976,31 +1982,51 @@
                     if (item.gainNode) item.gainNode.gain.value = 0;
                     item.videoEl.volume = 0;
                   }
+
+                  if (item.videoEl.paused) {
+                    item.videoEl.play().catch(e => console.warn('Center play:', e));
+                  }
                 }
+
                 if (item.audioEnabled !== false) {
                   activeVideoSoundPlaying = true;
                 }
-              } else {
-                // 3. Past clip duration: finish ONCE
-                if (item._playState !== 'finished') {
-                  item._playState = 'finished';
-                  if (!item.videoEl.paused) item.videoEl.pause();
+
+                // If video ended naturally during Phase 2 (playthrough completed):
+                if (item.videoEl.ended) {
+                  item._playState = 'post_center';
+                  item.videoEl.loop = true;
                   item.videoEl.muted = true;
                   if (item.gainNode) item.gainNode.gain.value = 0;
                   item.videoEl.volume = 0;
+                  item.videoEl.play().catch(e => {});
                 }
+              } else {
+                // Phase 3 (视频播放完毕后): 继续循环播放画面，但原声静音
+                if (item._playState !== 'post_center') {
+                  item._playState = 'post_center';
+                  item.videoEl.loop = true; // 循环播放
+                  item.videoEl.muted = true; // 但原声静音
+                  if (item.gainNode) item.gainNode.gain.value = 0;
+                  item.videoEl.volume = 0;
+                  if (item.videoEl.paused) {
+                    item.videoEl.play().catch(e => console.warn('Post-center loop:', e));
+                  }
+                }
+                // activeVideoSoundPlaying is false, allowing BGM ducking to restore
               }
             } else {
-              // Not preview playing (paused / scrubber seeking / export)
+              // Not live (paused or scrubber seeking while paused)
               if (item._playState !== 'paused') {
                 item._playState = 'paused';
                 if (!item.videoEl.paused) item.videoEl.pause();
                 item.videoEl.muted = true;
                 if (item.gainNode) item.gainNode.gain.value = 0;
+                item.videoEl.volume = 0;
               }
               const elapsed = t - tCenter;
               const clipDur = item.duration || 5.0;
-              const targetTime = elapsed < 0 ? 0 : Math.min(clipDur, elapsed);
+              const targetTime = elapsed < 0 ? 0 : (elapsed <= clipDur ? elapsed : (elapsed % clipDur));
               if (Math.abs(item.videoEl.currentTime - targetTime) > 0.08) {
                 try { item.videoEl.currentTime = targetTime; } catch (e) {}
               }
@@ -2021,7 +2047,7 @@
           if (item.isVideo) {
             let drawn = false;
             const hasDecoded = item.videoEl && item.videoEl.videoWidth > 0 && item.videoEl.readyState >= 2;
-            const isPlayingNow = (isPreviewPlaying || isSingleClipPlaying) && !item.videoEl.paused;
+            const isPlayingNow = (isLive || isSingleClipPlaying) && !item.videoEl.paused;
             const isSeekedPastZero = item.videoEl && item.videoEl.currentTime > 0.08;
 
             // 1. Live video frame when playing or when current frame is decoded past start
@@ -2353,15 +2379,10 @@
         });
       }
 
-      // Initialize all videos paused at start; center-trigger will start each when it reaches screen center
+      // Reset play state for all media items to smoothly trigger pre_center / center_play phases
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
-          item._playState = 'idle';
-          item.videoEl.loop = false;
-          item.videoEl.pause();
-          item.videoEl.muted = true;
-          if (item.gainNode) item.gainNode.gain.value = 0;
-          try { item.videoEl.currentTime = 0; } catch (e) {}
+          item._playState = null;
         }
       });
 
@@ -2539,23 +2560,27 @@
       
       const stream = masterCanvas.captureStream(30);
       let combinedStream = stream;
+      let exportAudioDest = null;
 
       // Audio mixing into stream with Web Audio API (BGM + Normalized Master Video Bus)
       try {
         const audioCtx = getAudioContext();
-        const dest = audioCtx.createMediaStreamDestination();
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+        exportAudioDest = audioCtx.createMediaStreamDestination();
         audioPlayer.currentTime = 0;
         audioPlayer.volume = bgmVolumeRatio;
         if (!audioPlayer._sourceNode) {
           audioPlayer._sourceNode = audioCtx.createMediaElementSource(audioPlayer);
           audioPlayer._sourceNode.connect(audioCtx.destination);
         }
-        audioPlayer._sourceNode.connect(dest);
+        audioPlayer._sourceNode.connect(exportAudioDest);
 
         // Connect Master Video Bus (with loudness compressor!) to export destination
-        loudnessCompressor.connect(dest);
+        loudnessCompressor.connect(exportAudioDest);
 
-        // Ensure all videos have nodes attached and initialized paused
+        // Ensure all videos have nodes attached and state initialized
         mediaItems.forEach(item => {
           if (item.isVideo) {
             attachVideoAudioNodes(item);
@@ -2565,28 +2590,32 @@
               item.videoEl.muted = true;
             }
           }
+          item._playState = null;
         });
         updateUnifiedLoudness();
 
         combinedStream = new MediaStream([
           ...stream.getVideoTracks(),
-          ...dest.stream.getAudioTracks()
+          ...exportAudioDest.stream.getAudioTracks()
         ]);
-        audioPlayer.play().catch(e => console.warn(e));
+        audioPlayer.play().catch(e => console.warn('BGM export play warning:', e));
       } catch (e) {
         console.warn('Web Audio stream mix fallback:', e);
       }
 
       let mimeType = 'video/mp4;codecs=avc1';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp9';
-        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+        mimeType = 'video/mp4';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'video/webm;codecs=vp9';
+          if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+        }
       }
 
       const recordedChunks = [];
       const mediaRecorder = new MediaRecorder(combinedStream, {
         mimeType: mimeType,
-        videoBitsPerSecond: 10000000 // 10 Mbps
+        videoBitsPerSecond: 10000000 // 10 Mbps Full HD
       });
 
       mediaRecorder.ondataavailable = (e) => {
@@ -2595,14 +2624,17 @@
 
       mediaRecorder.start(100);
 
-      // Record frame-by-frame loop
-      const renderFPS = 30;
-      const totalFrames = Math.round(totalDuration * renderFPS);
-      let currFrame = 0;
+      // High-Fidelity Real-Time Export Loop (Frame-accurate, 100% audio-visual sync)
+      isExportRecording = true;
+      const exportStartTime = performance.now();
+      const origTitle = document.title;
+      document.title = '🔴 正在合成视频 (请保持本页面在前台)...';
 
-      const recordInterval = setInterval(() => {
-        currFrame += 2; // Fast simulation step
-        const t = (currFrame / totalFrames) * totalDuration;
+      function exportLoop(now) {
+        if (!isExportRecording) return;
+        const elapsed = (now - exportStartTime) / 1000.0;
+        const t = Math.min(totalDuration, elapsed);
+
         renderFrameAt(t);
 
         // Dynamic Audio Ducking & Outro Volume Fade during export
@@ -2615,36 +2647,66 @@
           const fadeProgress = Math.min(1.0, Math.max(0, (t - outroStart) / OUTRO_DURATION));
           targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
         }
-        audioPlayer.volume = targetBgmVol;
 
-        const pct = Math.min(90, Math.round(35 + (currFrame / totalFrames) * 55));
-        setProgress(pct, '阶段 3/5', `逐帧编码渲染中 (${pct}%)`, `正在渲染第 ${currFrame}/${totalFrames} 帧，时间: ${t.toFixed(1)}s / ${totalDuration.toFixed(1)}s`);
+        const currentVol = audioPlayer.volume;
+        if (Math.abs(currentVol - targetBgmVol) > 0.005) {
+          const nextVol = currentVol + (targetBgmVol - currentVol) * 0.12;
+          audioPlayer.volume = Math.max(0, Math.min(1.0, nextVol));
+        }
 
-        if (currFrame >= totalFrames) {
-          clearInterval(recordInterval);
+        const pct = Math.min(95, Math.round(35 + (t / totalDuration) * 60));
+        const currFrame = Math.round(t * 30);
+        const totalFrames = Math.round(totalDuration * 30);
+        setProgress(pct, '阶段 3/5', `高保真视听同步录制中 (${pct}%)`, `正在编码第 ${currFrame}/${totalFrames} 帧 · 时间: ${t.toFixed(1)}s / ${totalDuration.toFixed(1)}s (请保持本页面在前台)`);
+
+        if (t >= totalDuration) {
+          isExportRecording = false;
 
           // Stage 4: Finalize
-          setProgress(95, '阶段 4/5', '正在封装多媒体音视频流', '合并音频轨道并生成二进制 Blob 文件...');
+          setProgress(98, '阶段 4/5', '正在封装多媒体音视频流', '合并双轨音频并生成高画质母带文件...');
           audioPlayer.pause();
           mediaItems.forEach(item => {
-            if (item.isVideo && item.videoEl) item.videoEl.pause();
+            if (item.isVideo && item.videoEl) {
+              item.videoEl.pause();
+              item.videoEl.muted = true;
+              if (item.gainNode) item.gainNode.gain.value = 0;
+              item.videoEl.volume = 0;
+              item._playState = 'paused';
+            }
           });
 
+          // Disconnect export audio destination cleanly
+          if (exportAudioDest) {
+            try {
+              loudnessCompressor.disconnect(exportAudioDest);
+              if (audioPlayer._sourceNode) audioPlayer._sourceNode.disconnect(exportAudioDest);
+            } catch (err) {}
+          }
+
           setTimeout(() => {
-            mediaRecorder.stop();
-          }, 300);
+            if (mediaRecorder.state !== 'inactive') {
+              mediaRecorder.stop();
+            }
+          }, 350);
+          return;
         }
-      }, 33);
+
+        requestAnimationFrame(exportLoop);
+      }
+
+      requestAnimationFrame(exportLoop);
 
       mediaRecorder.onstop = () => {
+        document.title = origTitle;
         // Stage 5: Complete & Trigger Download
         setProgress(100, '阶段 5/5', '🎉 视频合成完成！已触发自动下载', `成功导出 1920x1080 高清母带文件！`);
 
-        const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const blob = new Blob(recordedChunks, { type: mimeType.split(';')[0] });
         const downloadUrl = URL.createObjectURL(blob);
 
         downloadLink.href = downloadUrl;
-        downloadLink.download = `Cycling_Recap_${Math.round(gpxData.totalDist)}km_${Date.now()}.mp4`;
+        downloadLink.download = `Cycling_Recap_${Math.round(gpxData.totalDist)}km_${Date.now()}.${ext}`;
         downloadBox.classList.remove('hidden');
 
         // Automatic Download Trigger
@@ -2659,6 +2721,8 @@
         genBtn.classList.remove('opacity-70', 'cursor-not-allowed');
         spinner.classList.add('hidden');
         genText.innerText = "⚡ 重新渲染导出 (MP4)";
+
+        renderFrameAt(previewTime);
       };
     });
 
