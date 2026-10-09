@@ -805,7 +805,11 @@
     const MAX_VID_BYTES = 100 * 1024 * 1024; // 100MB
     const MAX_VID_SECONDS = 10.0;
 
-    async function handleUploadedFiles(files) {
+    function createVideoDefaultPlaceholder() {
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="428" height="484" viewBox="0 0 428 484"><rect width="428" height="484" fill="%231e293b"/><text x="214" y="225" font-size="44" text-anchor="middle" fill="%23f43f5e">🎬</text><text x="214" y="275" font-size="14" font-weight="bold" text-anchor="middle" fill="%2394a3b8" font-family="sans-serif">视频解析中</text></svg>';
+    }
+
+    function handleUploadedFiles(files) {
       if (!files || files.length === 0) return;
       let rejected = [];
 
@@ -837,28 +841,32 @@
             rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 100MB)`);
             continue;
           }
-          // Fast, non-blocking video thumbnail and metadata extraction
-          try {
-            const vidData = await extractVideoMetadataAndThumb(f);
-            if (vidData.duration > MAX_VID_SECONDS) {
-              rejected.push(`${f.name} (时长 ${vidData.duration.toFixed(1)}s > 10s)`);
-              continue;
-            }
-            mediaItems.push({
-              id: 'm_' + Math.random().toString(36).substr(2, 9),
-              file: f,
-              name: f.name,
-              size: f.size,
-              isVideo: true,
-              audioEnabled: true,
-              normalizedGain: 1.0,
-              thumbUrl: vidData.thumbUrl,
-              videoEl: vidData.videoEl,
-              duration: vidData.duration
-            });
-          } catch (vErr) {
-            console.warn('Video extract error:', vErr);
-          }
+
+          const url = URL.createObjectURL(f);
+          const video = document.createElement('video');
+          video.preload = 'auto'; // Load frame buffers for instant canvas capture
+          video.muted = true; // Essential for autoplay & decode policies
+          video.playsInline = true;
+          video.loop = true;
+          video.src = url;
+
+          const item = {
+            id: 'm_' + Math.random().toString(36).substr(2, 9),
+            file: f,
+            name: f.name,
+            size: f.size,
+            isVideo: true,
+            audioEnabled: true,
+            normalizedGain: 1.0,
+            thumbUrl: '',
+            thumbImg: null,
+            videoEl: video,
+            duration: 5.0
+          };
+          mediaItems.push(item);
+
+          // Asynchronous parallel video frame capture (never blocks the UI!)
+          extractAndApplyVideoThumb(item);
         }
       }
 
@@ -866,76 +874,136 @@
         alert("部分素材超过规格限制，已自动过滤：\n\n" + rejected.join("\n"));
       }
 
+      // Synchronous instant render: UI appears in < 10ms!
       updateUnifiedLoudness();
       updateDurationBasedOnMedia();
       renderMediaGrid();
       renderFrameAt(previewTime);
     }
 
-    function extractVideoMetadataAndThumb(file) {
-      return new Promise((resolve) => {
-        let isDone = false;
-        const finish = (data) => {
-          if (isDone) return;
-          isDone = true;
-          clearTimeout(timeoutId);
-          resolve(data);
-        };
+    function extractAndApplyVideoThumb(item) {
+      const video = item.videoEl;
+      let captured = false;
 
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        video.muted = true;
-        video.playsInline = true;
-        video.loop = true;
-        const url = URL.createObjectURL(file);
-        video.src = url;
-
-        // Hard safety timeout of 2.0s: guarantees upload queue never hangs even on slow decoders
-        const timeoutId = setTimeout(() => {
-          finish({
-            thumbUrl: '',
-            videoEl: video,
-            duration: video.duration || 5.0
-          });
-        }, 2000);
-
-        video.onloadedmetadata = () => {
-          video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
-        };
-
-        video.onseeked = () => {
+      function doCapture() {
+        if (captured) return;
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
           try {
             const c = document.createElement('canvas');
             c.width = 428;
             c.height = 484;
             const cx = c.getContext('2d');
-            const vw = video.videoWidth || 640;
-            const vh = video.videoHeight || 480;
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
             const scale = Math.max(c.width / vw, c.height / vh);
             const dw = vw * scale;
             const dh = vh * scale;
             cx.drawImage(video, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
             const thumbUrl = c.toDataURL('image/jpeg', 0.85);
-
-            // Restore unmuted audio state for master video playback (calibrated to 80% BGM)
-            video.muted = false;
-            video.volume = VIDEO_TARGET_RATIO;
-            video.currentTime = 0;
-
-            finish({
-              thumbUrl,
-              videoEl: video,
-              duration: video.duration || 5.0
-            });
+            if (thumbUrl && thumbUrl.length > 200) {
+              captured = true;
+              item.thumbUrl = thumbUrl;
+              item.thumbImg = new Image();
+              item.thumbImg.src = thumbUrl;
+              if (video.duration && isFinite(video.duration)) {
+                item.duration = video.duration;
+              }
+              // Restore audio settings for preview playback
+              video.muted = (item.audioEnabled === false);
+              video.volume = Math.min(1.0, VIDEO_TARGET_RATIO * (item.normalizedGain || 1.0));
+              updateCardInGrid(item);
+              renderFrameAt(previewTime);
+            }
           } catch (e) {
-            finish({ thumbUrl: '', videoEl: video, duration: video.duration || 5.0 });
+            console.warn('Video frame capture error:', e);
           }
-        };
+        }
+      }
 
-        video.onerror = () => {
-          finish({ thumbUrl: '', videoEl: video, duration: 0 });
-        };
-      });
+      video.onloadedmetadata = () => {
+        if (video.duration && isFinite(video.duration)) {
+          item.duration = video.duration;
+          // Guard 10s rule
+          if (item.duration > MAX_VID_SECONDS) {
+            const idx = mediaItems.indexOf(item);
+            if (idx !== -1) {
+              mediaItems.splice(idx, 1);
+              updateDurationBasedOnMedia();
+              renderMediaGrid();
+              renderFrameAt(previewTime);
+              alert(`视频素材 "${item.name}" 时长为 ${item.duration.toFixed(1)} 秒，超过规格上限（10 秒），已自动移除以保护浏览器稳定运行。`);
+              return;
+            }
+          }
+          updateCardInGrid(item);
+          updateDurationBasedOnMedia();
+        }
+        // Try capture first frame immediately
+        doCapture();
+        // Seek to 0.3s or 1/3 for a dynamic frame
+        if (video.duration > 0.3) {
+          video.currentTime = Math.min(0.5, video.duration / 3);
+        }
+      };
+
+      video.onloadeddata = () => {
+        doCapture();
+      };
+
+      video.onseeked = () => {
+        doCapture();
+      };
+
+      video.oncanplay = () => {
+        doCapture();
+      };
+
+      if (video.readyState >= 2) {
+        doCapture();
+      }
+
+      // Safety fallback timer: 1.5s
+      setTimeout(() => {
+        if (!captured) {
+          doCapture();
+          if (!captured && !item.thumbUrl) {
+            const c = document.createElement('canvas');
+            c.width = 428;
+            c.height = 484;
+            const cx = c.getContext('2d');
+            cx.fillStyle = '#1e293b';
+            cx.fillRect(0, 0, 428, 484);
+            cx.fillStyle = '#f43f5e';
+            cx.font = 'bold 44px sans-serif';
+            cx.textAlign = 'center';
+            cx.fillText('🎬', 214, 220);
+            cx.fillStyle = '#94a3b8';
+            cx.font = '16px sans-serif';
+            cx.fillText('视频素材', 214, 270);
+            item.thumbUrl = c.toDataURL('image/jpeg', 0.85);
+            item.thumbImg = new Image();
+            item.thumbImg.src = item.thumbUrl;
+            updateCardInGrid(item);
+            renderFrameAt(previewTime);
+          }
+        }
+      }, 1500);
+    }
+
+    function updateCardInGrid(item) {
+      const idx = mediaItems.indexOf(item);
+      if (idx === -1) return;
+      const card = document.querySelector(`.draggable-card[data-index="${idx}"]`);
+      if (card) {
+        const img = card.querySelector('img');
+        if (img && item.thumbUrl) {
+          img.src = item.thumbUrl;
+        }
+        const vtag = card.querySelector('.duration-tag');
+        if (vtag && item.duration) {
+          vtag.innerText = `🎬 ${item.duration.toFixed(0)}s`;
+        }
+      }
     }
 
     function updateDurationBasedOnMedia() {
@@ -971,7 +1039,7 @@
 
         // Image / Video Cover
         const img = document.createElement('img');
-        img.src = item.thumbUrl;
+        img.src = item.thumbUrl || (item.isVideo ? createVideoDefaultPlaceholder() : '');
         img.className = 'w-full h-full object-cover pointer-events-none select-none';
         card.appendChild(img);
 
@@ -988,7 +1056,7 @@
 
           // Duration Badge (left)
           const vtag = document.createElement('span');
-          vtag.className = 'pointer-events-auto bg-black/80 backdrop-blur-sm text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold border border-white/20 shadow flex items-center space-x-0.5';
+          vtag.className = 'duration-tag pointer-events-auto bg-black/80 backdrop-blur-sm text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold border border-white/20 shadow flex items-center space-x-0.5';
           vtag.innerText = `🎬 ${item.duration ? item.duration.toFixed(0) + 's' : '视频'}`;
           btmBar.appendChild(vtag);
 
@@ -1070,14 +1138,29 @@
     }
 
     function deleteMediaItem(idx) {
+      const item = mediaItems[idx];
+      if (item && item.videoEl) {
+        item.videoEl.pause();
+        item.videoEl.src = '';
+        item.videoEl.load();
+      }
       mediaItems.splice(idx, 1);
+      updateUnifiedLoudness();
       updateDurationBasedOnMedia();
       renderMediaGrid();
       renderFrameAt(previewTime);
     }
 
     document.getElementById('clearMediaBtn').addEventListener('click', () => {
+      mediaItems.forEach(item => {
+        if (item.videoEl) {
+          item.videoEl.pause();
+          item.videoEl.src = '';
+          item.videoEl.load();
+        }
+      });
       mediaItems = [];
+      updateUnifiedLoudness();
       updateDurationBasedOnMedia();
       renderMediaGrid();
       renderFrameAt(0);
@@ -1517,18 +1600,41 @@
           roundRect(ctx, rx, wy, rw, rh, 20, false, false);
           ctx.clip();
 
-          if (item.isVideo && item.videoEl) {
-            // Live playing video
-            try {
-              const v = item.videoEl;
-              const vw = v.videoWidth || 640;
-              const vh = v.videoHeight || 480;
-              const s = Math.max(rw / vw, rh / vh);
-              const dw = vw * s;
-              const dh = vh * s;
-              ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
-            } catch (e) {
-              if (item.imgEl && item.imgEl.complete) ctx.drawImage(item.imgEl, rx, wy, rw, rh);
+          if (item.isVideo) {
+            let drawn = false;
+            // 1. Live video frame if decoded and ready
+            if (item.videoEl && item.videoEl.videoWidth > 0 && item.videoEl.readyState >= 2) {
+              try {
+                const v = item.videoEl;
+                const vw = v.videoWidth;
+                const vh = v.videoHeight;
+                const s = Math.max(rw / vw, rh / vh);
+                const dw = vw * s;
+                const dh = vh * s;
+                ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+                drawn = true;
+              } catch (e) {
+                // fall through
+              }
+            }
+            // 2. Fallback to captured thumbnail frame
+            if (!drawn && item.thumbImg && item.thumbImg.complete && item.thumbImg.naturalWidth > 0) {
+              try {
+                const img = item.thumbImg;
+                const iw = img.naturalWidth || rw;
+                const ih = img.naturalHeight || rh;
+                const s = Math.max(rw / iw, rh / ih);
+                const dw = iw * s;
+                const dh = ih * s;
+                ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+                drawn = true;
+              } catch (e) {
+                // fall through
+              }
+            }
+            if (!drawn) {
+              ctx.fillStyle = '#1e293b';
+              ctx.fillRect(rx, wy, rw, rh);
             }
           } else if (item.imgEl && item.imgEl.complete) {
             // Image
