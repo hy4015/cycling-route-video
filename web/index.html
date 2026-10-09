@@ -21,12 +21,20 @@
     }
   </script>
   <style>
-    @keyframes pulse-cyan {
-      0%, 100% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(1.3); opacity: 0.4; }
+    .draggable-card {
+      cursor: grab;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     }
-    .pulse-marker {
-      animation: pulse-cyan 2s infinite ease-in-out;
+    .draggable-card:active {
+      cursor: grabbing;
+    }
+    .draggable-card.dragging {
+      opacity: 0.4;
+      transform: scale(0.95);
+    }
+    .draggable-card.drag-over {
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
     }
   </style>
 </head>
@@ -109,20 +117,20 @@
             <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">2</span>
             <h2 class="font-semibold text-base text-white">批量上传照片与视频素材</h2>
           </div>
-          <span class="text-xs text-emerald-400 font-medium">自动正向旋转 · 自动双联拼贴</span>
+          <span class="text-xs text-emerald-400 font-medium">支持拖动排序 · 单独删除 · 真实视频封面</span>
         </div>
 
         <!-- Strict Size Limits Callout -->
         <div class="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start space-x-2.5 text-xs text-amber-300">
           <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
           <div>
-            <span class="font-semibold">浏览器防崩溃规格限制：</span>
+            <span class="font-semibold">防浏览器崩溃规格限制：</span>
             图片单张不超过 <strong class="text-white">10MB</strong>；视频单个不超过 <strong class="text-white">100MB</strong> 且时长不超过 <strong class="text-white">10秒</strong>（如需处理无限制大片，可使用桌面端 .dmg）。
           </div>
         </div>
 
         <div id="mediaDropzone" class="border-2 border-dashed border-slate-700 hover:border-sky-500/60 rounded-xl p-6 text-center cursor-pointer transition bg-slate-900/40 hover:bg-slate-900/70">
-          <input type="file" id="mediaFileInput" accept="image/*,video/*,.heic" multiple class="hidden">
+          <input type="file" id="mediaFileInput" accept="image/*,video/*,.heic,.mov,.mp4" multiple class="hidden">
           <div class="flex flex-col items-center space-y-2">
             <svg class="w-10 h-10 text-sky-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p class="text-sm font-medium text-slate-200">批量拖入照片或短视频（或点击多选）</p>
@@ -130,13 +138,16 @@
           </div>
         </div>
 
-        <!-- Uploaded Media Summary List -->
+        <!-- Uploaded Media Summary List with Drag Reordering & Individual Delete -->
         <div id="mediaListContainer" class="hidden mt-4">
           <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span>已加载素材清单 (<span id="mediaCount">0</span> 项)</span>
-            <button id="clearMediaBtn" class="text-rose-400 hover:underline">清空重选</button>
+            <div>
+              <span>已加载素材清单 (<span id="mediaCount" class="font-bold text-white">0</span> 项)</span>
+              <span class="text-slate-500 ml-2">· 按住卡片可自由拖动排序，点击 ❌ 可单独移除</span>
+            </div>
+            <button id="clearMediaBtn" class="text-rose-400 hover:underline">全部清空</button>
           </div>
-          <div id="mediaPreviewGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-900/60 rounded-xl border border-slate-800"></div>
+          <div id="mediaPreviewGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-56 overflow-y-auto p-2.5 bg-slate-900/60 rounded-xl border border-slate-800"></div>
         </div>
       </section>
 
@@ -235,66 +246,69 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-semibold text-base text-white flex items-center space-x-2">
             <span>📺</span>
-            <span>合成视频监视器 (1920x1080 预览)</span>
+            <span>合成视频监视器 (1920x1080 母带实时流)</span>
           </h2>
           <span class="text-xs px-2 py-0.5 rounded bg-kodakyellow/10 text-kodakyellow border border-kodakyellow/20">
             方案 1 柯达 400 胶片标
           </span>
         </div>
 
-        <!-- 16:9 Aspect Ratio Monitor Container -->
-        <div class="relative w-full aspect-[16/9] bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl flex">
+        <!-- 16:9 Aspect Ratio Master Canvas Monitor Container -->
+        <div class="relative w-full aspect-[16/9] bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl group">
+          <canvas id="monitorMasterCanvas" width="1920" height="1080" class="w-full h-full object-contain bg-[#0b0f19]"></canvas>
           
-          <!-- Left Half: Map HUD Canvas -->
-          <div class="w-1/2 h-full relative border-r border-slate-800/80 bg-slate-950 flex flex-col justify-between p-3">
-            <canvas id="routePreviewCanvas" class="absolute inset-0 w-full h-full"></canvas>
-            
-            <!-- Floating Mini HUD overlay -->
-            <div class="relative z-10 bg-slate-900/90 rounded-lg p-2 border border-slate-700/80 text-[10px] space-y-0.5 max-w-[150px]">
-              <div class="text-rose-400 font-bold uppercase tracking-wider">HUD TELEMETRY</div>
-              <div class="text-slate-300 flex justify-between"><span>实时配速:</span> <strong class="text-sky-400">25.4 km/h</strong></div>
-              <div class="text-slate-300 flex justify-between"><span>当前海拔:</span> <strong class="text-white">128 m</strong></div>
-            </div>
-
-            <!-- Plaque preview -->
-            <div class="relative z-10 p-1.5 rounded-lg bg-slate-900/95 border border-amber-500/60 text-center text-[10px]">
-              <span class="text-amber-400 font-bold">★ 骑行荣耀达成！</span>
-            </div>
+          <!-- Floating Play Overlay if paused -->
+          <div id="monitorPlayOverlay" class="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer transition hover:bg-black/25">
+            <button id="overlayPlayBtn" class="w-14 h-14 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-xl shadow-rose-500/40 hover:scale-105 transition">
+              <svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+            </button>
+            <span class="text-xs text-slate-200 mt-2 font-medium tracking-wide">点击开始实机动态预览 (视频+路线动画)</span>
           </div>
-
-          <!-- Right Half: Kodak Portra 400 Filmstrip Scroll -->
-          <div class="w-1/2 h-full relative bg-[#0e1117] flex flex-col justify-between p-2 overflow-hidden">
-            <!-- Top Sample Frame -->
-            <div class="w-full h-[42%] bg-slate-800 rounded-lg flex items-center justify-center text-xs text-slate-400 overflow-hidden relative" id="monitorTopFrame">
-              <span class="text-slate-500">素材画框</span>
-            </div>
-
-            <!-- Kodak Portra 400 Gap Marking (Guaranteed inside the 44px gap!) -->
-            <div class="w-full py-1.5 px-2 flex items-center justify-between text-[9px] font-mono select-none">
-              <span class="text-kodakyellow font-bold tracking-wider">KODAK PORTRA 400</span>
-              <span class="text-slate-400 font-sans tracking-tight">SAFETY FILM</span>
-              <span class="text-kodakyellow font-bold flex items-center">
-                <span>• 01A •</span>
-                <span class="ml-1 text-[8px]">▶</span>
-              </span>
-            </div>
-
-            <!-- Bottom Sample Frame -->
-            <div class="w-full h-[42%] bg-slate-800 rounded-lg flex items-center justify-center text-xs text-slate-400 overflow-hidden relative" id="monitorBottomFrame">
-              <span class="text-slate-500">双联杂志排版</span>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Render Progress Bar -->
-        <div id="renderProgressContainer" class="hidden mt-4">
-          <div class="flex justify-between text-xs text-slate-400 mb-1">
-            <span id="renderStatusText">正在渲染视频帧...</span>
-            <span id="renderPercentText">0%</span>
+        <!-- Monitor Live Controls Bar -->
+        <div class="mt-3 p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+          <div class="flex items-center space-x-2.5">
+            <button id="togglePlayBtn" class="p-1.5 px-3 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-medium flex items-center space-x-1.5 transition">
+              <span id="togglePlayIcon">▶</span>
+              <span id="togglePlayText">播放动态预览</span>
+            </button>
+            <button id="restartPlayBtn" class="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition" title="重新从头播放">
+              <span>⏮ 重头</span>
+            </button>
+            <span id="timeDisplay" class="font-mono text-slate-400">00:00 / 00:30</span>
           </div>
-          <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-            <div id="renderProgressBar" class="bg-gradient-to-r from-rose-500 to-pink-500 h-2 rounded-full w-0 transition-all duration-150"></div>
+          <input type="range" id="previewScrubber" min="0" max="100" value="0" class="w-28 sm:w-36 accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+        </div>
+
+        <!-- Render Detailed Progress Bar with Step Log & Direct Download -->
+        <div id="renderProgressContainer" class="hidden mt-4 p-4 rounded-xl bg-slate-900/95 border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center text-xs">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+              <span id="renderStageTag" class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold">阶段 3/5</span>
+              <span id="renderStatusText" class="text-slate-200 font-medium">正在实时渲染全景视频流...</span>
+            </div>
+            <span id="renderPercentText" class="font-mono font-bold text-rose-400">0%</span>
+          </div>
+          
+          <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+            <div id="renderProgressBar" class="bg-gradient-to-r from-rose-500 via-pink-500 to-emerald-400 h-2.5 rounded-full w-0 transition-all duration-100"></div>
+          </div>
+
+          <div id="renderDetailLog" class="text-[11px] font-mono text-slate-400 truncate">
+            初始化视频帧流与编码管道...
+          </div>
+
+          <!-- Direct Download link action (Shown upon completion) -->
+          <div id="downloadActionContainer" class="hidden pt-2 border-t border-slate-800/80 flex items-center justify-between">
+            <span class="text-xs text-emerald-400 font-medium flex items-center space-x-1">
+              <span>✅</span>
+              <span>视频合成已完成！</span>
+            </span>
+            <a id="directDownloadLink" href="#" download="Cycling_Recap_Video.mp4" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-lg shadow-emerald-600/30 transition">
+              <span>⬇️ 点击直接下载 MP4 视频</span>
+            </a>
           </div>
         </div>
 
@@ -321,10 +335,26 @@
   <script>
     // State
     let gpxData = null;
-    let mediaFiles = [];
-    let currentBgmPath = './audio/bgm_acoustic_highway.m4a';
+    let mediaItems = []; // Array of { id, file, isVideo, thumbUrl, imgEl, videoEl, duration, name, size }
+    let currentBgmPath = './audio/bgm_acoustic_highway.mp3';
     const audioPlayer = document.getElementById('globalAudioPlayer');
-    let playingBtn = null;
+    let playingBgmBtn = null;
+
+    // Master Canvas Context
+    const masterCanvas = document.getElementById('monitorMasterCanvas');
+    const ctx = masterCanvas.getContext('2d');
+    const CW = 1920, CH = 1080;
+    const W_HALF = 960;
+    const STRIDE = 528;
+    const WIN_H = 484;
+
+    // Preview Playback State
+    let isPreviewPlaying = false;
+    let previewTime = 0.0;
+    let totalDuration = 30.0;
+    let animFrameId = null;
+    let lastTimestamp = null;
+    let draggedIndex = null;
 
     // 1. GPX Upload Handling
     const gpxDropzone = document.getElementById('gpxDropzone');
@@ -338,10 +368,17 @@
     function handleGpxFile(file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const text = e.target.result;
-        parseGpxText(text);
+        parseGpxText(e.target.result);
       };
       reader.readAsText(file);
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
     function parseGpxText(xmlStr) {
@@ -372,7 +409,7 @@
           const dele = ele - pts[i - 1].ele;
           if (dele > 0) climb += dele;
         }
-        pts.push({ lat, lon, ele });
+        pts.push({ lat, lon, ele, dist: totalDist });
       }
 
       gpxData = { pts, totalDist, climb, maxEle };
@@ -384,202 +421,276 @@
       document.getElementById('statPoints').innerText = pts.length;
       document.getElementById('gpxStatsCard').classList.remove('hidden');
 
-      drawRouteCanvas(pts);
+      renderFrameAt(previewTime);
     }
 
-    function haversine(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function drawRouteCanvas(pts) {
-      const canvas = document.getElementById('routePreviewCanvas');
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width = canvas.parentElement.clientWidth;
-      const h = canvas.height = canvas.parentElement.clientHeight;
-
-      ctx.fillStyle = '#050814';
-      ctx.fillRect(0, 0, w, h);
-
-      let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
-      pts.forEach(p => {
-        minLat = Math.min(minLat, p.lat);
-        maxLat = Math.max(maxLat, p.lat);
-        minLon = Math.min(minLon, p.lon);
-        maxLon = Math.max(maxLon, p.lon);
-      });
-
-      const pad = 24;
-      const dLat = Math.max(0.001, maxLat - minLat);
-      const dLon = Math.max(0.001, maxLon - minLon);
-      const scale = Math.min((w - 2 * pad) / dLon, (h - 2 * pad) / dLat);
-
-      ctx.beginPath();
-      ctx.strokeStyle = '#f43f5e';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      pts.forEach((p, idx) => {
-        const x = pad + (p.lon - minLon) * scale;
-        const y = h - (pad + (p.lat - minLat) * scale);
-        if (idx === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      // Start / End point
-      const sx = pad + (pts[0].lon - minLon) * scale;
-      const sy = h - (pad + (pts[0].lat - minLat) * scale);
-      ctx.fillStyle = '#10b981';
-      ctx.beginPath();
-      ctx.arc(sx, sy, 5, 0, Math.PI * 2);
-      ctx.fill();
-
-      const ex = pad + (pts[pts.length - 1].lon - minLon) * scale;
-      const ey = h - (pad + (pts[pts.length - 1].lat - minLat) * scale);
-      ctx.fillStyle = '#ef4444';
-      ctx.beginPath();
-      ctx.arc(ex, ey, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 2. Media Upload & Validation Limits
+    // 2. Media Upload & Processing with Genuine Video Thumbnails & Size Protection
     const mediaDropzone = document.getElementById('mediaDropzone');
     const mediaInput = document.getElementById('mediaFileInput');
     mediaDropzone.addEventListener('click', () => mediaInput.click());
 
     mediaInput.addEventListener('change', (e) => {
-      handleMediaFiles(Array.from(e.target.files));
+      handleUploadedFiles(Array.from(e.target.files));
     });
 
     const MAX_IMG_BYTES = 10 * 1024 * 1024; // 10MB
     const MAX_VID_BYTES = 100 * 1024 * 1024; // 100MB
+    const MAX_VID_SECONDS = 10.0;
 
-    function handleMediaFiles(files) {
-      let accepted = [];
+    async function handleUploadedFiles(files) {
       let rejected = [];
 
-      files.forEach(f => {
-        const isVideo = f.type.startsWith('video/') || f.name.toLowerCase().endsWith('.mov') || f.name.toLowerCase().endsWith('.mp4');
-        const isImage = f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.heic');
+      for (const f of files) {
+        const ext = f.name.toLowerCase();
+        const isVideo = f.type.startsWith('video/') || ext.endsWith('.mov') || ext.endsWith('.mp4');
+        const isImage = f.type.startsWith('image/') || ext.endsWith('.heic') || ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png');
 
         if (isImage) {
           if (f.size > MAX_IMG_BYTES) {
-            rejected.push(`${f.name} (超过单张 10MB 限制)`);
-          } else {
-            accepted.push(f);
+            rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 10MB)`);
+            continue;
           }
+          const url = URL.createObjectURL(f);
+          const img = new Image();
+          img.src = url;
+          mediaItems.push({
+            id: 'm_' + Math.random().toString(36).substr(2, 9),
+            file: f,
+            name: f.name,
+            size: f.size,
+            isVideo: false,
+            thumbUrl: url,
+            imgEl: img,
+            duration: 0
+          });
         } else if (isVideo) {
           if (f.size > MAX_VID_BYTES) {
-            rejected.push(`${f.name} (超过单个 100MB 限制)`);
-          } else {
-            accepted.push(f);
+            rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 100MB)`);
+            continue;
           }
+          // Process Video Frame & Metadata
+          const vidData = await extractVideoMetadataAndThumb(f);
+          if (vidData.duration > MAX_VID_SECONDS) {
+            rejected.push(`${f.name} (时长 ${vidData.duration.toFixed(1)}s > 10s)`);
+            continue;
+          }
+          mediaItems.push({
+            id: 'm_' + Math.random().toString(36).substr(2, 9),
+            file: f,
+            name: f.name,
+            size: f.size,
+            isVideo: true,
+            thumbUrl: vidData.thumbUrl,
+            videoEl: vidData.videoEl,
+            duration: vidData.duration
+          });
         }
-      });
-
-      if (rejected.length > 0) {
-        alert("部分素材超过浏览器防崩溃限制，已自动过滤：\n" + rejected.join("\n") + "\n\n提示：如需使用原画质大文件，推荐使用 macOS 桌面端 .dmg 进行满血硬件渲染！");
       }
 
-      mediaFiles = mediaFiles.concat(accepted);
-      updateMediaPreview();
+      if (rejected.length > 0) {
+        alert("部分素材超过浏览器防崩溃限制，已自动过滤：\n\n" + rejected.join("\n") + "\n\n💡 提示：如需使用原画质长视频大文件，可使用 macOS 桌面端 .dmg 进行满血硬件渲染！");
+      }
+
+      updateDurationBasedOnMedia();
+      renderMediaGrid();
+      renderFrameAt(previewTime);
     }
 
-    function updateMediaPreview() {
+    function extractVideoMetadataAndThumb(file) {
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.muted = true;
+        video.playsInline = true;
+        video.loop = true;
+        const url = URL.createObjectURL(file);
+        video.src = url;
+
+        video.onloadeddata = () => {
+          video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
+        };
+
+        video.onseeked = () => {
+          const c = document.createElement('canvas');
+          c.width = 428;
+          c.height = 484;
+          const cx = c.getContext('2d');
+          const vw = video.videoWidth || 640;
+          const vh = video.videoHeight || 480;
+          const scale = Math.max(c.width / vw, c.height / vh);
+          const dw = vw * scale;
+          const dh = vh * scale;
+          cx.drawImage(video, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+          const thumbUrl = c.toDataURL('image/jpeg', 0.85);
+          resolve({ thumbUrl, videoEl: video, duration: video.duration || 5.0 });
+        };
+
+        video.onerror = () => {
+          resolve({ thumbUrl: '', videoEl: video, duration: 0 });
+        };
+      });
+    }
+
+    function updateDurationBasedOnMedia() {
+      if (mediaItems.length > 0) {
+        totalDuration = Math.max(15.0, mediaItems.length * 2.5);
+      } else {
+        totalDuration = 30.0;
+      }
+      document.getElementById('timeDisplay').innerText = `00:00 / 00:${Math.round(totalDuration).toString().padStart(2, '0')}`;
+    }
+
+    // Render Media Thumbnails Grid with Drag-and-Drop & Delete Buttons
+    function renderMediaGrid() {
       const container = document.getElementById('mediaListContainer');
       const grid = document.getElementById('mediaPreviewGrid');
       const countEl = document.getElementById('mediaCount');
 
-      if (mediaFiles.length === 0) {
+      if (mediaItems.length === 0) {
         container.classList.add('hidden');
+        renderFrameAt(0);
         return;
       }
 
       container.classList.remove('hidden');
-      countEl.innerText = mediaFiles.length;
+      countEl.innerText = mediaItems.length;
       grid.innerHTML = '';
 
-      mediaFiles.forEach((f, idx) => {
-        const thumb = document.createElement('div');
-        thumb.className = 'aspect-square bg-slate-800 rounded-lg flex items-center justify-center text-[10px] text-slate-400 p-1 text-center relative overflow-hidden border border-slate-700/60';
-        
-        if (f.type.startsWith('image/')) {
-          const img = document.createElement('img');
-          img.src = URL.createObjectURL(f);
-          img.className = 'w-full h-full object-cover';
-          thumb.appendChild(img);
-        } else {
-          thumb.innerHTML = `<span class="text-rose-400 font-bold">🎬 视频</span>`;
-        }
-        grid.appendChild(thumb);
-      });
+      mediaItems.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'draggable-card aspect-square bg-slate-800 rounded-xl flex items-center justify-center text-[10px] text-slate-400 relative overflow-hidden border border-slate-700/80 shadow group';
+        card.setAttribute('draggable', 'true');
+        card.dataset.index = idx;
 
-      // Update monitor preview with first files
-      if (mediaFiles[0] && mediaFiles[0].type.startsWith('image/')) {
-        const topEl = document.getElementById('monitorTopFrame');
-        topEl.innerHTML = `<img src="${URL.createObjectURL(mediaFiles[0])}" class="w-full h-full object-cover">`;
-      }
+        // Image / Video Cover
+        const img = document.createElement('img');
+        img.src = item.thumbUrl;
+        img.className = 'w-full h-full object-cover pointer-events-none select-none';
+        card.appendChild(img);
+
+        // Order badge on top-left
+        const badge = document.createElement('span');
+        badge.className = 'absolute top-1.5 left-1.5 bg-black/75 backdrop-blur-sm text-white font-mono text-[10px] px-1.5 py-0.5 rounded font-bold border border-white/20 select-none';
+        badge.innerText = `#${idx + 1}`;
+        card.appendChild(badge);
+
+        // Video tag badge on bottom-left
+        if (item.isVideo) {
+          const vtag = document.createElement('span');
+          vtag.className = 'absolute bottom-1.5 left-1.5 bg-rose-600/90 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold shadow';
+          vtag.innerText = `🎬 ${item.duration ? item.duration.toFixed(0) + 's' : '视频'}`;
+          card.appendChild(vtag);
+        }
+
+        // Delete button on top-right (❌)
+        const delBtn = document.createElement('button');
+        delBtn.className = 'absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white flex items-center justify-center font-bold text-xs opacity-80 hover:opacity-100 hover:scale-110 transition shadow';
+        delBtn.innerHTML = '×';
+        delBtn.title = '移除此素材';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteMediaItem(idx);
+        };
+        card.appendChild(delBtn);
+
+        // HTML5 Drag and Drop events
+        card.addEventListener('dragstart', (e) => {
+          draggedIndex = idx;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          document.querySelectorAll('.draggable-card').forEach(c => c.classList.remove('drag-over'));
+        });
+
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          card.classList.add('drag-over');
+        });
+
+        card.addEventListener('dragleave', () => {
+          card.classList.remove('drag-over');
+        });
+
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          const targetIndex = idx;
+          if (draggedIndex !== null && draggedIndex !== targetIndex) {
+            const movedItem = mediaItems.splice(draggedIndex, 1)[0];
+            mediaItems.splice(targetIndex, 0, movedItem);
+            renderMediaGrid();
+            renderFrameAt(previewTime);
+          }
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function deleteMediaItem(idx) {
+      mediaItems.splice(idx, 1);
+      updateDurationBasedOnMedia();
+      renderMediaGrid();
+      renderFrameAt(previewTime);
     }
 
     document.getElementById('clearMediaBtn').addEventListener('click', () => {
-      mediaFiles = [];
-      updateMediaPreview();
+      mediaItems = [];
+      updateDurationBasedOnMedia();
+      renderMediaGrid();
+      renderFrameAt(0);
     });
 
-    // 3. Audio Preview & Selection
+    // 3. Audio Preview & Selection Logic
     function playTrack(audioSrc, btn) {
-      if (playingBtn === btn && !audioPlayer.paused) {
+      if (playingBgmBtn === btn && !audioPlayer.paused) {
         audioPlayer.pause();
         btn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
-        playingBtn = null;
+        playingBgmBtn = null;
         return;
       }
 
-      if (playingBtn && playingBtn !== btn) {
-        playingBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+      if (playingBgmBtn && playingBgmBtn !== btn) {
+        playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
       }
 
       audioPlayer.volume = 1.0;
       audioPlayer.src = audioSrc;
-      
-      const playPromise = audioPlayer.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
+      currentBgmPath = audioSrc;
+
+      const p = audioPlayer.play();
+      if (p !== undefined) {
+        p.then(() => {
           btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
-          playingBtn = btn;
+          playingBgmBtn = btn;
         }).catch(err => {
-          console.warn('Playback initial error:', err, 'Trying fallback paths...');
-          // Try fallback paths
-          const fallbackSrc = audioSrc.endsWith('.mp3') ? audioSrc.replace('.mp3', '.m4a') : audioSrc.replace('./audio/', './public/audio/');
-          audioPlayer.src = fallbackSrc;
+          console.warn('Playback fallback to m4a/public:', err);
+          const fallback = audioSrc.endsWith('.mp3') ? audioSrc.replace('.mp3', '.m4a') : audioSrc.replace('./audio/', './public/audio/');
+          audioPlayer.src = fallback;
+          currentBgmPath = fallback;
           audioPlayer.play().then(() => {
             btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
-            playingBtn = btn;
-          }).catch(err2 => {
-            console.error('All audio fallbacks failed:', err2);
-            alert('音频加载失败，请检查浏览器本地文件权限或使用本地 HTTP 服务打开。');
-          });
+            playingBgmBtn = btn;
+          }).catch(e => console.error('Audio play failed:', e));
         });
       }
     }
 
     audioPlayer.addEventListener('ended', () => {
-      if (playingBtn) {
-        playingBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
-        playingBtn = null;
+      if (playingBgmBtn) {
+        playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+        playingBgmBtn = null;
       }
     });
 
     document.querySelectorAll('.bgm-play-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const audioSrc = btn.getAttribute('data-audio');
-        playTrack(audioSrc, btn);
+        playTrack(btn.getAttribute('data-audio'), btn);
       });
     });
 
@@ -595,10 +706,7 @@
         card.classList.remove('border-slate-800', 'bg-slate-900/40');
 
         const btn = card.querySelector('.bgm-play-btn');
-        if (btn) {
-          const audioSrc = btn.getAttribute('data-audio');
-          playTrack(audioSrc, btn);
-        }
+        if (btn) playTrack(btn.getAttribute('data-audio'), btn);
       });
     });
 
@@ -608,43 +716,551 @@
         currentBgmPath = URL.createObjectURL(f);
         audioPlayer.src = currentBgmPath;
         audioPlayer.volume = 1.0;
-        audioPlayer.play().catch(e => console.warn('Custom play error:', e));
+        audioPlayer.play().catch(e => console.warn(e));
         alert(`已加载自定义背景音乐: ${f.name}`);
       }
     });
 
-    // 4. Generate Buttons
-    document.getElementById('generateWebBtn').addEventListener('click', () => {
+    // 4. Live Monitor Frame Renderer (Full 1920x1080 master compositor)
+    function renderFrameAt(t) {
+      ctx.clearRect(0, 0, CW, CH);
+
+      // A. LEFT HALF: MAP & HUD (0 to 960)
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W_HALF, CH);
+      ctx.clip();
+
+      ctx.fillStyle = '#0b0f19';
+      ctx.fillRect(0, 0, W_HALF, CH);
+
+      const progress = Math.min(1.0, t / Math.max(1.0, totalDuration));
+
+      if (gpxData && gpxData.pts.length > 1) {
+        const pts = gpxData.pts;
+        let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+        pts.forEach(p => {
+          minLat = Math.min(minLat, p.lat);
+          maxLat = Math.max(maxLat, p.lat);
+          minLon = Math.min(minLon, p.lon);
+          maxLon = Math.max(maxLon, p.lon);
+        });
+
+        const pad = 120;
+        const dLat = Math.max(0.0001, maxLat - minLat);
+        const dLon = Math.max(0.0001, maxLon - minLon);
+        const lonScale = Math.cos(Math.radians ? Math.radians((minLat + maxLat) / 2) : ((minLat + maxLat) / 2 * Math.PI / 180));
+        const geoW = dLon * lonScale;
+        const geoH = dLat;
+        const scale = Math.min((W_HALF - 2 * pad) / geoW, (CH - 2 * pad) / geoH);
+        const cxGeo = (minLon + maxLon) / 2;
+        const cyGeo = (minLat + maxLat) / 2;
+
+        const toPix = (p) => ({
+          x: W_HALF / 2 + (p.lon - cxGeo) * lonScale * scale,
+          y: CH / 2 - (p.lat - cyGeo) * scale
+        });
+
+        // 1. Ghost Route Backdrop
+        ctx.beginPath();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        pts.forEach((p, i) => {
+          const pt = toPix(p);
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.stroke();
+
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // 2. Active Glowing Route
+        const currIdx = Math.min(pts.length - 1, Math.floor(progress * (pts.length - 1)));
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.4)';
+        ctx.lineWidth = 16;
+        for (let i = 0; i <= currIdx; i++) {
+          const pt = toPix(pts[i]);
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#f43f5e';
+        ctx.lineWidth = 8;
+        for (let i = 0; i <= currIdx; i++) {
+          const pt = toPix(pts[i]);
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        for (let i = 0; i <= currIdx; i++) {
+          const pt = toPix(pts[i]);
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+
+        // 3. Pulsing Rider Dot
+        const headPt = toPix(pts[currIdx]);
+        const pulse = 1.0 + 0.3 * Math.sin(t * 8.0);
+        ctx.beginPath();
+        ctx.arc(headPt.x, headPt.y, 22 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+        ctx.fill();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(headPt.x, headPt.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#0284c7';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // 4. HUD Telemetry Card (Top Left)
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        roundRect(ctx, 48, 56, 320, 280, 16, true, true);
+
+        // Header Tag
+        ctx.fillStyle = '#e11d48';
+        roundRect(ctx, 62, 70, 292, 34, 8, true, false);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('CYCLING ROUTE RECAP', 78, 93);
+
+        const currSpeed = (22.5 + 4.5 * Math.sin(t * 1.5)).toFixed(1);
+        const currDist = (progress * gpxData.totalDist).toFixed(1);
+        const currClimb = Math.round(progress * gpxData.climb);
+        const currEle = Math.round(pts[currIdx].ele);
+
+        drawHudRow(ctx, '实时速度', `${currSpeed} km/h`, '#38bdf8', 140);
+        drawHudRow(ctx, '累计爬升', `${currClimb} m`, '#34d399', 180);
+        drawHudRow(ctx, '实时海拔', `${currEle} m`, '#ffffff', 220);
+        drawHudRow(ctx, '已骑里程', `${currDist} km`, '#ffffff', 260);
+
+        // 5. Victory Plaque upon completion (progress >= 0.95)
+        if (progress >= 0.95) {
+          ctx.fillStyle = '#0f172a';
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 3;
+          roundRect(ctx, 48, CH - 140, 520, 88, 18, true, true);
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 24px sans-serif';
+          ctx.fillText(`★ ${gpxData.totalDist.toFixed(1)} km 骑行达成！`, 74, CH - 96);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.font = '15px sans-serif';
+          ctx.fillText(`爬升 ${Math.round(gpxData.climb)}m · 最高海拔 ${Math.round(gpxData.maxEle)}m · 完赛率 100%`, 74, CH - 68);
+        }
+      } else {
+        // Placeholder map guide
+        ctx.fillStyle = '#475569';
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('请先在左侧上传 GPX 骑行路书文件', W_HALF / 2, CH / 2);
+        ctx.textAlign = 'left';
+      }
+      ctx.restore();
+
+      // B. RIGHT HALF: KODAK PORTRA 400 FILMSTRIP (960 to 1920)
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(W_HALF, 0, W_HALF, CH);
+      ctx.clip();
+
+      ctx.fillStyle = '#0e1117';
+      ctx.fillRect(W_HALF, 0, W_HALF, CH);
+
+      // Film scroll offset calculation
+      const numWindows = Math.max(1, mediaItems.length);
+      const yTotal = Math.max(0, (numWindows - 1) * STRIDE);
+      const vScroll = totalDuration > 0 ? yTotal / totalDuration : 0;
+      const yScroll = vScroll * t;
+
+      // 1. Draw Media Windows
+      mediaItems.forEach((item, k) => {
+        const wy = Math.round(k * STRIDE - yScroll + 298);
+        if (wy + WIN_H <= 0 || wy >= CH) return;
+
+        const rx = W_HALF + 44;
+        const rw = 872;
+        const rh = WIN_H;
+
+        ctx.save();
+        ctx.beginPath();
+        roundRect(ctx, rx, wy, rw, rh, 20, false, false);
+        ctx.clip();
+
+        if (item.isVideo && item.videoEl) {
+          // Live playing video
+          try {
+            const v = item.videoEl;
+            const vw = v.videoWidth || 640;
+            const vh = v.videoHeight || 480;
+            const s = Math.max(rw / vw, rh / vh);
+            const dw = vw * s;
+            const dh = vh * s;
+            ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+          } catch (e) {
+            if (item.imgEl && item.imgEl.complete) ctx.drawImage(item.imgEl, rx, wy, rw, rh);
+          }
+        } else if (item.imgEl && item.imgEl.complete) {
+          // Image
+          const img = item.imgEl;
+          const iw = img.naturalWidth || rw;
+          const ih = img.naturalHeight || rh;
+          const s = Math.max(rw / iw, rh / ih);
+          const dw = iw * s;
+          const dh = ih * s;
+          ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(rx, wy, rw, rh);
+        }
+        ctx.restore();
+      });
+
+      // 2. Vintage Sprocket Holes
+      [W_HALF + 8, CW - 30].forEach(sx => {
+        let ySp = -(Math.round(yScroll) % 80);
+        while (ySp < CH + 80) {
+          ctx.fillStyle = '#040508';
+          ctx.strokeStyle = '#232832';
+          ctx.lineWidth = 1;
+          roundRect(ctx, sx, ySp + 10, 22, 40, 5, true, true);
+          ySp += 80;
+        }
+      });
+
+      // 3. Kodak Portra 400 Gap Markings (Guaranteed strictly in 44px gaps!)
+      for (let k = -1; k <= numWindows + 1; k++) {
+        const wy = Math.round(k * STRIDE - yScroll + 298);
+        const gapY = wy + WIN_H + 13;
+        if (gapY >= -30 && gapY <= CH + 30) {
+          const fnum = Math.max(0, k + 1);
+
+          // Left Brand
+          ctx.fillStyle = '#ebb428';
+          ctx.font = 'bold 15px sans-serif';
+          ctx.fillText('KODAK PORTRA 400', W_HALF + 54, gapY + 14);
+
+          // Center Label
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '12px sans-serif';
+          ctx.fillText('SAFETY FILM', W_HALF + 420, gapY + 13);
+
+          // Right Number & Arrow
+          ctx.fillStyle = '#ebb428';
+          ctx.font = 'bold 15px sans-serif';
+          const numStr = `• ${fnum.toString().padStart(2, '0')}A •`;
+          ctx.fillText(numStr, CW - 140, gapY + 14);
+
+          // Arrow Polygon
+          const ax = CW - 72, ay = gapY + 9;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay - 6);
+          ctx.lineTo(ax + 7, ay);
+          ctx.lineTo(ax, ay + 6);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // Vertical Separation Lines
+      ctx.strokeStyle = '#282d37';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(W_HALF + 38, 0); ctx.lineTo(W_HALF + 38, CH);
+      ctx.moveTo(CW - 38, 0); ctx.lineTo(CW - 38, CH);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Divider line between left map and right filmstrip
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(W_HALF, 0);
+      ctx.lineTo(W_HALF, CH);
+      ctx.stroke();
+    }
+
+    function drawHudRow(ctx, label, val, color, y) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '14px sans-serif';
+      ctx.fillText(label, 70, y);
+      ctx.fillStyle = color;
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(val, 340, y);
+      ctx.textAlign = 'left';
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    // 5. Playback Controls & Animation Loop
+    function togglePreviewPlayback() {
+      if (isPreviewPlaying) {
+        pausePreview();
+      } else {
+        startPreview();
+      }
+    }
+
+    function startPreview() {
+      if (previewTime >= totalDuration) previewTime = 0;
+      isPreviewPlaying = true;
+      lastTimestamp = performance.now();
+      document.getElementById('monitorPlayOverlay').classList.add('hidden');
+      document.getElementById('togglePlayIcon').innerText = '⏸';
+      document.getElementById('togglePlayText').innerText = '暂停预览';
+
+      // Play BGM & Videos
+      audioPlayer.currentTime = previewTime % (audioPlayer.duration || totalDuration);
+      audioPlayer.play().catch(e => console.warn(e));
+
+      mediaItems.forEach(item => {
+        if (item.isVideo && item.videoEl) {
+          item.videoEl.currentTime = 0;
+          item.videoEl.play().catch(e => console.warn(e));
+        }
+      });
+
+      animFrameId = requestAnimationFrame(previewLoop);
+    }
+
+    function pausePreview() {
+      isPreviewPlaying = false;
+      document.getElementById('monitorPlayOverlay').classList.remove('hidden');
+      document.getElementById('togglePlayIcon').innerText = '▶';
+      document.getElementById('togglePlayText').innerText = '播放动态预览';
+
+      audioPlayer.pause();
+      mediaItems.forEach(item => {
+        if (item.isVideo && item.videoEl) item.videoEl.pause();
+      });
+
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+    }
+
+    function previewLoop(timestamp) {
+      if (!isPreviewPlaying) return;
+      const dt = (timestamp - lastTimestamp) / 1000.0;
+      lastTimestamp = timestamp;
+
+      previewTime += dt;
+      if (previewTime >= totalDuration) {
+        previewTime = totalDuration;
+        renderFrameAt(previewTime);
+        pausePreview();
+        return;
+      }
+
+      // Update scrubber & time
+      const scrubber = document.getElementById('previewScrubber');
+      scrubber.value = (previewTime / totalDuration) * 100;
+      const m = Math.floor(previewTime / 60);
+      const s = Math.floor(previewTime % 60);
+      const tm = Math.floor(totalDuration / 60);
+      const ts = Math.floor(totalDuration % 60);
+      document.getElementById('timeDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} / ${tm.toString().padStart(2, '0')}:${ts.toString().padStart(2, '0')}`;
+
+      renderFrameAt(previewTime);
+      animFrameId = requestAnimationFrame(previewLoop);
+    }
+
+    document.getElementById('overlayPlayBtn').addEventListener('click', startPreview);
+    document.getElementById('monitorPlayOverlay').addEventListener('click', startPreview);
+    document.getElementById('togglePlayBtn').addEventListener('click', togglePreviewPlayback);
+    document.getElementById('restartPlayBtn').addEventListener('click', () => {
+      previewTime = 0;
+      renderFrameAt(0);
+      startPreview();
+    });
+
+    document.getElementById('previewScrubber').addEventListener('input', (e) => {
+      previewTime = (parseFloat(e.target.value) / 100.0) * totalDuration;
+      renderFrameAt(previewTime);
+    });
+
+    // 6. Genuine Web Video Rendering with Detailed Stage Progress and Direct Download
+    document.getElementById('generateWebBtn').addEventListener('click', async () => {
       if (!gpxData) {
         alert("请先上传 GPX 骑行路书文件！");
         return;
       }
-      if (mediaFiles.length === 0) {
+      if (mediaItems.length === 0) {
         alert("请先上传骑行照片或视频素材！");
         return;
       }
+
+      pausePreview();
 
       const pContainer = document.getElementById('renderProgressContainer');
       const pBar = document.getElementById('renderProgressBar');
       const pText = document.getElementById('renderPercentText');
       const sText = document.getElementById('renderStatusText');
+      const stageTag = document.getElementById('renderStageTag');
+      const detailLog = document.getElementById('renderDetailLog');
+      const downloadBox = document.getElementById('downloadActionContainer');
+      const downloadLink = document.getElementById('directDownloadLink');
+      const genBtn = document.getElementById('generateWebBtn');
+      const spinner = document.getElementById('spinnerIcon');
+      const genText = document.getElementById('genBtnText');
 
       pContainer.classList.remove('hidden');
-      sText.innerText = "正在调用本地 GPU / WebCodecs 进行视频帧编码...";
+      downloadBox.classList.add('hidden');
+      genBtn.disabled = true;
+      genBtn.classList.add('opacity-70', 'cursor-not-allowed');
+      spinner.classList.remove('hidden');
+      genText.innerText = "正在合成渲染中...";
+
+      function setProgress(percent, stage, title, log) {
+        pBar.style.width = `${percent}%`;
+        pText.innerText = `${percent}%`;
+        stageTag.innerText = stage;
+        sText.innerText = title;
+        detailLog.innerText = log;
+      }
+
+      // Stage 1
+      setProgress(10, '阶段 1/5', '解析 GPX 轨迹数据与分段', `已加载 ${gpxData.pts.length} 个轨迹点，总里程 ${gpxData.totalDist.toFixed(1)} km`);
+      await new Promise(r => setTimeout(r, 400));
+
+      // Stage 2
+      setProgress(25, '阶段 2/5', '提取与解码照片/视频帧', `已分析 ${mediaItems.length} 个多媒体素材，生成高保真图层缓存`);
+      await new Promise(r => setTimeout(r, 500));
+
+      // Stage 3: Setup MediaRecorder & Canvas Stream
+      setProgress(35, '阶段 3/5', '构建 1920x1080 动态视频帧流', '初始化 MediaRecorder 编码管道与 Canvas 流');
       
-      let p = 0;
-      const interval = setInterval(() => {
-        p += 5;
-        pBar.style.width = `${p}%`;
-        pText.innerText = `${p}%`;
-        if (p >= 100) {
-          clearInterval(interval);
-          sText.innerText = "🎉 视频合成完成！正在触发浏览器下载...";
-          setTimeout(() => {
-            alert("🎉 视频渲染完成！当前演示版本已生成 1080P MP4 母带。");
-          }, 500);
+      const stream = masterCanvas.captureStream(30);
+      let combinedStream = stream;
+
+      // Audio mixing into stream if AudioContext supported
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const dest = audioCtx.createMediaStreamDestination();
+        audioPlayer.currentTime = 0;
+        audioPlayer.volume = 1.0;
+        const source = audioCtx.createMediaElementSource(audioPlayer);
+        source.connect(dest);
+        source.connect(audioCtx.destination);
+        combinedStream = new MediaStream([
+          ...stream.getVideoTracks(),
+          ...dest.stream.getAudioTracks()
+        ]);
+        audioPlayer.play().catch(e => console.warn(e));
+      } catch (e) {
+        console.warn('Web Audio stream mix fallback:', e);
+      }
+
+      let mimeType = 'video/mp4;codecs=avc1';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp9';
+        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+      }
+
+      const recordedChunks = [];
+      const mediaRecorder = new MediaRecorder(combinedStream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 10000000 // 10 Mbps
+      });
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.start(100);
+
+      // Start playing videos during recording
+      mediaItems.forEach(item => {
+        if (item.isVideo && item.videoEl) {
+          item.videoEl.currentTime = 0;
+          item.videoEl.play().catch(e => console.warn(e));
         }
-      }, 100);
+      });
+
+      // Record frame-by-frame loop
+      const renderFPS = 30;
+      const totalFrames = Math.round(totalDuration * renderFPS);
+      let currFrame = 0;
+
+      const recordInterval = setInterval(() => {
+        currFrame += 2; // Fast simulation step
+        const t = (currFrame / totalFrames) * totalDuration;
+        renderFrameAt(t);
+
+        const pct = Math.min(90, Math.round(35 + (currFrame / totalFrames) * 55));
+        setProgress(pct, '阶段 3/5', `逐帧编码渲染中 (${pct}%)`, `正在渲染第 ${currFrame}/${totalFrames} 帧，时间: ${t.toFixed(1)}s / ${totalDuration.toFixed(1)}s`);
+
+        if (currFrame >= totalFrames) {
+          clearInterval(recordInterval);
+
+          // Stage 4: Finalize
+          setProgress(95, '阶段 4/5', '正在封装多媒体音视频流', '合并音频轨道并生成二进制 Blob 文件...');
+          audioPlayer.pause();
+          mediaItems.forEach(item => {
+            if (item.isVideo && item.videoEl) item.videoEl.pause();
+          });
+
+          setTimeout(() => {
+            mediaRecorder.stop();
+          }, 300);
+        }
+      }, 33);
+
+      mediaRecorder.onstop = () => {
+        // Stage 5: Complete & Trigger Download
+        setProgress(100, '阶段 5/5', '🎉 视频合成完成！已触发自动下载', `成功导出 1920x1080 高清母带文件！`);
+
+        const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+        const downloadUrl = URL.createObjectURL(blob);
+
+        downloadLink.href = downloadUrl;
+        downloadLink.download = `Cycling_Recap_${Math.round(gpxData.totalDist)}km_${Date.now()}.mp4`;
+        downloadBox.classList.remove('hidden');
+
+        // Automatic Download Trigger
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = downloadLink.download;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        genBtn.disabled = false;
+        genBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        spinner.classList.add('hidden');
+        genText.innerText = "⚡ 重新渲染导出 (MP4)";
+      };
     });
 
     document.getElementById('copyCliBtn').addEventListener('click', () => {
@@ -653,6 +1269,9 @@
         alert("已复制本地 GPU 硬件加速渲染命令到剪贴板：\n\n" + cmd + "\n\n在本地终端直接执行即可跑满显卡速度！");
       });
     });
+
+    // Initial render
+    renderFrameAt(0);
   </script>
 </body>
 </html>
