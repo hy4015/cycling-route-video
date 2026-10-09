@@ -1,0 +1,43 @@
+{
+  "name": "cycling-route-video-desktop",
+  "version": "1.0.0",
+  "description": "Universal Cycling Route Video Generator for macOS",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac dmg"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.hy4015.cyclingroutevideo",
+    "productName": "Cycling Route Video",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.video",
+      "target": [
+        "dmg"
+      ],
+      "hardenedRuntime": false
+    },
+    "dmg": {
+      "title": "Cycling Route Video Installer",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  }
+}

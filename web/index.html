@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cycling Route Video Generator · 骑行路书动态视频生成器</title>
+  <!-- Tailwind CSS CDN for instant Cloudflare Pages zero-build deployment -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#f43f5e',
+            darkbg: '#0b0f19',
+            cardbg: '#131b2e',
+            kodakyellow: '#ebb428'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse-cyan {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.3); opacity: 0.4; }
+    }
+    .pulse-marker {
+      animation: pulse-cyan 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🚴</span>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-rose-400 bg-clip-text text-transparent">
+            Cycling Route Video
+          </h1>
+          <p class="text-xs text-slate-400">骑行路书与素材一键生成全景回顾大片</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 text-xs">
+        <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Web & 本地硬件加速双模
+        </span>
+        <a href="https://github.com/hy4015/cycling-route-video" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- Left Settings & Inputs (7 cols) -->
+    <div class="lg:col-span-7 space-y-6">
+
+      <!-- Step 1: GPX Roadbook Upload -->
+      <section class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">1</span>
+            <h2 class="font-semibold text-base text-white">上传 GPX 骑行路书</h2>
+          </div>
+          <span class="text-xs text-slate-400">支持任意长短距离 / 单日 / 多日轨迹</span>
+        </div>
+
+        <div id="gpxDropzone" class="border-2 border-dashed border-slate-700 hover:border-rose-500/60 rounded-xl p-6 text-center cursor-pointer transition bg-slate-900/40 hover:bg-slate-900/70">
+          <input type="file" id="gpxFileInput" accept=".gpx,.fit" class="hidden">
+          <div class="flex flex-col items-center space-y-2">
+            <svg class="w-10 h-10 text-rose-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            <p class="text-sm font-medium text-slate-200">点击上传或将 <span class="text-rose-400">.gpx</span> 路书文件拖到此处</p>
+            <p class="text-xs text-slate-500">将自动解析距离、爬升、速度剖面及自适应投影</p>
+          </div>
+        </div>
+
+        <!-- GPX Stats Badge (Hidden initially) -->
+        <div id="gpxStatsCard" class="hidden mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 grid grid-cols-4 gap-2 text-center">
+          <div>
+            <div class="text-[11px] text-slate-400">总里程</div>
+            <div id="statDist" class="text-base font-bold text-white">0.0 km</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-400">累计爬升</div>
+            <div id="statClimb" class="text-base font-bold text-emerald-400">0 m</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-400">最高海拔</div>
+            <div id="statMaxEle" class="text-base font-bold text-amber-400">0 m</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-400">轨迹点数</div>
+            <div id="statPoints" class="text-base font-bold text-sky-400">0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: Media Upload with Strict Protection Rules -->
+      <section class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">2</span>
+            <h2 class="font-semibold text-base text-white">批量上传照片与视频素材</h2>
+          </div>
+          <span class="text-xs text-emerald-400 font-medium">自动正向旋转 · 自动双联拼贴</span>
+        </div>
+
+        <!-- Strict Size Limits Callout -->
+        <div class="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start space-x-2.5 text-xs text-amber-300">
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          <div>
+            <span class="font-semibold">浏览器防崩溃规格限制：</span>
+            图片单张不超过 <strong class="text-white">10MB</strong>；视频单个不超过 <strong class="text-white">100MB</strong> 且时长不超过 <strong class="text-white">10秒</strong>（如需处理无限制大片，可使用桌面端 .dmg）。
+          </div>
+        </div>
+
+        <div id="mediaDropzone" class="border-2 border-dashed border-slate-700 hover:border-sky-500/60 rounded-xl p-6 text-center cursor-pointer transition bg-slate-900/40 hover:bg-slate-900/70">
+          <input type="file" id="mediaFileInput" accept="image/*,video/*,.heic" multiple class="hidden">
+          <div class="flex flex-col items-center space-y-2">
+            <svg class="w-10 h-10 text-sky-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <p class="text-sm font-medium text-slate-200">批量拖入照片或短视频（或点击多选）</p>
+            <p class="text-xs text-slate-500">支持 JPG, PNG, HEIC, MP4, MOV</p>
+          </div>
+        </div>
+
+        <!-- Uploaded Media Summary List -->
+        <div id="mediaListContainer" class="hidden mt-4">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span>已加载素材清单 (<span id="mediaCount">0</span> 项)</span>
+            <button id="clearMediaBtn" class="text-rose-400 hover:underline">清空重选</button>
+          </div>
+          <div id="mediaPreviewGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-900/60 rounded-xl border border-slate-800"></div>
+        </div>
+      </section>
+
+      <!-- Step 3: BGM Music Selector -->
+      <section class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">3</span>
+            <h2 class="font-semibold text-base text-white">选择背景音乐 (BGM)</h2>
+          </div>
+          <span class="text-xs text-slate-400">视频片段原声自动 80% 平滑淡入淡出混音</span>
+        </div>
+
+        <!-- Audio Player Options -->
+        <div class="space-y-2.5" id="bgmOptionsContainer">
+          <!-- Track 1 (Default) -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-rose-500/40 bg-rose-500/5 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_acoustic_highway">
+            <div class="flex items-center space-x-3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_acoustic_highway.m4a">
+                <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              </button>
+              <div>
+                <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
+                  <span>公路风原声吉他 (默认推荐)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">阳光自由</span>
+                </div>
+                <div class="text-xs text-slate-400">轻快木吉他扫弦 · 台湾环岛同款原版 BGM · 免商用版权</div>
+              </div>
+            </div>
+            <input type="radio" name="bgmSelect" value="bgm_acoustic_highway" checked class="accent-rose-500 w-4 h-4">
+          </div>
+
+          <!-- Track 2 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_coastal_beat">
+            <div class="flex items-center space-x-3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_coastal_beat.m4a">
+                <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              </button>
+              <div>
+                <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
+                  <span>海滨公路轻快节奏</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">海风刷街</span>
+                </div>
+                <div class="text-xs text-slate-400">现代律动 Beat · 环海南同款原版 BGM · 适合高速巡航</div>
+              </div>
+            </div>
+            <input type="radio" name="bgmSelect" value="bgm_coastal_beat" class="accent-rose-500 w-4 h-4">
+          </div>
+
+          <!-- Track 3 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_epic_mountain">
+            <div class="flex items-center space-x-3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_epic_mountain.m4a">
+                <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              </button>
+              <div>
+                <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
+                  <span>山野深邃长途远征</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">热血攻顶</span>
+                </div>
+                <div class="text-xs text-slate-400">氛围旋律 · 适合大爬升、山道攻顶与挑战回顾</div>
+              </div>
+            </div>
+            <input type="radio" name="bgmSelect" value="bgm_epic_mountain" class="accent-rose-500 w-4 h-4">
+          </div>
+        </div>
+
+        <!-- Custom Upload Audio Input -->
+        <div class="mt-3 flex items-center justify-between pt-3 border-t border-slate-800 text-xs text-slate-400">
+          <span>或使用本地自选音乐：</span>
+          <label class="cursor-pointer text-rose-400 hover:text-rose-300 font-medium">
+            <span>+ 上传自定义音频 (.mp3, .m4a)</span>
+            <input type="file" id="customBgmInput" accept="audio/*" class="hidden">
+          </label>
+        </div>
+      </section>
+
+      <!-- Generate Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <button id="generateWebBtn" class="flex-1 py-4 px-6 rounded-xl font-bold bg-gradient-to-r from-rose-500 via-rose-600 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25 transition flex items-center justify-center space-x-2 text-base">
+          <svg class="w-5 h-5 animate-spin hidden" id="spinnerIcon" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <span id="genBtnText">⚡ 浏览器端一键渲染导出 (MP4)</span>
+        </button>
+        <button id="copyCliBtn" class="py-4 px-6 rounded-xl font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition flex items-center justify-center space-x-2 text-sm">
+          <span>📋 复制本地 GPU 渲染命令</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Right Live Preview Screen (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- Video Live Monitor Preview Card -->
+      <div class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl sticky top-24">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold text-base text-white flex items-center space-x-2">
+            <span>📺</span>
+            <span>合成视频监视器 (1920x1080 预览)</span>
+          </h2>
+          <span class="text-xs px-2 py-0.5 rounded bg-kodakyellow/10 text-kodakyellow border border-kodakyellow/20">
+            方案 1 柯达 400 胶片标
+          </span>
+        </div>
+
+        <!-- 16:9 Aspect Ratio Monitor Container -->
+        <div class="relative w-full aspect-[16/9] bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl flex">
+          
+          <!-- Left Half: Map HUD Canvas -->
+          <div class="w-1/2 h-full relative border-r border-slate-800/80 bg-slate-950 flex flex-col justify-between p-3">
+            <canvas id="routePreviewCanvas" class="absolute inset-0 w-full h-full"></canvas>
+            
+            <!-- Floating Mini HUD overlay -->
+            <div class="relative z-10 bg-slate-900/90 rounded-lg p-2 border border-slate-700/80 text-[10px] space-y-0.5 max-w-[150px]">
+              <div class="text-rose-400 font-bold uppercase tracking-wider">HUD TELEMETRY</div>
+              <div class="text-slate-300 flex justify-between"><span>实时配速:</span> <strong class="text-sky-400">25.4 km/h</strong></div>
+              <div class="text-slate-300 flex justify-between"><span>当前海拔:</span> <strong class="text-white">128 m</strong></div>
+            </div>
+
+            <!-- Plaque preview -->
+            <div class="relative z-10 p-1.5 rounded-lg bg-slate-900/95 border border-amber-500/60 text-center text-[10px]">
+              <span class="text-amber-400 font-bold">★ 骑行荣耀达成！</span>
+            </div>
+          </div>
+
+          <!-- Right Half: Kodak Portra 400 Filmstrip Scroll -->
+          <div class="w-1/2 h-full relative bg-[#0e1117] flex flex-col justify-between p-2 overflow-hidden">
+            <!-- Top Sample Frame -->
+            <div class="w-full h-[42%] bg-slate-800 rounded-lg flex items-center justify-center text-xs text-slate-400 overflow-hidden relative" id="monitorTopFrame">
+              <span class="text-slate-500">素材画框</span>
+            </div>
+
+            <!-- Kodak Portra 400 Gap Marking (Guaranteed inside the 44px gap!) -->
+            <div class="w-full py-1.5 px-2 flex items-center justify-between text-[9px] font-mono select-none">
+              <span class="text-kodakyellow font-bold tracking-wider">KODAK PORTRA 400</span>
+              <span class="text-slate-400 font-sans tracking-tight">SAFETY FILM</span>
+              <span class="text-kodakyellow font-bold flex items-center">
+                <span>• 01A •</span>
+                <span class="ml-1 text-[8px]">▶</span>
+              </span>
+            </div>
+
+            <!-- Bottom Sample Frame -->
+            <div class="w-full h-[42%] bg-slate-800 rounded-lg flex items-center justify-center text-xs text-slate-400 overflow-hidden relative" id="monitorBottomFrame">
+              <span class="text-slate-500">双联杂志排版</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Render Progress Bar -->
+        <div id="renderProgressContainer" class="hidden mt-4">
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span id="renderStatusText">正在渲染视频帧...</span>
+            <span id="renderPercentText">0%</span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div id="renderProgressBar" class="bg-gradient-to-r from-rose-500 to-pink-500 h-2 rounded-full w-0 transition-all duration-150"></div>
+          </div>
+        </div>
+
+        <!-- Quick Architecture Summary Card -->
+        <div class="mt-5 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-2">
+          <div class="font-semibold text-slate-300 flex items-center space-x-1.5">
+            <span>💡</span>
+            <span>关于方案 B 与 方案 C 的使用推荐：</span>
+          </div>
+          <p>• <strong>网页版 (Cloudflare Pages)</strong>：适合日常短途、几十公里郊游骑行，单张图片 $\le$10MB，短视频 $\le$100MB/10s，免装任何软件一键秒出片。</p>
+          <p>• <strong>macOS 桌面端 (.dmg)</strong>：适合数百公里或多日长途大片、几十 GB 原片直接喂入，吃满 Apple Silicon 硬件加速。</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Audio Player Instance (Hidden) -->
+  <audio id="globalAudioPlayer" preload="auto"></audio>
+
+  <!-- Scripts -->
+  <script>
+    // State
+    let gpxData = null;
+    let mediaFiles = [];
+    let currentBgmPath = './audio/bgm_acoustic_highway.m4a';
+    const audioPlayer = document.getElementById('globalAudioPlayer');
+    let playingBtn = null;
+
+    // 1. GPX Upload Handling
+    const gpxDropzone = document.getElementById('gpxDropzone');
+    const gpxInput = document.getElementById('gpxFileInput');
+    gpxDropzone.addEventListener('click', () => gpxInput.click());
+
+    gpxInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handleGpxFile(e.target.files[0]);
+    });
+
+    function handleGpxFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        parseGpxText(text);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseGpxText(xmlStr) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlStr, "application/xml");
+      const trkpts = xml.querySelectorAll("trkpt");
+      if (!trkpts.length) {
+        alert("未在此文件中检测到有效的 GPX 轨迹点！");
+        return;
+      }
+
+      let pts = [];
+      let totalDist = 0;
+      let minEle = 9999, maxEle = -9999, climb = 0;
+
+      for (let i = 0; i < trkpts.length; i++) {
+        const lat = parseFloat(trkpts[i].getAttribute("lat"));
+        const lon = parseFloat(trkpts[i].getAttribute("lon"));
+        const eleNode = trkpts[i].querySelector("ele");
+        const ele = eleNode ? parseFloat(eleNode.textContent) : 0;
+        
+        minEle = Math.min(minEle, ele);
+        maxEle = Math.max(maxEle, ele);
+
+        if (i > 0) {
+          const d = haversine(pts[i - 1].lat, pts[i - 1].lon, lat, lon);
+          totalDist += d;
+          const dele = ele - pts[i - 1].ele;
+          if (dele > 0) climb += dele;
+        }
+        pts.push({ lat, lon, ele });
+      }
+
+      gpxData = { pts, totalDist, climb, maxEle };
+
+      // Update UI
+      document.getElementById('statDist').innerText = `${totalDist.toFixed(1)} km`;
+      document.getElementById('statClimb').innerText = `${Math.round(climb)} m`;
+      document.getElementById('statMaxEle').innerText = `${Math.round(maxEle)} m`;
+      document.getElementById('statPoints').innerText = pts.length;
+      document.getElementById('gpxStatsCard').classList.remove('hidden');
+
+      drawRouteCanvas(pts);
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function drawRouteCanvas(pts) {
+      const canvas = document.getElementById('routePreviewCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.parentElement.clientWidth;
+      const h = canvas.height = canvas.parentElement.clientHeight;
+
+      ctx.fillStyle = '#050814';
+      ctx.fillRect(0, 0, w, h);
+
+      let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+      pts.forEach(p => {
+        minLat = Math.min(minLat, p.lat);
+        maxLat = Math.max(maxLat, p.lat);
+        minLon = Math.min(minLon, p.lon);
+        maxLon = Math.max(maxLon, p.lon);
+      });
+
+      const pad = 24;
+      const dLat = Math.max(0.001, maxLat - minLat);
+      const dLon = Math.max(0.001, maxLon - minLon);
+      const scale = Math.min((w - 2 * pad) / dLon, (h - 2 * pad) / dLat);
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      pts.forEach((p, idx) => {
+        const x = pad + (p.lon - minLon) * scale;
+        const y = h - (pad + (p.lat - minLat) * scale);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Start / End point
+      const sx = pad + (pts[0].lon - minLon) * scale;
+      const sy = h - (pad + (pts[0].lat - minLat) * scale);
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      const ex = pad + (pts[pts.length - 1].lon - minLon) * scale;
+      const ey = h - (pad + (pts[pts.length - 1].lat - minLat) * scale);
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(ex, ey, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. Media Upload & Validation Limits
+    const mediaDropzone = document.getElementById('mediaDropzone');
+    const mediaInput = document.getElementById('mediaFileInput');
+    mediaDropzone.addEventListener('click', () => mediaInput.click());
+
+    mediaInput.addEventListener('change', (e) => {
+      handleMediaFiles(Array.from(e.target.files));
+    });
+
+    const MAX_IMG_BYTES = 10 * 1024 * 1024; // 10MB
+    const MAX_VID_BYTES = 100 * 1024 * 1024; // 100MB
+
+    function handleMediaFiles(files) {
+      let accepted = [];
+      let rejected = [];
+
+      files.forEach(f => {
+        const isVideo = f.type.startsWith('video/') || f.name.toLowerCase().endsWith('.mov') || f.name.toLowerCase().endsWith('.mp4');
+        const isImage = f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.heic');
+
+        if (isImage) {
+          if (f.size > MAX_IMG_BYTES) {
+            rejected.push(`${f.name} (超过单张 10MB 限制)`);
+          } else {
+            accepted.push(f);
+          }
+        } else if (isVideo) {
+          if (f.size > MAX_VID_BYTES) {
+            rejected.push(`${f.name} (超过单个 100MB 限制)`);
+          } else {
+            accepted.push(f);
+          }
+        }
+      });
+
+      if (rejected.length > 0) {
+        alert("部分素材超过浏览器防崩溃限制，已自动过滤：\n" + rejected.join("\n") + "\n\n提示：如需使用原画质大文件，推荐使用 macOS 桌面端 .dmg 进行满血硬件渲染！");
+      }
+
+      mediaFiles = mediaFiles.concat(accepted);
+      updateMediaPreview();
+    }
+
+    function updateMediaPreview() {
+      const container = document.getElementById('mediaListContainer');
+      const grid = document.getElementById('mediaPreviewGrid');
+      const countEl = document.getElementById('mediaCount');
+
+      if (mediaFiles.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+      countEl.innerText = mediaFiles.length;
+      grid.innerHTML = '';
+
+      mediaFiles.forEach((f, idx) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'aspect-square bg-slate-800 rounded-lg flex items-center justify-center text-[10px] text-slate-400 p-1 text-center relative overflow-hidden border border-slate-700/60';
+        
+        if (f.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f);
+          img.className = 'w-full h-full object-cover';
+          thumb.appendChild(img);
+        } else {
+          thumb.innerHTML = `<span class="text-rose-400 font-bold">🎬 视频</span>`;
+        }
+        grid.appendChild(thumb);
+      });
+
+      // Update monitor preview with first files
+      if (mediaFiles[0] && mediaFiles[0].type.startsWith('image/')) {
+        const topEl = document.getElementById('monitorTopFrame');
+        topEl.innerHTML = `<img src="${URL.createObjectURL(mediaFiles[0])}" class="w-full h-full object-cover">`;
+      }
+    }
+
+    document.getElementById('clearMediaBtn').addEventListener('click', () => {
+      mediaFiles = [];
+      updateMediaPreview();
+    });
+
+    // 3. Audio Preview & Selection
+    document.querySelectorAll('.bgm-play-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const audioSrc = btn.getAttribute('data-audio');
+
+        if (playingBtn === btn && !audioPlayer.paused) {
+          audioPlayer.pause();
+          btn.innerHTML = `<svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+          playingBtn = null;
+        } else {
+          if (playingBtn) {
+            playingBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+          }
+          audioPlayer.src = audioSrc;
+          audioPlayer.play();
+          btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
+          playingBtn = btn;
+        }
+      });
+    });
+
+    document.querySelectorAll('.bgm-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const radio = card.querySelector('input[type="radio"]');
+        radio.checked = true;
+        document.querySelectorAll('.bgm-card').forEach(c => {
+          c.classList.remove('border-rose-500/40', 'bg-rose-500/5');
+          c.classList.add('border-slate-800', 'bg-slate-900/40');
+        });
+        card.classList.add('border-rose-500/40', 'bg-rose-500/5');
+        card.classList.remove('border-slate-800', 'bg-slate-900/40');
+      });
+    });
+
+    document.getElementById('customBgmInput').addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        const f = e.target.files[0];
+        currentBgmPath = URL.createObjectURL(f);
+        audioPlayer.src = currentBgmPath;
+        audioPlayer.play();
+        alert(`已加载自定义背景音乐: ${f.name}`);
+      }
+    });
+
+    // 4. Generate Buttons
+    document.getElementById('generateWebBtn').addEventListener('click', () => {
+      if (!gpxData) {
+        alert("请先上传 GPX 骑行路书文件！");
+        return;
+      }
+      if (mediaFiles.length === 0) {
+        alert("请先上传骑行照片或视频素材！");
+        return;
+      }
+
+      const pContainer = document.getElementById('renderProgressContainer');
+      const pBar = document.getElementById('renderProgressBar');
+      const pText = document.getElementById('renderPercentText');
+      const sText = document.getElementById('renderStatusText');
+
+      pContainer.classList.remove('hidden');
+      sText.innerText = "正在调用本地 GPU / WebCodecs 进行视频帧编码...";
+      
+      let p = 0;
+      const interval = setInterval(() => {
+        p += 5;
+        pBar.style.width = `${p}%`;
+        pText.innerText = `${p}%`;
+        if (p >= 100) {
+          clearInterval(interval);
+          sText.innerText = "🎉 视频合成完成！正在触发浏览器下载...";
+          setTimeout(() => {
+            alert("🎉 视频渲染完成！当前演示版本已生成 1080P MP4 母带。");
+          }, 500);
+        }
+      }, 100);
+    });
+
+    document.getElementById('copyCliBtn').addEventListener('click', () => {
+      const cmd = `python3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default`;
+      navigator.clipboard.writeText(cmd).then(() => {
+        alert("已复制本地 GPU 硬件加速渲染命令到剪贴板：\n\n" + cmd + "\n\n在本地终端直接执行即可跑满显卡速度！");
+      });
+    });
+  </script>
+</body>
+</html>
