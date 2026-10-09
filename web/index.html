@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cycling Route Video Generator · 骑行路书动态视频生成器</title>
+  <!-- Enforce viewport strictly stays at top (Step 1) and disable automatic browser scroll restoration -->
+  <script>
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  </script>
   <!-- Tailwind CSS CDN for instant Cloudflare Pages zero-build deployment -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -1890,6 +1897,32 @@
       navigator.clipboard.writeText(cmd).then(() => {
         alert("已复制本地 GPU 渲染命令到剪贴板！\n\n📌 运行说明：\n1. 请先在终端进入项目目录：cd cycling-route-video\n2. 首次使用请安装依赖：pip install -r requirements.txt\n3. 执行命令即可跑满硬件加速！\n\n命令详情：\n" + cmd);
       });
+    });
+
+    // Enforce viewport strictly stays at top (Step 1) on initial load and refresh
+    function enforceScrollToTop() {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur();
+      }
+      if (window.location.hash) {
+        try {
+          history.replaceState(null, null, window.location.pathname + window.location.search);
+        } catch (e) {}
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+
+    enforceScrollToTop();
+    window.addEventListener('DOMContentLoaded', enforceScrollToTop);
+    window.addEventListener('load', () => {
+      enforceScrollToTop();
+      setTimeout(enforceScrollToTop, 50);
+      setTimeout(enforceScrollToTop, 200);
     });
 
     // Initial render
