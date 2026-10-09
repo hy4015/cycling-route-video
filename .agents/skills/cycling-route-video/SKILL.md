@@ -13,18 +13,21 @@ This skill provides an automated, end-to-end pipeline to transform any cycling G
 ## Pipeline Highlights
 
 1. **Left Screen (Map & Telemetry HUD, 960x1080)**:
-   - Dynamic track projection auto-scaled to route bounding box.
+   - **Real Map Basemaps**: Web Mercator tiles for 🛰️ 卫星实景 (Esri Satellite), 🌑 暗黑极简 (Carto Dark), 🏔️ 等高地形 (Esri Topo), 🗺️ 明亮街道 (Carto Light).
+   - **Customizable HUD Title**: Support custom text input (e.g. `环千岛湖骑行`, `台湾环岛·DAY 01`), defaults to `CYCLING ROUTE RECAP`.
+   - Dynamic track projection auto-scaled to route bounding box with 1:1 map registration.
    - Real-time glowing route progression with pulsating cyan rider marker.
    - Live telemetry card (real-time speed, cumulative climb, current elevation, total distance).
    - Golden trophy plaque upon completion (`★ XX.X km 骑行达成！`).
 
-2. **Right Screen (Vintage Kodak Portra 400 Filmstrip, 960x1080)**:
+2. **Right Screen (35mm Classic Filmstrip, 960x1080)**:
    - Authentic sprocket hole borders on margins.
-   - **Kodak 400 Gap Typography**:
-     - `KODAK PORTRA 400` in golden yellow.
-     - `SAFETY FILM` in subtle gray.
-     - `• xxA • ►` frame counter and polygon arrow.
-     - Strictly located inside the 44px gap between media items (100% clean media content).
+   - **4 Classic Film Stock Options**:
+     - **方案 1 柯达 Portra 400**: `KODAK PORTRA 400` / `SAFETY FILM` / 暖黄色调 `#ebb428`
+     - **方案 2 柯达 Gold 200**: `KODAK GOLD 200` / `GB 200` / 浓郁金色 `#f59e0b`
+     - **方案 3 富士 Superia 400**: `FUJIFILM SUPERIA 400` / `COLOR PRINT FILM` / 清透青绿 `#10b981`
+     - **方案 4 依尔福 HP5 Plus**: `ILFORD HP5 PLUS` / `PAN 400` / 经典黑白 `#f1f5f9`
+   - Strictly located inside the 44px gap between media items (100% clean media content).
    - Dual magazine collage for vertical media (428x484 each) & full bleed for horizontal media (872x484).
    - 100% upright EXIF rotation guarantee.
 
@@ -45,12 +48,15 @@ python3 -m engine.pipeline \
   --media "/path/to/photos_and_videos" \
   --output "./cycling_recap.mp4"
 
-# Custom BGM and Duration
+# Custom Title, Map Style, Film Stock & BGM
 python3 -m engine.pipeline \
   --gpx "/path/to/my_route.gpx" \
   --media "/path/to/photos_and_videos" \
   --output "./cycling_recap.mp4" \
-  --bgm coastal \
+  --hud-title "台湾环岛·DAY 01" \
+  --map-style satellite \
+  --film-style portra400 \
+  --bgm default \
   --duration 60.0
 ```
 

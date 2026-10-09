@@ -68,7 +68,7 @@ def create_base_canvas(projected_pts):
     
     return canvas
 
-def render_map_frame(base_img, projected_pts, progress, f_idx, stage_info, gpx_summary, fonts):
+def render_map_frame(base_img, projected_pts, progress, f_idx, stage_info, gpx_summary, fonts, hud_title='CYCLING ROUTE RECAP'):
     """
     Renders left-half map frame with dynamic telemetry HUD, live glowing route, and rider pulse.
     """
@@ -98,10 +98,13 @@ def render_map_frame(base_img, projected_pts, progress, f_idx, stage_info, gpx_s
     hud_w, hud_h = 248, 230
     draw.rounded_rectangle((hud_x, hud_y, hud_x + hud_w, hud_y + hud_h), radius=12, fill=(15, 23, 42, 220), outline=(51, 65, 85), width=1)
     
-    # Top title tag
-    draw.rounded_rectangle((hud_x + 10, hud_y + 10, hud_x + hud_w - 10, hud_y + 36), radius=6, fill=(225, 29, 72))
-    tag_str = 'CYCLING ROUTE RECAP'
-    draw.text((hud_x + 22, hud_y + 16), tag_str, fill=(255, 255, 255), font=f_hud_title)
+    # Top title tag with custom hud_title support
+    tag_str = (hud_title or 'CYCLING ROUTE RECAP').strip()
+    tb = f_hud_title.getbbox(tag_str)
+    tw = tb[2] - tb[0]
+    tag_pill_w = max(120, min(hud_w - 20, tw + 24))
+    draw.rounded_rectangle((hud_x + 10, hud_y + 10, hud_x + 10 + tag_pill_w, hud_y + 36), radius=6, fill=(225, 29, 72))
+    draw.text((hud_x + 10 + (tag_pill_w - tw) // 2, hud_y + 16), tag_str, fill=(255, 255, 255), font=f_hud_title)
     
     # Stage name
     s_name = stage_info.get('name', 'ROAD TRIP')

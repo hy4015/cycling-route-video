@@ -110,11 +110,91 @@
         </div>
       </section>
 
-      <!-- Step 2: Media Upload with Strict Protection Rules -->
+      <!-- Step 2: Visual Style & Route Title Customization -->
+      <section class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">2</span>
+            <h2 class="font-semibold text-base text-white">个性化定制 · 路线标题与视觉风格</h2>
+          </div>
+          <span class="text-xs text-slate-400">实时更新预览效果</span>
+        </div>
+
+        <div class="space-y-4">
+          <!-- 1. Custom Title Input -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+              <span class="flex items-center space-x-1.5">
+                <span>🏷️ 路线左上角抬头文字</span>
+                <span class="text-slate-500 text-[11px]">(默认 CYCLING ROUTE RECAP)</span>
+              </span>
+              <span class="text-[11px] text-rose-400 font-medium">支持中英文自定义输入</span>
+            </label>
+            <div class="relative flex items-center">
+              <input type="text" id="routeTitleInput" value="CYCLING ROUTE RECAP" placeholder="输入路线左上角自定义文字，如：环千岛湖骑行 / 台湾环岛·DAY 01" class="w-full bg-slate-900/90 border border-slate-700 focus:border-rose-500 rounded-xl px-3.5 py-2.5 pr-14 text-sm text-white placeholder-slate-500 focus:outline-none transition">
+              <button type="button" id="resetTitleBtn" class="absolute right-3 text-xs text-slate-400 hover:text-white px-1.5 py-0.5 rounded bg-slate-800 transition" title="恢复默认">重置</button>
+            </div>
+          </div>
+
+          <!-- 2. Map Underlay Style Selector -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-2 flex items-center justify-between">
+              <span>🗺️ 地图底图样式 (真实卫星与高保真地形)</span>
+              <span id="currentMapStyleLabel" class="text-[11px] text-sky-400 font-medium">卫星实景 (Esri Satellite)</span>
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="mapStyleBtnGroup">
+              <button type="button" class="map-style-btn active px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-rose-500/60 bg-rose-500/10 text-rose-300 shadow-sm" data-style="satellite">
+                <span>🛰️</span>
+                <span>卫星实景</span>
+              </button>
+              <button type="button" class="map-style-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-style="dark">
+                <span>🌑</span>
+                <span>暗黑极简</span>
+              </button>
+              <button type="button" class="map-style-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-style="topo">
+                <span>🏔️</span>
+                <span>等高地形</span>
+              </button>
+              <button type="button" class="map-style-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-style="light">
+                <span>🗺️</span>
+                <span>明亮街道</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Film Stock Theme Selector -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-2 flex items-center justify-between">
+              <span>🎞️ 35mm 胶卷风格 (经典胶片标与色调)</span>
+              <span id="currentFilmStyleLabel" class="text-[11px] text-kodakyellow font-medium">方案 1 柯达 Portra 400</span>
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="filmStyleBtnGroup">
+              <button type="button" class="film-style-btn active px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-amber-500/60 bg-amber-500/10 text-amber-300 shadow-sm" data-film="portra400">
+                <span class="w-2 h-2 rounded-full bg-[#ebb428]"></span>
+                <span>柯达 Portra 400</span>
+              </button>
+              <button type="button" class="film-style-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-film="gold200">
+                <span class="w-2 h-2 rounded-full bg-[#f59e0b]"></span>
+                <span>柯达 Gold 200</span>
+              </button>
+              <button type="button" class="film-style-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-film="fuji400">
+                <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+                <span>富士 400</span>
+              </button>
+              <button type="button" class="film-style-btn px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-center space-x-1.5 transition border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:text-white" data-film="ilford400">
+                <span class="w-2 h-2 rounded-full bg-[#f1f5f9]"></span>
+                <span>依尔福 黑白</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: Media Upload with Strict Protection Rules -->
       <section class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center space-x-2.5">
-            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">2</span>
+            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">3</span>
             <h2 class="font-semibold text-base text-white">批量上传照片与视频素材</h2>
           </div>
           <span class="text-xs text-emerald-400 font-medium">支持拖动排序 · 单独删除 · 真实视频封面</span>
@@ -151,11 +231,11 @@
         </div>
       </section>
 
-      <!-- Step 3: BGM Music Selector -->
+      <!-- Step 4: BGM Music Selector -->
       <section class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center space-x-2.5">
-            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">3</span>
+            <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">4</span>
             <h2 class="font-semibold text-base text-white">选择背景音乐 (BGM)</h2>
           </div>
           <span class="text-xs text-slate-400">视频片段原声自动 80% 平滑淡入淡出混音</span>
@@ -246,10 +326,10 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-semibold text-base text-white flex items-center space-x-2">
             <span>📺</span>
-            <span>合成视频监视器 (1920x1080 母带实时流)</span>
+            <span>预览合成效果</span>
           </h2>
-          <span class="text-xs px-2 py-0.5 rounded bg-kodakyellow/10 text-kodakyellow border border-kodakyellow/20">
-            方案 1 柯达 400 胶片标
+          <span id="filmStyleBadge" class="text-xs px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">
+            方案 1 柯达 Portra 400
           </span>
         </div>
 
@@ -262,7 +342,7 @@
             <button id="overlayPlayBtn" class="w-14 h-14 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-xl shadow-rose-500/40 hover:scale-105 transition">
               <svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
             </button>
-            <span class="text-xs text-slate-200 mt-2 font-medium tracking-wide">点击开始实机动态预览 (视频+路线动画)</span>
+            <span class="text-xs text-slate-200 mt-2 font-medium tracking-wide">点击预览</span>
           </div>
         </div>
 
@@ -271,7 +351,7 @@
           <div class="flex items-center space-x-2.5">
             <button id="togglePlayBtn" class="p-1.5 px-3 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-medium flex items-center space-x-1.5 transition">
               <span id="togglePlayIcon">▶</span>
-              <span id="togglePlayText">播放动态预览</span>
+              <span id="togglePlayText">播放预览</span>
             </button>
             <button id="restartPlayBtn" class="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition" title="重新从头播放">
               <span>⏮ 重头</span>
@@ -333,12 +413,75 @@
 
   <!-- Scripts -->
   <script>
-    // State
+    // State & Personalization
     let gpxData = null;
     let mediaItems = []; // Array of { id, file, isVideo, thumbUrl, imgEl, videoEl, duration, name, size }
     let currentBgmPath = './audio/bgm_acoustic_highway.mp3';
     const audioPlayer = document.getElementById('globalAudioPlayer');
     let playingBgmBtn = null;
+
+    // Custom HUD Title & Style Settings
+    let customRouteTitle = 'CYCLING ROUTE RECAP';
+    let currentMapStyle = 'satellite';
+    let currentFilmStyle = 'portra400';
+
+    const MAP_PROVIDERS = {
+      satellite: {
+        name: '卫星实景 (Esri Satellite)',
+        getTileUrl: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,
+        overlayDim: 'rgba(11, 15, 25, 0.28)'
+      },
+      dark: {
+        name: '暗黑极简 (Carto Dark)',
+        getTileUrl: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/dark_all/${z}/${x}/${y}.png`,
+        overlayDim: 'rgba(11, 15, 25, 0.12)'
+      },
+      topo: {
+        name: '等高地形 (Esri Topo)',
+        getTileUrl: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${x}`,
+        overlayDim: 'rgba(11, 15, 25, 0.20)'
+      },
+      light: {
+        name: '明亮街道 (Carto Light)',
+        getTileUrl: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/light_all/${z}/${x}/${y}.png`,
+        overlayDim: 'rgba(11, 15, 25, 0.30)'
+      }
+    };
+
+    const FILM_CONFIGS = {
+      portra400: {
+        name: '方案 1 柯达 Portra 400',
+        brand: 'KODAK PORTRA 400',
+        mid: 'SAFETY FILM',
+        formatNum: (fnum) => `• ${fnum.toString().padStart(2, '0')}A •`,
+        accent: '#ebb428',
+        badgeClass: 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+      },
+      gold200: {
+        name: '方案 2 柯达 Gold 200',
+        brand: 'KODAK GOLD 200',
+        mid: 'GB 200',
+        formatNum: (fnum) => `200-4 • ${fnum.toString().padStart(2, '0')}A`,
+        accent: '#f59e0b',
+        badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+      },
+      fuji400: {
+        name: '方案 3 富士 400 胶片标',
+        brand: 'FUJIFILM SUPERIA 400',
+        mid: 'COLOR PRINT FILM',
+        formatNum: (fnum) => `S-400 • ${fnum.toString().padStart(2, '0')}A`,
+        accent: '#10b981',
+        badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      },
+      ilford400: {
+        name: '方案 4 依尔福 黑白胶卷',
+        brand: 'ILFORD HP5 PLUS',
+        mid: 'PAN 400',
+        formatNum: (fnum) => `HP5 • ${fnum.toString().padStart(2, '0')}A`,
+        accent: '#f1f5f9',
+        badgeClass: 'bg-slate-200/10 text-slate-200 border-slate-200/20'
+      }
+    };
 
     // Master Canvas Context
     const masterCanvas = document.getElementById('monitorMasterCanvas');
@@ -348,6 +491,14 @@
     const STRIDE = 528;
     const WIN_H = 484;
 
+    // Offscreen Canvas for Real Map Basemap Stitching
+    const mapBasemapCanvas = document.createElement('canvas');
+    mapBasemapCanvas.width = W_HALF;
+    mapBasemapCanvas.height = CH;
+    const mapTileCtx = mapBasemapCanvas.getContext('2d');
+    let isMapTilesReady = false;
+    let mapTileLoadToken = 0;
+
     // Preview Playback State
     let isPreviewPlaying = false;
     let previewTime = 0.0;
@@ -355,6 +506,17 @@
     let animFrameId = null;
     let lastTimestamp = null;
     let draggedIndex = null;
+
+    // Web Mercator Coordinate Conversions
+    function lon2pix(lon, z) {
+      return (lon + 180) / 360 * Math.pow(2, z) * 256;
+    }
+
+    function lat2pix(lat, z) {
+      const sin = Math.sin(lat * Math.PI / 180);
+      const safeSin = Math.max(-0.9999, Math.min(0.9999, sin));
+      return (0.5 - Math.log((1 + safeSin) / (1 - safeSin)) / (4 * Math.PI)) * Math.pow(2, z) * 256;
+    }
 
     // 1. GPX Upload Handling
     const gpxDropzone = document.getElementById('gpxDropzone');
@@ -393,6 +555,7 @@
       let pts = [];
       let totalDist = 0;
       let minEle = 9999, maxEle = -9999, climb = 0;
+      let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
 
       for (let i = 0; i < trkpts.length; i++) {
         const lat = parseFloat(trkpts[i].getAttribute("lat"));
@@ -402,6 +565,10 @@
         
         minEle = Math.min(minEle, ele);
         maxEle = Math.max(maxEle, ele);
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+        minLon = Math.min(minLon, lon);
+        maxLon = Math.max(maxLon, lon);
 
         if (i > 0) {
           const d = haversine(pts[i - 1].lat, pts[i - 1].lon, lat, lon);
@@ -412,7 +579,31 @@
         pts.push({ lat, lon, ele, dist: totalDist });
       }
 
-      gpxData = { pts, totalDist, climb, maxEle };
+      // Calculate Optimal Integer Zoom & World Center for Web Mercator Registration
+      const pad = 120;
+      const targetW = W_HALF - 2 * pad; // 720
+      const targetH = CH - 2 * pad;     // 840
+      let bestZoom = 11;
+
+      for (let z = 16; z >= 3; z--) {
+        const w = lon2pix(maxLon, z) - lon2pix(minLon, z);
+        const h = lat2pix(minLat, z) - lat2pix(maxLat, z);
+        if (w <= targetW && h <= targetH) {
+          bestZoom = z;
+          break;
+        }
+      }
+
+      const cxWorld = (lon2pix(minLon, bestZoom) + lon2pix(maxLon, bestZoom)) / 2;
+      const cyWorld = (lat2pix(minLat, bestZoom) + lat2pix(maxLat, bestZoom)) / 2;
+
+      // Project all track points to canvas screen coordinates with 1:1 map alignment
+      pts.forEach(p => {
+        p.screenX = W_HALF / 2 + (lon2pix(p.lon, bestZoom) - cxWorld);
+        p.screenY = CH / 2 + (lat2pix(p.lat, bestZoom) - cyWorld);
+      });
+
+      gpxData = { pts, totalDist, climb, maxEle, zoom: bestZoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon };
 
       // Update UI
       document.getElementById('statDist').innerText = `${totalDist.toFixed(1)} km`;
@@ -421,7 +612,55 @@
       document.getElementById('statPoints').innerText = pts.length;
       document.getElementById('gpxStatsCard').classList.remove('hidden');
 
+      loadMapTilesForRoute();
       renderFrameAt(previewTime);
+    }
+
+    async function loadMapTilesForRoute() {
+      if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
+      const token = ++mapTileLoadToken;
+      const provider = MAP_PROVIDERS[currentMapStyle] || MAP_PROVIDERS.satellite;
+
+      // Clear mapBasemapCanvas to dark tactical background
+      mapTileCtx.fillStyle = '#0b0f19';
+      mapTileCtx.fillRect(0, 0, W_HALF, CH);
+
+      const { zoom, cxWorld, cyWorld } = gpxData;
+      const minTx = Math.floor((cxWorld - W_HALF / 2) / 256);
+      const maxTx = Math.floor((cxWorld + W_HALF / 2) / 256);
+      const minTy = Math.floor((cyWorld - CH / 2) / 256);
+      const maxTy = Math.floor((cyWorld + CH / 2) / 256);
+
+      const promises = [];
+      for (let tx = minTx; tx <= maxTx; tx++) {
+        for (let ty = minTy; ty <= maxTy; ty++) {
+          const url = provider.getTileUrl(zoom, tx, ty);
+          const sx = W_HALF / 2 + (tx * 256 - cxWorld);
+          const sy = CH / 2 + (ty * 256 - cyWorld);
+
+          const p = new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              if (token === mapTileLoadToken) {
+                mapTileCtx.drawImage(img, sx, sy, 256, 256);
+              }
+              resolve();
+            };
+            img.onerror = () => {
+              resolve(); // ignore failed tile gracefully
+            };
+            img.src = url;
+          });
+          promises.push(p);
+        }
+      }
+
+      await Promise.all(promises);
+      if (token === mapTileLoadToken) {
+        isMapTilesReady = true;
+        renderFrameAt(previewTime);
+      }
     }
 
     // 2. Media Upload & Processing with Genuine Video Thumbnails & Size Protection
@@ -721,6 +960,68 @@
       }
     });
 
+    // Style & Personalization UI Event Handlers
+    const titleInput = document.getElementById('routeTitleInput');
+    const resetTitleBtn = document.getElementById('resetTitleBtn');
+
+    titleInput.addEventListener('input', (e) => {
+      customRouteTitle = e.target.value.trim() || 'CYCLING ROUTE RECAP';
+      renderFrameAt(previewTime);
+    });
+
+    resetTitleBtn.addEventListener('click', () => {
+      customRouteTitle = 'CYCLING ROUTE RECAP';
+      titleInput.value = 'CYCLING ROUTE RECAP';
+      renderFrameAt(previewTime);
+    });
+
+    document.querySelectorAll('.map-style-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const style = btn.getAttribute('data-style');
+        if (style === currentMapStyle) return;
+        currentMapStyle = style;
+
+        document.querySelectorAll('.map-style-btn').forEach(b => {
+          b.classList.remove('active', 'border-rose-500/60', 'bg-rose-500/10', 'text-rose-300', 'shadow-sm');
+          b.classList.add('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+        });
+        btn.classList.add('active', 'border-rose-500/60', 'bg-rose-500/10', 'text-rose-300', 'shadow-sm');
+        btn.classList.remove('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+
+        const provider = MAP_PROVIDERS[style];
+        if (provider) {
+          document.getElementById('currentMapStyleLabel').innerText = provider.name;
+        }
+
+        loadMapTilesForRoute();
+      });
+    });
+
+    document.querySelectorAll('.film-style-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filmKey = btn.getAttribute('data-film');
+        if (filmKey === currentFilmStyle) return;
+        currentFilmStyle = filmKey;
+
+        document.querySelectorAll('.film-style-btn').forEach(b => {
+          b.classList.remove('active', 'border-amber-500/60', 'bg-amber-500/10', 'text-amber-300', 'shadow-sm');
+          b.classList.add('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+        });
+        btn.classList.add('active', 'border-amber-500/60', 'bg-amber-500/10', 'text-amber-300', 'shadow-sm');
+        btn.classList.remove('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+
+        const film = FILM_CONFIGS[filmKey];
+        if (film) {
+          document.getElementById('currentFilmStyleLabel').innerText = film.name;
+          const badge = document.getElementById('filmStyleBadge');
+          badge.innerText = film.name;
+          badge.className = `text-xs px-2.5 py-0.5 rounded border font-medium ${film.badgeClass}`;
+        }
+
+        renderFrameAt(previewTime);
+      });
+    });
+
     // 4. Live Monitor Frame Renderer (Full 1920x1080 master compositor)
     function renderFrameAt(t) {
       ctx.clearRect(0, 0, CW, CH);
@@ -731,62 +1032,46 @@
       ctx.rect(0, 0, W_HALF, CH);
       ctx.clip();
 
-      ctx.fillStyle = '#0b0f19';
-      ctx.fillRect(0, 0, W_HALF, CH);
+      // Real Map Basemap Rendering
+      if (isMapTilesReady) {
+        ctx.drawImage(mapBasemapCanvas, 0, 0);
+        const provider = MAP_PROVIDERS[currentMapStyle] || MAP_PROVIDERS.satellite;
+        ctx.fillStyle = provider.overlayDim || 'rgba(11, 15, 25, 0.28)';
+        ctx.fillRect(0, 0, W_HALF, CH);
+      } else {
+        ctx.fillStyle = '#0b0f19';
+        ctx.fillRect(0, 0, W_HALF, CH);
+      }
 
       const progress = Math.min(1.0, t / Math.max(1.0, totalDuration));
 
       if (gpxData && gpxData.pts.length > 1) {
         const pts = gpxData.pts;
-        let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
-        pts.forEach(p => {
-          minLat = Math.min(minLat, p.lat);
-          maxLat = Math.max(maxLat, p.lat);
-          minLon = Math.min(minLon, p.lon);
-          maxLon = Math.max(maxLon, p.lon);
-        });
-
-        const pad = 120;
-        const dLat = Math.max(0.0001, maxLat - minLat);
-        const dLon = Math.max(0.0001, maxLon - minLon);
-        const lonScale = Math.cos(Math.radians ? Math.radians((minLat + maxLat) / 2) : ((minLat + maxLat) / 2 * Math.PI / 180));
-        const geoW = dLon * lonScale;
-        const geoH = dLat;
-        const scale = Math.min((W_HALF - 2 * pad) / geoW, (CH - 2 * pad) / geoH);
-        const cxGeo = (minLon + maxLon) / 2;
-        const cyGeo = (minLat + maxLat) / 2;
-
-        const toPix = (p) => ({
-          x: W_HALF / 2 + (p.lon - cxGeo) * lonScale * scale,
-          y: CH / 2 - (p.lat - cyGeo) * scale
-        });
 
         // 1. Ghost Route Backdrop
         ctx.beginPath();
-        ctx.strokeStyle = '#1e293b';
+        ctx.strokeStyle = 'rgba(30, 41, 59, 0.90)';
         ctx.lineWidth = 10;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         pts.forEach((p, i) => {
-          const pt = toPix(p);
-          if (i === 0) ctx.moveTo(pt.x, pt.y);
-          else ctx.lineTo(pt.x, pt.y);
+          if (i === 0) ctx.moveTo(p.screenX, p.screenY);
+          else ctx.lineTo(p.screenX, p.screenY);
         });
         ctx.stroke();
 
-        ctx.strokeStyle = '#334155';
+        ctx.strokeStyle = '#475569';
         ctx.lineWidth = 4;
         ctx.stroke();
 
         // 2. Active Glowing Route
         const currIdx = Math.min(pts.length - 1, Math.floor(progress * (pts.length - 1)));
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(244, 63, 94, 0.4)';
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.45)';
         ctx.lineWidth = 16;
         for (let i = 0; i <= currIdx; i++) {
-          const pt = toPix(pts[i]);
-          if (i === 0) ctx.moveTo(pt.x, pt.y);
-          else ctx.lineTo(pt.x, pt.y);
+          if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
+          else ctx.lineTo(pts[i].screenX, pts[i].screenY);
         }
         ctx.stroke();
 
@@ -794,9 +1079,8 @@
         ctx.strokeStyle = '#f43f5e';
         ctx.lineWidth = 8;
         for (let i = 0; i <= currIdx; i++) {
-          const pt = toPix(pts[i]);
-          if (i === 0) ctx.moveTo(pt.x, pt.y);
-          else ctx.lineTo(pt.x, pt.y);
+          if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
+          else ctx.lineTo(pts[i].screenX, pts[i].screenY);
         }
         ctx.stroke();
 
@@ -804,25 +1088,24 @@
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 3;
         for (let i = 0; i <= currIdx; i++) {
-          const pt = toPix(pts[i]);
-          if (i === 0) ctx.moveTo(pt.x, pt.y);
-          else ctx.lineTo(pt.x, pt.y);
+          if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
+          else ctx.lineTo(pts[i].screenX, pts[i].screenY);
         }
         ctx.stroke();
 
         // 3. Pulsing Rider Dot
-        const headPt = toPix(pts[currIdx]);
+        const headPt = pts[currIdx];
         const pulse = 1.0 + 0.3 * Math.sin(t * 8.0);
         ctx.beginPath();
-        ctx.arc(headPt.x, headPt.y, 22 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+        ctx.arc(headPt.screenX, headPt.screenY, 22 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
         ctx.fill();
         ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(headPt.x, headPt.y, 8, 0, Math.PI * 2);
+        ctx.arc(headPt.screenX, headPt.screenY, 8, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
         ctx.strokeStyle = '#0284c7';
@@ -830,17 +1113,26 @@
         ctx.stroke();
 
         // 4. HUD Telemetry Card (Top Left)
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 2;
         roundRect(ctx, 48, 56, 320, 280, 16, true, true);
 
-        // Header Tag
+        // Header Tag with Dynamic Custom Title Support
         ctx.fillStyle = '#e11d48';
-        roundRect(ctx, 62, 70, 292, 34, 8, true, false);
+        const titleStr = (customRouteTitle || 'CYCLING ROUTE RECAP').trim();
+        let fontSize = 15;
+        ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+        let tm = ctx.measureText(titleStr);
+        while (tm.width > 255 && fontSize > 11) {
+          fontSize--;
+          ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+          tm = ctx.measureText(titleStr);
+        }
+        const tagW = Math.max(160, Math.min(292, tm.width + 30));
+        roundRect(ctx, 62, 70, tagW, 34, 8, true, false);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('CYCLING ROUTE RECAP', 78, 93);
+        ctx.fillText(titleStr, 76, 92);
 
         const currSpeed = (22.5 + 4.5 * Math.sin(t * 1.5)).toFixed(1);
         const currDist = (progress * gpxData.totalDist).toFixed(1);
@@ -875,7 +1167,7 @@
       }
       ctx.restore();
 
-      // B. RIGHT HALF: KODAK PORTRA 400 FILMSTRIP (960 to 1920)
+      // B. RIGHT HALF: 35mm FILMSTRIP (960 to 1920)
       ctx.save();
       ctx.beginPath();
       ctx.rect(W_HALF, 0, W_HALF, CH);
@@ -945,7 +1237,8 @@
         }
       });
 
-      // 3. Kodak Portra 400 Gap Markings (Guaranteed strictly in 44px gaps!)
+      // 3. Film Stock Gap Markings (Guaranteed strictly in 44px gaps!)
+      const film = FILM_CONFIGS[currentFilmStyle] || FILM_CONFIGS.portra400;
       for (let k = -1; k <= numWindows + 1; k++) {
         const wy = Math.round(k * STRIDE - yScroll + 298);
         const gapY = wy + WIN_H + 13;
@@ -953,23 +1246,25 @@
           const fnum = Math.max(0, k + 1);
 
           // Left Brand
-          ctx.fillStyle = '#ebb428';
-          ctx.font = 'bold 15px sans-serif';
-          ctx.fillText('KODAK PORTRA 400', W_HALF + 54, gapY + 14);
+          ctx.fillStyle = film.accent;
+          ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          ctx.fillText(film.brand, W_HALF + 54, gapY + 14);
 
           // Center Label
           ctx.fillStyle = '#94a3b8';
-          ctx.font = '12px sans-serif';
-          ctx.fillText('SAFETY FILM', W_HALF + 420, gapY + 13);
+          ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          const midW = ctx.measureText(film.mid).width;
+          ctx.fillText(film.mid, W_HALF + (W_HALF - midW) / 2, gapY + 13);
 
           // Right Number & Arrow
-          ctx.fillStyle = '#ebb428';
-          ctx.font = 'bold 15px sans-serif';
-          const numStr = `• ${fnum.toString().padStart(2, '0')}A •`;
-          ctx.fillText(numStr, CW - 140, gapY + 14);
+          ctx.fillStyle = film.accent;
+          ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          const numStr = film.formatNum(fnum);
+          const nw = ctx.measureText(numStr).width;
+          ctx.fillText(numStr, CW - 64 - nw, gapY + 14);
 
           // Arrow Polygon
-          const ax = CW - 72, ay = gapY + 9;
+          const ax = CW - 50, ay = gapY + 9;
           ctx.beginPath();
           ctx.moveTo(ax, ay - 6);
           ctx.lineTo(ax + 7, ay);
@@ -1060,7 +1355,7 @@
       isPreviewPlaying = false;
       document.getElementById('monitorPlayOverlay').classList.remove('hidden');
       document.getElementById('togglePlayIcon').innerText = '▶';
-      document.getElementById('togglePlayText').innerText = '播放动态预览';
+      document.getElementById('togglePlayText').innerText = '播放预览';
 
       audioPlayer.pause();
       mediaItems.forEach(item => {
@@ -1264,7 +1559,10 @@
     });
 
     document.getElementById('copyCliBtn').addEventListener('click', () => {
-      const cmd = `python3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default`;
+      const titleArg = customRouteTitle !== 'CYCLING ROUTE RECAP' ? ` --hud-title "${customRouteTitle}"` : '';
+      const mapArg = currentMapStyle !== 'satellite' ? ` --map-style ${currentMapStyle}` : '';
+      const filmArg = currentFilmStyle !== 'portra400' ? ` --film-style ${currentFilmStyle}` : '';
+      const cmd = `python3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default${titleArg}${mapArg}${filmArg}`;
       navigator.clipboard.writeText(cmd).then(() => {
         alert("已复制本地 GPU 硬件加速渲染命令到剪贴板：\n\n" + cmd + "\n\n在本地终端直接执行即可跑满显卡速度！");
       });

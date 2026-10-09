@@ -25,7 +25,34 @@ def load_fonts():
         font_num = ImageFont.load_default()
     return font_kodak, font_sub, font_num
 
-def render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, masks, fonts):
+FILM_CONFIGS = {
+    'portra400': {
+        'brand': 'KODAK PORTRA 400',
+        'mid': 'SAFETY FILM',
+        'accent': (235, 180, 40),
+        'num_format': lambda f: f'• {f:02d}A •'
+    },
+    'gold200': {
+        'brand': 'KODAK GOLD 200',
+        'mid': 'GB 200',
+        'accent': (245, 158, 11),
+        'num_format': lambda f: f'200-4 • {f:02d}A'
+    },
+    'fuji400': {
+        'brand': 'FUJIFILM SUPERIA 400',
+        'mid': 'COLOR PRINT FILM',
+        'accent': (16, 185, 129),
+        'num_format': lambda f: f'S-400 • {f:02d}A'
+    },
+    'ilford400': {
+        'brand': 'ILFORD HP5 PLUS',
+        'mid': 'PAN 400',
+        'accent': (241, 245, 249),
+        'num_format': lambda f: f'HP5 • {f:02d}A'
+    }
+}
+
+def render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, masks, fonts, film_style='portra400'):
     """
     Renders a single 960x1080 filmstrip frame at time t.
     """
@@ -71,25 +98,32 @@ def render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, m
                                    radius=5, fill=(4, 5, 8), outline=(35, 40, 50), width=1)
             y_sp += 80
             
-    # 3. Kodak Portra 400 Gap Typography (strictly in the 44px gap)
+    # 3. 35mm Film Stock Gap Typography (strictly in the 44px gap)
+    cfg = FILM_CONFIGS.get(film_style, FILM_CONFIGS['portra400'])
+    accent_col = cfg['accent']
+    brand_text = cfg['brand']
+    mid_text = cfg['mid']
+
     for k in range(-1, num_windows + 1):
         wy = int(round(k * STRIDE - y_scroll + 298))
         gap_y = wy + WIN_H + 13
         if -30 <= gap_y <= H + 30:
             curr_fnum = max(0, k + 1)
             # Left brand
-            draw.text((54, gap_y), 'KODAK PORTRA 400', fill=KODAK_YELLOW, font=font_kodak)
+            draw.text((54, gap_y), brand_text, fill=accent_col, font=font_kodak)
             
             # Center label
-            mb = font_sub.getbbox('SAFETY FILM')
+            mb = font_sub.getbbox(mid_text)
             mw = mb[2] - mb[0]
-            draw.text(((W_HALF - mw) // 2, gap_y + 2), 'SAFETY FILM', fill=FILM_GRAY, font=font_sub)
+            draw.text(((W_HALF - mw) // 2, gap_y + 2), mid_text, fill=FILM_GRAY, font=font_sub)
             
             # Right frame number & arrow
-            num_str = f'• {curr_fnum:02d}A •'
-            draw.text((820, gap_y), num_str, fill=KODAK_YELLOW, font=font_num)
-            arrow_x, arrow_y = 882, gap_y + 8
-            draw.polygon([(arrow_x, arrow_y - 5), (arrow_x + 6, arrow_y), (arrow_x, arrow_y + 5)], fill=KODAK_YELLOW)
+            num_str = cfg['num_format'](curr_fnum)
+            nb = font_num.getbbox(num_str)
+            nw = nb[2] - nb[0]
+            draw.text((880 - nw, gap_y), num_str, fill=accent_col, font=font_num)
+            arrow_x, arrow_y = 890, gap_y + 8
+            draw.polygon([(arrow_x, arrow_y - 5), (arrow_x + 6, arrow_y), (arrow_x, arrow_y + 5)], fill=accent_col)
             
     # 4. Vertical Separation Guide Lines
     draw.line([(38, 0), (38, H)], fill=(40, 45, 55), width=2)
