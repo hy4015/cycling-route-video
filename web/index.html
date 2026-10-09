@@ -28,9 +28,30 @@
     }
   </script>
   <style>
+    #mediaPreviewGrid {
+      align-content: start;
+    }
     .draggable-card {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      min-width: 0;
+      min-height: 0;
       cursor: grab;
       transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+    .draggable-card::before {
+      content: "";
+      display: block;
+      padding-top: 100%;
+    }
+    .draggable-card > img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .draggable-card:active {
       cursor: grabbing;
@@ -42,6 +63,20 @@
     .draggable-card.drag-over {
       border-color: #f43f5e !important;
       box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+    }
+    #mediaPreviewGrid::-webkit-scrollbar {
+      width: 6px;
+    }
+    #mediaPreviewGrid::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 9999px;
+    }
+    #mediaPreviewGrid::-webkit-scrollbar-thumb {
+      background: rgba(71, 85, 105, 0.6);
+      border-radius: 9999px;
+    }
+    #mediaPreviewGrid::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.8);
     }
   </style>
 </head>
@@ -251,7 +286,7 @@
             </div>
             <button id="clearMediaBtn" class="text-rose-400 hover:underline">全部清空</button>
           </div>
-          <div id="mediaPreviewGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-56 overflow-y-auto p-2.5 bg-slate-900/60 rounded-xl border border-slate-800"></div>
+          <div id="mediaPreviewGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-80 sm:max-h-96 overflow-y-auto p-2.5 bg-slate-900/60 rounded-xl border border-slate-800"></div>
         </div>
       </section>
 
@@ -1271,7 +1306,7 @@
       mediaItems.forEach((item, idx) => {
         const isActive = (activePreviewIndex === idx);
         const card = document.createElement('div');
-        card.className = `draggable-card aspect-square bg-slate-800 rounded-xl flex items-center justify-center text-[10px] text-slate-400 relative overflow-hidden border shadow group cursor-pointer transition-all ${
+        card.className = `draggable-card aspect-square bg-slate-800 rounded-xl relative overflow-hidden border shadow group cursor-pointer transition-all ${
           isActive 
             ? 'border-rose-500 ring-2 ring-rose-500 shadow-lg shadow-rose-500/30' 
             : 'border-slate-700/80 hover:border-slate-500'
@@ -1283,7 +1318,7 @@
         // Image / Video Cover
         const img = document.createElement('img');
         img.src = item.thumbUrl || (item.isVideo ? createVideoDefaultPlaceholder() : '');
-        img.className = 'w-full h-full object-cover pointer-events-none select-none';
+        img.className = 'absolute inset-0 w-full h-full object-cover pointer-events-none select-none';
         card.appendChild(img);
 
         // Order badge on top-left
