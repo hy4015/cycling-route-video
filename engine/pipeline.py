@@ -1,5 +1,11 @@
 import os
 import sys
+
+# Ensure project root directory is in sys.path
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
 import time
 import math
 import argparse
@@ -179,7 +185,7 @@ def run_pipeline(gpx_path, media_dir, output_path, bgm_choice='default', duratio
     print(f"📍 Output: {output_path} ({os.path.getsize(output_path)/(1024*1024):.1f} MB)")
     print("=" * 60)
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description="Universal Cycling Route Video Generator")
     parser.add_argument('--gpx', required=True, help="Path to GPX track file")
     parser.add_argument('--media', required=True, help="Path to folder containing photos/videos")
@@ -195,3 +201,6 @@ if __name__ == '__main__':
         args.gpx, args.media, args.output, args.bgm, args.duration,
         hud_title=args.hud_title, map_style=args.map_style, film_style=args.film_style
     )
+
+if __name__ == '__main__':
+    main()

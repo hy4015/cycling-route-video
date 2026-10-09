@@ -1562,9 +1562,9 @@
       const titleArg = customRouteTitle !== 'CYCLING ROUTE RECAP' ? ` --hud-title "${customRouteTitle}"` : '';
       const mapArg = currentMapStyle !== 'satellite' ? ` --map-style ${currentMapStyle}` : '';
       const filmArg = currentFilmStyle !== 'portra400' ? ` --film-style ${currentFilmStyle}` : '';
-      const cmd = `python3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default${titleArg}${mapArg}${filmArg}`;
+      const cmd = `cd cycling-route-video\npython3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default${titleArg}${mapArg}${filmArg}`;
       navigator.clipboard.writeText(cmd).then(() => {
-        alert("已复制本地 GPU 硬件加速渲染命令到剪贴板：\n\n" + cmd + "\n\n在本地终端直接执行即可跑满显卡速度！");
+        alert("已复制本地 GPU 渲染命令到剪贴板！\n\n📌 运行说明：\n1. 请先在终端进入项目目录：cd cycling-route-video\n2. 首次使用请安装依赖：pip install -r requirements.txt\n3. 执行命令即可跑满硬件加速！\n\n命令详情：\n" + cmd);
       });
     });
 
