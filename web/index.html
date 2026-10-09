@@ -592,7 +592,8 @@
     // Preview Playback State
     let isPreviewPlaying = false;
     let previewTime = 0.0;
-    let totalDuration = 30.0;
+    const OUTRO_DURATION = 3.0; // 3 seconds outro tail after last media asset
+    let totalDuration = 33.0;
     let animFrameId = null;
     let lastTimestamp = null;
     let draggedIndex = null;
@@ -1093,11 +1094,14 @@
 
     function updateDurationBasedOnMedia() {
       if (mediaItems.length > 0) {
-        totalDuration = Math.max(15.0, mediaItems.length * 2.5);
+        const contentDuration = Math.max(15.0, mediaItems.length * 2.5);
+        totalDuration = contentDuration + OUTRO_DURATION;
       } else {
-        totalDuration = 30.0;
+        totalDuration = 30.0 + OUTRO_DURATION;
       }
-      document.getElementById('timeDisplay').innerText = `00:00 / 00:${Math.round(totalDuration).toString().padStart(2, '0')}`;
+      const m = Math.floor(totalDuration / 60);
+      const s = Math.floor(totalDuration % 60);
+      document.getElementById('timeDisplay').innerText = `00:00 / ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
     // Render Media Thumbnails Grid with Drag-and-Drop & Delete Buttons
@@ -1281,8 +1285,9 @@
       });
 
       // Calculate time so this item is centered in the filmstrip
+      const contentDuration = Math.max(5.0, totalDuration - OUTRO_DURATION);
       const targetTime = mediaItems.length > 1
-        ? (idx / (mediaItems.length - 1)) * totalDuration
+        ? (idx / (mediaItems.length - 1)) * contentDuration
         : 0;
 
       previewTime = targetTime;
@@ -1595,7 +1600,8 @@
         ctx.fillRect(0, 0, W_HALF, CH);
       }
 
-      const progress = Math.min(1.0, t / Math.max(1.0, totalDuration));
+      const contentDuration = Math.max(5.0, totalDuration - OUTRO_DURATION);
+      const progress = Math.min(1.0, t / contentDuration);
 
       if (gpxData && gpxData.pts.length > 1) {
         const pts = gpxData.pts;
@@ -1730,7 +1736,7 @@
       // Film scroll offset calculation
       const numWindows = Math.max(1, mediaItems.length);
       const yTotal = Math.max(0, (numWindows - 1) * STRIDE);
-      const vScroll = totalDuration > 0 ? yTotal / totalDuration : 0;
+      const vScroll = numWindows > 1 ? yTotal / contentDuration : (STRIDE * 0.5 / contentDuration);
       const yScroll = vScroll * t;
 
       // First window top position (Film Leader Boundary)
@@ -1905,7 +1911,7 @@
       });
 
       // 4. Film Stock Gap Markings (Strictly below photo 0, starting from k = 0)
-      for (let k = 0; k <= numWindows + 1; k++) {
+      for (let k = 0; k <= numWindows + 5; k++) {
         const wy = Math.round(k * STRIDE - yScroll + 298);
         const gapY = wy + WIN_H + 13;
         if (gapY >= -30 && gapY <= CH + 30) {
@@ -2041,6 +2047,16 @@
       ctx.moveTo(W_HALF, 0);
       ctx.lineTo(W_HALF, CH);
       ctx.stroke();
+
+      // 5. Cinematic Outro Fade-Out (Fade to black / deep slate over the last 3.0s)
+      const outroStart = totalDuration - OUTRO_DURATION;
+      if (t >= outroStart) {
+        const fadeProgress = Math.min(1.0, Math.max(0, (t - outroStart) / OUTRO_DURATION));
+        ctx.save();
+        ctx.fillStyle = `rgba(11, 15, 25, ${fadeProgress})`;
+        ctx.fillRect(0, 0, CW, CH);
+        ctx.restore();
+      }
     }
 
     function drawHudRow(ctx, label, val, color, y) {
@@ -2189,6 +2205,15 @@
         return;
       }
 
+      // Outro audio volume fade
+      const outroStart = totalDuration - OUTRO_DURATION;
+      if (previewTime >= outroStart) {
+        const fadeProgress = Math.min(1.0, Math.max(0, (previewTime - outroStart) / OUTRO_DURATION));
+        audioPlayer.volume = Math.max(0, 1.0 - fadeProgress);
+      } else {
+        audioPlayer.volume = 1.0;
+      }
+
       // Update scrubber & time
       const scrubber = document.getElementById('previewScrubber');
       scrubber.value = (previewTime / totalDuration) * 100;
@@ -2212,6 +2237,7 @@
         c.classList.add('border-slate-700/80');
       });
       previewTime = 0;
+      audioPlayer.volume = 1.0;
       try { audioPlayer.currentTime = 0; } catch (err) {}
       renderFrameAt(0);
       startPreview();
@@ -2225,6 +2251,13 @@
         c.classList.add('border-slate-700/80');
       });
       previewTime = (parseFloat(e.target.value) / 100.0) * totalDuration;
+      const outroStart = totalDuration - OUTRO_DURATION;
+      if (previewTime >= outroStart) {
+        const fadeProgress = Math.min(1.0, Math.max(0, (previewTime - outroStart) / OUTRO_DURATION));
+        audioPlayer.volume = Math.max(0, 1.0 - fadeProgress);
+      } else {
+        audioPlayer.volume = 1.0;
+      }
       try {
         if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
           audioPlayer.currentTime = previewTime % audioPlayer.duration;
@@ -2359,6 +2392,15 @@
         currFrame += 2; // Fast simulation step
         const t = (currFrame / totalFrames) * totalDuration;
         renderFrameAt(t);
+
+        // Audio fade out during outro
+        const outroStart = totalDuration - OUTRO_DURATION;
+        if (t >= outroStart) {
+          const fadeProgress = Math.min(1.0, Math.max(0, (t - outroStart) / OUTRO_DURATION));
+          audioPlayer.volume = Math.max(0, 1.0 - fadeProgress);
+        } else {
+          audioPlayer.volume = 1.0;
+        }
 
         const pct = Math.min(90, Math.round(35 + (currFrame / totalFrames) * 55));
         setProgress(pct, '阶段 3/5', `逐帧编码渲染中 (${pct}%)`, `正在渲染第 ${currFrame}/${totalFrames} 帧，时间: ${t.toFixed(1)}s / ${totalDuration.toFixed(1)}s`);
