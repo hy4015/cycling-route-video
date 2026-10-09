@@ -487,11 +487,11 @@
 
         // 2. Broadcast-grade Dynamics Compressor (EBU R128 loudness leveler & peak limiter)
         loudnessCompressor = webAudioCtx.createDynamicsCompressor();
-        loudnessCompressor.threshold.value = -24.0; // dB
-        loudnessCompressor.knee.value = 30.0;       // dB (smooth soft knee)
-        loudnessCompressor.ratio.value = 12.0;      // 12:1 compression
-        loudnessCompressor.attack.value = 0.003;    // 3ms attack
-        loudnessCompressor.release.value = 0.25;    // 250ms release
+        loudnessCompressor.threshold.value = -16.0; // dB (smooth ceiling, avoids choking)
+        loudnessCompressor.knee.value = 20.0;       // dB (smooth soft knee)
+        loudnessCompressor.ratio.value = 4.0;       // 4:1 broadcast compression (natural leveling)
+        loudnessCompressor.attack.value = 0.010;    // 10ms smooth attack
+        loudnessCompressor.release.value = 0.20;    // 200ms natural release
 
         masterVideoBus.connect(loudnessCompressor);
         loudnessCompressor.connect(webAudioCtx.destination);
@@ -1885,61 +1885,74 @@
             : 0;
           const clipDur = item.duration || 5.0;
 
-          // Video Playback & Audio Synchronization
+          // Video Playback & Audio Synchronization (Non-blocking State Machine)
           if (item.isVideo && item.videoEl) {
             if (isSingleClipPlaying && activePreviewIndex === k) {
               // Auditioning single clip: handled by playSingleClip loop
               if (item.audioEnabled !== false) activeVideoSoundPlaying = true;
             } else if (isPreviewPlaying) {
               const elapsed = t - tCenter;
+              const clipDur = item.duration || 5.0;
 
               if (elapsed < 0) {
-                // 1. Before reaching center: hold frame 1, pause, mute audio
-                if (!item.videoEl.paused) item.videoEl.pause();
-                try { item.videoEl.currentTime = 0; } catch (e) {}
-                item.videoEl.muted = true;
-                item.videoEl.volume = 0;
-                if (item.gainNode) item.gainNode.gain.value = 0;
-              } else if (elapsed <= clipDur) {
-                // 2. Reached center: play from frame 1 with synchronized audio!
-                if (item.videoEl.paused) {
-                  try { item.videoEl.currentTime = Math.max(0, elapsed); } catch (e) {}
-                  item.videoEl.play().catch(e => console.warn(e));
-                }
-                // Resync if time drifted by > 0.35s
-                if (Math.abs(item.videoEl.currentTime - elapsed) > 0.35) {
-                  try { item.videoEl.currentTime = elapsed; } catch (e) {}
-                }
-                if (item.audioEnabled !== false) {
-                  item.videoEl.muted = false;
-                  const effGain = item.normalizedGain || 1.0;
-                  item.videoEl.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * effGain));
-                  if (item.gainNode) item.gainNode.gain.value = effGain;
-                  activeVideoSoundPlaying = true;
-                } else {
+                // 1. Before reaching center: set idle state ONCE
+                if (item._playState !== 'idle') {
+                  item._playState = 'idle';
+                  if (!item.videoEl.paused) item.videoEl.pause();
+                  if (Math.abs(item.videoEl.currentTime) > 0.05) {
+                    try { item.videoEl.currentTime = 0; } catch (e) {}
+                  }
                   item.videoEl.muted = true;
-                  item.videoEl.volume = 0;
                   if (item.gainNode) item.gainNode.gain.value = 0;
                 }
+              } else if (elapsed <= clipDur) {
+                // 2. Active playing window: trigger play ONCE when entering center
+                if (item._playState !== 'playing') {
+                  item._playState = 'playing';
+                  try { item.videoEl.currentTime = Math.max(0, elapsed); } catch (e) {}
+                  item.videoEl.play().catch(e => console.warn('Preview video play fallback:', e));
+                  if (item.audioEnabled !== false) {
+                    item.videoEl.muted = false;
+                    const effGain = item.normalizedGain || 1.0;
+                    if (item.gainNode) {
+                      item.gainNode.gain.value = effGain;
+                      item.videoEl.volume = 1.0;
+                    } else {
+                      item.videoEl.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * effGain));
+                    }
+                  } else {
+                    item.videoEl.muted = true;
+                    if (item.gainNode) item.gainNode.gain.value = 0;
+                    item.videoEl.volume = 0;
+                  }
+                }
+                if (item.audioEnabled !== false) {
+                  activeVideoSoundPlaying = true;
+                }
               } else {
-                // 3. Past clip duration: hold last frame, mute audio
-                if (!item.videoEl.paused) item.videoEl.pause();
-                item.videoEl.muted = true;
-                item.videoEl.volume = 0;
-                if (item.gainNode) item.gainNode.gain.value = 0;
+                // 3. Past clip duration: finish ONCE
+                if (item._playState !== 'finished') {
+                  item._playState = 'finished';
+                  if (!item.videoEl.paused) item.videoEl.pause();
+                  item.videoEl.muted = true;
+                  if (item.gainNode) item.gainNode.gain.value = 0;
+                  item.videoEl.volume = 0;
+                }
               }
             } else {
-              // Not playing (paused / scrubber seeking / export)
-              const elapsed = t - tCenter;
-              if (elapsed < 0) {
-                try { item.videoEl.currentTime = 0; } catch (e) {}
-              } else {
-                try { item.videoEl.currentTime = Math.min(clipDur, elapsed); } catch (e) {}
+              // Not preview playing (paused / scrubber seeking / export)
+              if (item._playState !== 'paused') {
+                item._playState = 'paused';
+                if (!item.videoEl.paused) item.videoEl.pause();
+                item.videoEl.muted = true;
+                if (item.gainNode) item.gainNode.gain.value = 0;
               }
-              if (!item.videoEl.paused) item.videoEl.pause();
-              item.videoEl.muted = true;
-              item.videoEl.volume = 0;
-              if (item.gainNode) item.gainNode.gain.value = 0;
+              const elapsed = t - tCenter;
+              const clipDur = item.duration || 5.0;
+              const targetTime = elapsed < 0 ? 0 : Math.min(clipDur, elapsed);
+              if (Math.abs(item.videoEl.currentTime - targetTime) > 0.08) {
+                try { item.videoEl.currentTime = targetTime; } catch (e) {}
+              }
             }
           }
 
@@ -2292,6 +2305,7 @@
       // Initialize all videos paused at start; center-trigger will start each when it reaches screen center
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
+          item._playState = 'idle';
           item.videoEl.loop = false;
           item.videoEl.pause();
           item.videoEl.muted = true;
@@ -2318,6 +2332,7 @@
 
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
+          item._playState = 'paused';
           item.videoEl.pause();
           item.videoEl.muted = true;
           if (item.gainNode) item.gainNode.gain.value = 0;
@@ -2351,7 +2366,7 @@
 
       renderFrameAt(previewTime);
 
-      // Dynamic Audio Ducking & Outro Volume Fade
+      // Dynamic Audio Ducking & Outro Volume Fade with Smooth Ramping
       const outroStart = totalDuration - OUTRO_DURATION;
       let targetBgmVol = bgmVolumeRatio;
       if (isAudioDuckingEnabled && isAnyVideoAudioActive) {
@@ -2361,7 +2376,13 @@
         const fadeProgress = Math.min(1.0, Math.max(0, (previewTime - outroStart) / OUTRO_DURATION));
         targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
       }
-      audioPlayer.volume = targetBgmVol;
+
+      // Smooth exponential volume glide: only update when changed to avoid audio driver buffer stutter
+      const currentVol = audioPlayer.volume;
+      if (Math.abs(currentVol - targetBgmVol) > 0.005) {
+        const nextVol = currentVol + (targetBgmVol - currentVol) * 0.12;
+        audioPlayer.volume = Math.max(0, Math.min(1.0, nextVol));
+      }
 
       animFrameId = requestAnimationFrame(previewLoop);
     }
@@ -2390,6 +2411,11 @@
         c.classList.add('border-slate-700/80');
       });
       previewTime = (parseFloat(e.target.value) / 100.0) * totalDuration;
+      mediaItems.forEach(item => {
+        if (item.isVideo && item.videoEl) {
+          item._playState = 'paused';
+        }
+      });
       renderFrameAt(previewTime);
 
       const outroStart = totalDuration - OUTRO_DURATION;
