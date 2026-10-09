@@ -155,7 +155,7 @@
           <!-- Track 1 (Default) -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-rose-500/40 bg-rose-500/5 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_acoustic_highway">
             <div class="flex items-center space-x-3">
-              <button class="bgm-play-btn w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_acoustic_highway.m4a">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_acoustic_highway.mp3">
                 <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               </button>
               <div>
@@ -172,7 +172,7 @@
           <!-- Track 2 -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_coastal_beat">
             <div class="flex items-center space-x-3">
-              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_coastal_beat.m4a">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_coastal_beat.mp3">
                 <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               </button>
               <div>
@@ -189,7 +189,7 @@
           <!-- Track 3 -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_epic_mountain">
             <div class="flex items-center space-x-3">
-              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_epic_mountain.m4a">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_epic_mountain.mp3">
                 <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               </button>
               <div>
@@ -532,24 +532,54 @@
     });
 
     // 3. Audio Preview & Selection
+    function playTrack(audioSrc, btn) {
+      if (playingBtn === btn && !audioPlayer.paused) {
+        audioPlayer.pause();
+        btn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+        playingBtn = null;
+        return;
+      }
+
+      if (playingBtn && playingBtn !== btn) {
+        playingBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+      }
+
+      audioPlayer.volume = 1.0;
+      audioPlayer.src = audioSrc;
+      
+      const playPromise = audioPlayer.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
+          playingBtn = btn;
+        }).catch(err => {
+          console.warn('Playback initial error:', err, 'Trying fallback paths...');
+          // Try fallback paths
+          const fallbackSrc = audioSrc.endsWith('.mp3') ? audioSrc.replace('.mp3', '.m4a') : audioSrc.replace('./audio/', './public/audio/');
+          audioPlayer.src = fallbackSrc;
+          audioPlayer.play().then(() => {
+            btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
+            playingBtn = btn;
+          }).catch(err2 => {
+            console.error('All audio fallbacks failed:', err2);
+            alert('音频加载失败，请检查浏览器本地文件权限或使用本地 HTTP 服务打开。');
+          });
+        });
+      }
+    }
+
+    audioPlayer.addEventListener('ended', () => {
+      if (playingBtn) {
+        playingBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
+        playingBtn = null;
+      }
+    });
+
     document.querySelectorAll('.bgm-play-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const audioSrc = btn.getAttribute('data-audio');
-
-        if (playingBtn === btn && !audioPlayer.paused) {
-          audioPlayer.pause();
-          btn.innerHTML = `<svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
-          playingBtn = null;
-        } else {
-          if (playingBtn) {
-            playingBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
-          }
-          audioPlayer.src = audioSrc;
-          audioPlayer.play();
-          btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
-          playingBtn = btn;
-        }
+        playTrack(audioSrc, btn);
       });
     });
 
@@ -563,6 +593,12 @@
         });
         card.classList.add('border-rose-500/40', 'bg-rose-500/5');
         card.classList.remove('border-slate-800', 'bg-slate-900/40');
+
+        const btn = card.querySelector('.bgm-play-btn');
+        if (btn) {
+          const audioSrc = btn.getAttribute('data-audio');
+          playTrack(audioSrc, btn);
+        }
       });
     });
 
@@ -571,7 +607,8 @@
         const f = e.target.files[0];
         currentBgmPath = URL.createObjectURL(f);
         audioPlayer.src = currentBgmPath;
-        audioPlayer.play();
+        audioPlayer.volume = 1.0;
+        audioPlayer.play().catch(e => console.warn('Custom play error:', e));
         alert(`已加载自定义背景音乐: ${f.name}`);
       }
     });
