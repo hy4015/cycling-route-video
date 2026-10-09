@@ -762,10 +762,30 @@
     // 2. Media Upload & Processing with Genuine Video Thumbnails & Size Protection
     const mediaDropzone = document.getElementById('mediaDropzone');
     const mediaInput = document.getElementById('mediaFileInput');
+    
     mediaDropzone.addEventListener('click', () => mediaInput.click());
 
+    // Drag and Drop support on dropzone
+    mediaDropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      mediaDropzone.classList.add('border-sky-400', 'bg-slate-800/80');
+    });
+    mediaDropzone.addEventListener('dragleave', () => {
+      mediaDropzone.classList.remove('border-sky-400', 'bg-slate-800/80');
+    });
+    mediaDropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      mediaDropzone.classList.remove('border-sky-400', 'bg-slate-800/80');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleUploadedFiles(Array.from(e.dataTransfer.files));
+      }
+    });
+
     mediaInput.addEventListener('change', (e) => {
-      handleUploadedFiles(Array.from(e.target.files));
+      if (e.target.files && e.target.files.length > 0) {
+        handleUploadedFiles(Array.from(e.target.files));
+      }
+      e.target.value = ''; // Reset input so same or new files can be uploaded repeatedly
     });
 
     const MAX_IMG_BYTES = 10 * 1024 * 1024; // 10MB
@@ -773,12 +793,13 @@
     const MAX_VID_SECONDS = 10.0;
 
     async function handleUploadedFiles(files) {
+      if (!files || files.length === 0) return;
       let rejected = [];
 
       for (const f of files) {
         const ext = f.name.toLowerCase();
         const isVideo = f.type.startsWith('video/') || ext.endsWith('.mov') || ext.endsWith('.mp4');
-        const isImage = f.type.startsWith('image/') || ext.endsWith('.heic') || ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png');
+        const isImage = f.type.startsWith('image/') || ext.endsWith('.heic') || ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp');
 
         if (isImage) {
           if (f.size > MAX_IMG_BYTES) {
@@ -803,25 +824,28 @@
             rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 100MB)`);
             continue;
           }
-          // Process Video Frame & Metadata
-          const vidData = await extractVideoMetadataAndThumb(f);
-          if (vidData.duration > MAX_VID_SECONDS) {
-            rejected.push(`${f.name} (时长 ${vidData.duration.toFixed(1)}s > 10s)`);
-            continue;
+          // Fast, non-blocking video thumbnail and metadata extraction
+          try {
+            const vidData = await extractVideoMetadataAndThumb(f);
+            if (vidData.duration > MAX_VID_SECONDS) {
+              rejected.push(`${f.name} (时长 ${vidData.duration.toFixed(1)}s > 10s)`);
+              continue;
+            }
+            mediaItems.push({
+              id: 'm_' + Math.random().toString(36).substr(2, 9),
+              file: f,
+              name: f.name,
+              size: f.size,
+              isVideo: true,
+              audioEnabled: true,
+              normalizedGain: 1.0,
+              thumbUrl: vidData.thumbUrl,
+              videoEl: vidData.videoEl,
+              duration: vidData.duration
+            });
+          } catch (vErr) {
+            console.warn('Video extract error:', vErr);
           }
-          mediaItems.push({
-            id: 'm_' + Math.random().toString(36).substr(2, 9),
-            file: f,
-            name: f.name,
-            size: f.size,
-            isVideo: true,
-            audioEnabled: true,
-            measuredRms: vidData.measuredRms,
-            normalizedGain: 1.0,
-            thumbUrl: vidData.thumbUrl,
-            videoEl: vidData.videoEl,
-            duration: vidData.duration
-          });
         }
       }
 
@@ -835,67 +859,68 @@
       renderFrameAt(previewTime);
     }
 
-    async function extractVideoMetadataAndThumb(file) {
-      // Background Audio RMS Loudness Analysis
-      let measuredRms = null;
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const arrayBuffer = await file.arrayBuffer();
-        const audioBuf = await new Promise((res, rej) => audioCtx.decodeAudioData(arrayBuffer.slice(0), res, rej));
-        const ch = audioBuf.getChannelData(0);
-        let sumSquares = 0;
-        const step = Math.max(1, Math.floor(ch.length / 8000));
-        let count = 0;
-        for (let i = 0; i < ch.length; i += step) {
-          sumSquares += ch[i] * ch[i];
-          count++;
-        }
-        measuredRms = Math.sqrt(sumSquares / Math.max(1, count));
-      } catch (err) {
-        measuredRms = null;
-      }
-
+    function extractVideoMetadataAndThumb(file) {
       return new Promise((resolve) => {
+        let isDone = false;
+        const finish = (data) => {
+          if (isDone) return;
+          isDone = true;
+          clearTimeout(timeoutId);
+          resolve(data);
+        };
+
         const video = document.createElement('video');
-        video.preload = 'auto';
-        video.muted = true; // Temporary muted for silent thumbnail extraction
+        video.preload = 'metadata';
+        video.muted = true;
         video.playsInline = true;
         video.loop = true;
         const url = URL.createObjectURL(file);
         video.src = url;
 
-        video.onloadeddata = () => {
+        // Hard safety timeout of 2.0s: guarantees upload queue never hangs even on slow decoders
+        const timeoutId = setTimeout(() => {
+          finish({
+            thumbUrl: '',
+            videoEl: video,
+            duration: video.duration || 5.0
+          });
+        }, 2000);
+
+        video.onloadedmetadata = () => {
           video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
         };
 
         video.onseeked = () => {
-          const c = document.createElement('canvas');
-          c.width = 428;
-          c.height = 484;
-          const cx = c.getContext('2d');
-          const vw = video.videoWidth || 640;
-          const vh = video.videoHeight || 480;
-          const scale = Math.max(c.width / vw, c.height / vh);
-          const dw = vw * scale;
-          const dh = vh * scale;
-          cx.drawImage(video, (c.width - dw) / 2, (c.height - dw) / 2, dw, dh);
-          const thumbUrl = c.toDataURL('image/jpeg', 0.85);
+          try {
+            const c = document.createElement('canvas');
+            c.width = 428;
+            c.height = 484;
+            const cx = c.getContext('2d');
+            const vw = video.videoWidth || 640;
+            const vh = video.videoHeight || 480;
+            const scale = Math.max(c.width / vw, c.height / vh);
+            const dw = vw * scale;
+            const dh = vh * scale;
+            cx.drawImage(video, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+            const thumbUrl = c.toDataURL('image/jpeg', 0.85);
 
-          // Restore unmuted audio state for master video playback
-          video.muted = false;
-          video.volume = 0.8;
-          video.currentTime = 0;
+            // Restore unmuted audio state for master video playback (calibrated to 80% BGM)
+            video.muted = false;
+            video.volume = VIDEO_TARGET_RATIO;
+            video.currentTime = 0;
 
-          resolve({
-            thumbUrl,
-            videoEl: video,
-            duration: video.duration || 5.0,
-            measuredRms: measuredRms
-          });
+            finish({
+              thumbUrl,
+              videoEl: video,
+              duration: video.duration || 5.0
+            });
+          } catch (e) {
+            finish({ thumbUrl: '', videoEl: video, duration: video.duration || 5.0 });
+          }
         };
 
         video.onerror = () => {
-          resolve({ thumbUrl: '', videoEl: video, duration: 0, measuredRms: null });
+          finish({ thumbUrl: '', videoEl: video, duration: 0 });
         };
       });
     }
