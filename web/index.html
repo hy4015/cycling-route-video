@@ -335,15 +335,7 @@
 
         <!-- 16:9 Aspect Ratio Master Canvas Monitor Container -->
         <div class="relative w-full aspect-[16/9] bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl group">
-          <canvas id="monitorMasterCanvas" width="1920" height="1080" class="w-full h-full object-contain bg-[#0b0f19]"></canvas>
-          
-          <!-- Floating Play Overlay if paused -->
-          <div id="monitorPlayOverlay" class="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer transition hover:bg-black/25">
-            <button id="overlayPlayBtn" class="w-14 h-14 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-xl shadow-rose-500/40 hover:scale-105 transition">
-              <svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
-            </button>
-            <span class="text-xs text-slate-200 mt-2 font-medium tracking-wide">点击预览</span>
-          </div>
+          <canvas id="monitorMasterCanvas" width="1920" height="1080" class="w-full h-full object-contain bg-[#0b0f19] cursor-pointer" title="点击画面可直接播放/暂停预览"></canvas>
         </div>
 
         <!-- Monitor Live Controls Bar -->
@@ -351,7 +343,7 @@
           <div class="flex items-center space-x-2.5">
             <button id="togglePlayBtn" class="p-1.5 px-3 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-medium flex items-center space-x-1.5 transition">
               <span id="togglePlayIcon">▶</span>
-              <span id="togglePlayText">播放预览</span>
+              <span id="togglePlayText">点击预览</span>
             </button>
             <button id="restartPlayBtn" class="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition" title="重新从头播放">
               <span>⏮ 重头</span>
@@ -1333,7 +1325,6 @@
       if (previewTime >= totalDuration) previewTime = 0;
       isPreviewPlaying = true;
       lastTimestamp = performance.now();
-      document.getElementById('monitorPlayOverlay').classList.add('hidden');
       document.getElementById('togglePlayIcon').innerText = '⏸';
       document.getElementById('togglePlayText').innerText = '暂停预览';
 
@@ -1353,9 +1344,8 @@
 
     function pausePreview() {
       isPreviewPlaying = false;
-      document.getElementById('monitorPlayOverlay').classList.remove('hidden');
       document.getElementById('togglePlayIcon').innerText = '▶';
-      document.getElementById('togglePlayText').innerText = '播放预览';
+      document.getElementById('togglePlayText').innerText = '点击预览';
 
       audioPlayer.pause();
       mediaItems.forEach(item => {
@@ -1391,8 +1381,7 @@
       animFrameId = requestAnimationFrame(previewLoop);
     }
 
-    document.getElementById('overlayPlayBtn').addEventListener('click', startPreview);
-    document.getElementById('monitorPlayOverlay').addEventListener('click', startPreview);
+    masterCanvas.addEventListener('click', togglePreviewPlayback);
     document.getElementById('togglePlayBtn').addEventListener('click', togglePreviewPlayback);
     document.getElementById('restartPlayBtn').addEventListener('click', () => {
       previewTime = 0;
