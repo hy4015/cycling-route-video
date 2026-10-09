@@ -328,13 +328,10 @@
       </section>
 
       <!-- Generate Actions -->
-      <div class="flex flex-col sm:flex-row gap-3 pt-2">
-        <button id="generateWebBtn" class="flex-1 py-4 px-6 rounded-xl font-bold bg-gradient-to-r from-rose-500 via-rose-600 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25 transition flex items-center justify-center space-x-2 text-base">
+      <div class="pt-2">
+        <button id="generateWebBtn" class="w-full py-4 px-6 rounded-xl font-bold bg-gradient-to-r from-rose-500 via-rose-600 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg shadow-rose-500/25 transition flex items-center justify-center space-x-2 text-base cursor-pointer">
           <svg class="w-5 h-5 animate-spin hidden" id="spinnerIcon" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
           <span id="genBtnText">⚡ 浏览器端一键渲染导出 (MP4)</span>
-        </button>
-        <button id="copyCliBtn" class="py-4 px-6 rounded-xl font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition flex items-center justify-center space-x-2 text-sm">
-          <span>📋 复制本地 GPU 渲染命令</span>
         </button>
       </div>
 
@@ -2147,16 +2144,6 @@
       };
     });
 
-    document.getElementById('copyCliBtn').addEventListener('click', () => {
-      const titleArg = customRouteTitle !== 'CYCLING ROUTE RECAP' ? ` --hud-title "${customRouteTitle}"` : '';
-      const introArg = customIntroTitle !== 'MEMORIES ON THE ROAD · 沿途风光与光影纪实' ? ` --intro-title "${customIntroTitle}"` : '';
-      const mapArg = currentMapStyle !== 'satellite' ? ` --map-style ${currentMapStyle}` : '';
-      const filmArg = currentFilmStyle !== 'portra400' ? ` --film-style ${currentFilmStyle}` : '';
-      const cmd = `cd cycling-route-video\npython3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default${titleArg}${introArg}${mapArg}${filmArg}`;
-      navigator.clipboard.writeText(cmd).then(() => {
-        alert("已复制本地 GPU 渲染命令到剪贴板！\n\n📌 运行说明：\n1. 请先在终端进入项目目录：cd cycling-route-video\n2. 首次使用请安装依赖：pip install -r requirements.txt\n3. 执行命令即可跑满硬件加速！\n\n命令详情：\n" + cmd);
-      });
-    });
 
     // Enforce viewport strictly stays at top (Step 1) on initial load and refresh
     function enforceScrollToTop() {
