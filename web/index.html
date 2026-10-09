@@ -205,7 +205,7 @@
           <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
           <div>
             <span class="font-semibold">防浏览器崩溃规格限制：</span>
-            图片单张不超过 <strong class="text-white">10MB</strong>；视频单个不超过 <strong class="text-white">100MB</strong> 且时长不超过 <strong class="text-white">10秒</strong>（如需处理无限制大片，可使用桌面端 .dmg）。
+            图片单张不超过 <strong class="text-white">10MB</strong>；视频单个不超过 <strong class="text-white">100MB</strong> 且时长不超过 <strong class="text-white">10秒</strong>。
           </div>
         </div>
 
@@ -382,16 +382,6 @@
               <span>⬇️ 点击直接下载 MP4 视频</span>
             </a>
           </div>
-        </div>
-
-        <!-- Quick Architecture Summary Card -->
-        <div class="mt-5 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-2">
-          <div class="font-semibold text-slate-300 flex items-center space-x-1.5">
-            <span>💡</span>
-            <span>关于方案 B 与 方案 C 的使用推荐：</span>
-          </div>
-          <p>• <strong>网页版 (Cloudflare Pages)</strong>：适合日常短途、几十公里郊游骑行，单张图片 $\le$10MB，短视频 $\le$100MB/10s，免装任何软件一键秒出片。</p>
-          <p>• <strong>macOS 桌面端 (.dmg)</strong>：适合数百公里或多日长途大片、几十 GB 原片直接喂入，吃满 Apple Silicon 硬件加速。</p>
         </div>
 
       </div>
@@ -850,7 +840,7 @@
       }
 
       if (rejected.length > 0) {
-        alert("部分素材超过浏览器防崩溃限制，已自动过滤：\n\n" + rejected.join("\n") + "\n\n💡 提示：如需使用原画质长视频大文件，可使用 macOS 桌面端 .dmg 进行满血硬件渲染！");
+        alert("部分素材超过规格限制，已自动过滤：\n\n" + rejected.join("\n"));
       }
 
       updateUnifiedLoudness();
