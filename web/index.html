@@ -424,9 +424,10 @@
         overlayDim: 'rgba(11, 15, 25, 0.28)'
       },
       dark: {
-        name: '暗黑极简 (Carto Dark)',
-        getTileUrl: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/dark_all/${z}/${x}/${y}.png`,
-        overlayDim: 'rgba(11, 15, 25, 0.12)'
+        name: '暗黑极简 (Esri Dark Canvas)',
+        getTileUrl: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${z}/${y}/${x}`,
+        fallbackUrl: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/dark_all/${z}/${x}/${y}.png`,
+        overlayDim: 'rgba(11, 15, 25, 0.10)'
       },
       topo: {
         name: '等高地形 (Esri Topo)',
@@ -434,9 +435,10 @@
         overlayDim: 'rgba(11, 15, 25, 0.20)'
       },
       light: {
-        name: '明亮街道 (Carto Light)',
-        getTileUrl: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/light_all/${z}/${x}/${y}.png`,
-        overlayDim: 'rgba(11, 15, 25, 0.30)'
+        name: '明亮街道 (Esri World Street)',
+        getTileUrl: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`,
+        fallbackUrl: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/light_all/${z}/${x}/${y}.png`,
+        overlayDim: 'rgba(11, 15, 25, 0.22)'
       }
     };
 
@@ -626,7 +628,8 @@
       const promises = [];
       for (let tx = minTx; tx <= maxTx; tx++) {
         for (let ty = minTy; ty <= maxTy; ty++) {
-          const url = provider.getTileUrl(zoom, tx, ty);
+          const primaryUrl = provider.getTileUrl(zoom, tx, ty);
+          const fallbackUrl = provider.fallbackUrl ? provider.fallbackUrl(zoom, tx, ty) : null;
           const sx = W_HALF / 2 + (tx * 256 - cxWorld);
           const sy = CH / 2 + (ty * 256 - cyWorld);
 
@@ -636,13 +639,30 @@
             img.onload = () => {
               if (token === mapTileLoadToken) {
                 mapTileCtx.drawImage(img, sx, sy, 256, 256);
+                isMapTilesReady = true;
+                renderFrameAt(previewTime);
               }
               resolve();
             };
             img.onerror = () => {
-              resolve(); // ignore failed tile gracefully
+              if (fallbackUrl) {
+                const fbImg = new Image();
+                fbImg.crossOrigin = 'anonymous';
+                fbImg.onload = () => {
+                  if (token === mapTileLoadToken) {
+                    mapTileCtx.drawImage(fbImg, sx, sy, 256, 256);
+                    isMapTilesReady = true;
+                    renderFrameAt(previewTime);
+                  }
+                  resolve();
+                };
+                fbImg.onerror = () => resolve();
+                fbImg.src = fallbackUrl;
+              } else {
+                resolve();
+              }
             };
-            img.src = url;
+            img.src = primaryUrl;
           });
           promises.push(p);
         }
