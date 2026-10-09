@@ -22,7 +22,7 @@ from engine.audio_mixer import mix_master_audio
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 
-def run_pipeline(gpx_path, media_dir, output_path, bgm_choice='default', duration=None, fps=30, hud_title='CYCLING ROUTE RECAP', map_style='satellite', film_style='portra400'):
+def run_pipeline(gpx_path, media_dir, output_path, bgm_choice='default', duration=None, fps=30, hud_title='CYCLING ROUTE RECAP', intro_title='MEMORIES ON THE ROAD · 沿途风光与光影纪实', map_style='satellite', film_style='portra400'):
     t0 = time.time()
     print("=" * 60)
     print("🚴 Universal Cycling Route Video Generator")
@@ -141,7 +141,7 @@ def run_pipeline(gpx_path, media_dir, output_path, bgm_choice='default', duratio
     for f_idx in range(total_frames):
         t = f_idx / float(fps)
         y_scroll = get_y_scroll(t)
-        frame_im = render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, (mask_a, mask_b), film_fonts, film_style=film_style)
+        frame_im = render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, (mask_a, mask_b), film_fonts, film_style=film_style, hud_title=hud_title, intro_title=intro_title)
         proc_right.stdin.write(frame_im.tobytes())
     proc_right.stdin.close()
     proc_right.wait()
@@ -193,13 +193,14 @@ def main():
     parser.add_argument('--bgm', default="default", help="BGM choice (default, coastal, epic or custom file path)")
     parser.add_argument('--duration', type=float, default=None, help="Video duration in seconds")
     parser.add_argument('--hud-title', default="CYCLING ROUTE RECAP", help="Custom HUD title text")
+    parser.add_argument('--intro-title', default="MEMORIES ON THE ROAD · 沿途风光与光影纪实", help="Custom film leader intro subtitle")
     parser.add_argument('--map-style', default="satellite", choices=['satellite', 'dark', 'topo', 'light'], help="Map underlay style")
     parser.add_argument('--film-style', default="portra400", choices=['portra400', 'gold200', 'fuji400', 'ilford400'], help="35mm Film stock theme")
     
     args = parser.parse_args()
     run_pipeline(
         args.gpx, args.media, args.output, args.bgm, args.duration,
-        hud_title=args.hud_title, map_style=args.map_style, film_style=args.film_style
+        hud_title=args.hud_title, intro_title=args.intro_title, map_style=args.map_style, film_style=args.film_style
     )
 
 if __name__ == '__main__':

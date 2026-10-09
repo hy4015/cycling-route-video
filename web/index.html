@@ -143,7 +143,22 @@
             </div>
           </div>
 
-          <!-- 2. Map Underlay Style Selector -->
+          <!-- 2. Filmstrip Intro Title Customization (胶卷片头副标题) -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+              <span class="flex items-center space-x-1.5">
+                <span>🎬 胶卷片头说明文字</span>
+                <span class="text-slate-500 text-[11px]">(片头卡片呈现，主标题沿用路线抬头)</span>
+              </span>
+              <span class="text-[11px] text-amber-400 font-medium">支持自定义修改</span>
+            </label>
+            <div class="relative flex items-center">
+              <input type="text" id="introTitleInput" value="MEMORIES ON THE ROAD · 沿途风光与光影纪实" placeholder="输入胶卷片头说明，如：光影定格 · 35mm 胶卷骑行光影纪录" class="w-full bg-slate-900/90 border border-slate-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 pr-14 text-sm text-white placeholder-slate-500 focus:outline-none transition">
+              <button type="button" id="resetIntroTitleBtn" class="absolute right-3 text-xs text-slate-400 hover:text-white px-1.5 py-0.5 rounded bg-slate-800 transition" title="恢复默认">重置</button>
+            </div>
+          </div>
+
+          <!-- 3. Map Underlay Style Selector -->
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-2 flex items-center justify-between">
               <span>🗺️ 地图底图样式 (真实卫星与高保真地形)</span>
@@ -169,7 +184,7 @@
             </div>
           </div>
 
-          <!-- 3. Film Stock Theme Selector -->
+          <!-- 4. Film Stock Theme Selector -->
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-2 flex items-center justify-between">
               <span>🎞️ 35mm 胶卷风格 (经典胶片标与色调)</span>
@@ -495,6 +510,7 @@
 
     // Custom HUD Title & Style Settings
     let customRouteTitle = 'CYCLING ROUTE RECAP';
+    let customIntroTitle = 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
     let currentMapStyle = 'satellite';
     let currentFilmStyle = 'portra400';
 
@@ -1181,6 +1197,8 @@
     // Style & Personalization UI Event Handlers
     const titleInput = document.getElementById('routeTitleInput');
     const resetTitleBtn = document.getElementById('resetTitleBtn');
+    const introTitleInput = document.getElementById('introTitleInput');
+    const resetIntroTitleBtn = document.getElementById('resetIntroTitleBtn');
 
     titleInput.addEventListener('input', (e) => {
       customRouteTitle = e.target.value.trim() || 'CYCLING ROUTE RECAP';
@@ -1190,6 +1208,17 @@
     resetTitleBtn.addEventListener('click', () => {
       customRouteTitle = 'CYCLING ROUTE RECAP';
       titleInput.value = 'CYCLING ROUTE RECAP';
+      renderFrameAt(previewTime);
+    });
+
+    introTitleInput.addEventListener('input', (e) => {
+      customIntroTitle = e.target.value.trim() || 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
+      renderFrameAt(previewTime);
+    });
+
+    resetIntroTitleBtn.addEventListener('click', () => {
+      customIntroTitle = 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
+      introTitleInput.value = 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
       renderFrameAt(previewTime);
     });
 
@@ -1385,19 +1414,13 @@
       }
       ctx.restore();
 
-      // B. RIGHT HALF: 35mm FILMSTRIP (960 to 1920)
+      // B. RIGHT HALF: 35mm FILMSTRIP & INTRO LEADER (960 to 1920)
       ctx.save();
       ctx.beginPath();
       ctx.rect(W_HALF, 0, W_HALF, CH);
       ctx.clip();
 
-      ctx.fillStyle = '#0e1117';
-      ctx.fillRect(W_HALF, 0, W_HALF, CH);
-
-      // Sprocket hole track margins (subtle film edge tone)
-      ctx.fillStyle = '#141824';
-      ctx.fillRect(W_HALF, 0, 38, CH);
-      ctx.fillRect(CW - 38, 0, 38, CH);
+      const film = FILM_CONFIGS[currentFilmStyle] || FILM_CONFIGS.portra400;
 
       // Film scroll offset calculation
       const numWindows = Math.max(1, mediaItems.length);
@@ -1405,100 +1428,145 @@
       const vScroll = totalDuration > 0 ? yTotal / totalDuration : 0;
       const yScroll = vScroll * t;
 
-      // 1. Draw Media Windows
-      mediaItems.forEach((item, k) => {
-        const wy = Math.round(k * STRIDE - yScroll + 298);
-        const isVisible = (wy + WIN_H > 0 && wy < CH);
+      // First window top position (Film Leader Boundary)
+      const wy0 = Math.round(0 * STRIDE - yScroll + 298);
 
-        // Active Audio Management: Only visible video plays sound at normalized 80% loudness
-        if (item.isVideo && item.videoEl) {
-          if (isVisible) {
-            if (isPreviewPlaying && item.videoEl.paused) {
-              item.videoEl.play().catch(e => console.warn(e));
-            }
-            if (item.audioEnabled !== false) {
-              const centerY = wy + WIN_H / 2;
-              const dist = Math.abs(centerY - CH / 2);
-              const fade = Math.max(0.2, Math.min(1.0, 1.0 - (dist - 180) / 360));
-              const effectiveGain = (item.normalizedGain || 1.0) * fade;
+      // 1. Backgrounds: Film Base (below wy0) & Intro Leader Slate (above wy0)
+      if (wy0 < CH) {
+        // Authentic 35mm dark film base
+        ctx.fillStyle = '#0e1117';
+        ctx.fillRect(W_HALF, Math.max(0, wy0), W_HALF, CH - Math.max(0, wy0));
 
-              if (item.gainNode) {
-                item.gainNode.gain.value = effectiveGain;
+        // Sprocket hole track margins
+        ctx.fillStyle = '#141824';
+        const trackTop = Math.max(0, wy0);
+        ctx.fillRect(W_HALF, trackTop, 38, CH - trackTop);
+        ctx.fillRect(CW - 38, trackTop, 38, CH - trackTop);
+      }
+
+      if (wy0 > 0) {
+        // Elegant cinematic slate for the Film Leader zone (above photo 0)
+        const leaderH = Math.min(CH, wy0);
+        const leaderGrad = ctx.createLinearGradient(W_HALF, wy0 - 320, W_HALF, wy0);
+        leaderGrad.addColorStop(0, '#090d16');
+        leaderGrad.addColorStop(1, '#0e121d');
+        ctx.fillStyle = leaderGrad;
+        ctx.fillRect(W_HALF, 0, W_HALF, leaderH);
+      }
+
+      // 2. Draw Media Windows
+      if (mediaItems.length === 0) {
+        // Placeholder Window 0
+        const rx = W_HALF + 44, rw = 872, rh = WIN_H;
+        if (wy0 + rh > 0 && wy0 < CH) {
+          ctx.save();
+          ctx.beginPath();
+          roundRect(ctx, rx, wy0, rw, rh, 20, false, false);
+          ctx.clip();
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(rx, wy0, rw, rh);
+          ctx.fillStyle = '#64748b';
+          ctx.font = '20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('等待在左侧步骤 3 批量添加照片或短视频', rx + rw / 2, wy0 + rh / 2);
+          ctx.restore();
+        }
+      } else {
+        mediaItems.forEach((item, k) => {
+          const wy = Math.round(k * STRIDE - yScroll + 298);
+          const isVisible = (wy + WIN_H > 0 && wy < CH);
+
+          // Active Audio Management: Only visible video plays sound at normalized 80% loudness
+          if (item.isVideo && item.videoEl) {
+            if (isVisible) {
+              if (isPreviewPlaying && item.videoEl.paused) {
+                item.videoEl.play().catch(e => console.warn(e));
               }
-              item.videoEl.muted = false;
-              item.videoEl.volume = Math.max(0, Math.min(1.0, VIDEO_TARGET_RATIO * effectiveGain));
+              if (item.audioEnabled !== false) {
+                const centerY = wy + WIN_H / 2;
+                const dist = Math.abs(centerY - CH / 2);
+                const fade = Math.max(0.2, Math.min(1.0, 1.0 - (dist - 180) / 360));
+                const effectiveGain = (item.normalizedGain || 1.0) * fade;
+
+                if (item.gainNode) {
+                  item.gainNode.gain.value = effectiveGain;
+                }
+                item.videoEl.muted = false;
+                item.videoEl.volume = Math.max(0, Math.min(1.0, VIDEO_TARGET_RATIO * effectiveGain));
+              } else {
+                item.videoEl.muted = true;
+                if (item.gainNode) item.gainNode.gain.value = 0;
+                item.videoEl.volume = 0;
+              }
             } else {
+              // Off-screen: silence
               item.videoEl.muted = true;
               if (item.gainNode) item.gainNode.gain.value = 0;
               item.videoEl.volume = 0;
             }
+          }
+
+          if (!isVisible) return;
+
+          const rx = W_HALF + 44;
+          const rw = 872;
+          const rh = WIN_H;
+
+          ctx.save();
+          ctx.beginPath();
+          roundRect(ctx, rx, wy, rw, rh, 20, false, false);
+          ctx.clip();
+
+          if (item.isVideo && item.videoEl) {
+            // Live playing video
+            try {
+              const v = item.videoEl;
+              const vw = v.videoWidth || 640;
+              const vh = v.videoHeight || 480;
+              const s = Math.max(rw / vw, rh / vh);
+              const dw = vw * s;
+              const dh = vh * s;
+              ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+            } catch (e) {
+              if (item.imgEl && item.imgEl.complete) ctx.drawImage(item.imgEl, rx, wy, rw, rh);
+            }
+          } else if (item.imgEl && item.imgEl.complete) {
+            // Image
+            const img = item.imgEl;
+            const iw = img.naturalWidth || rw;
+            const ih = img.naturalHeight || rh;
+            const s = Math.max(rw / iw, rh / ih);
+            const dw = iw * s;
+            const dh = ih * s;
+            ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
           } else {
-            // Off-screen: silence
-            item.videoEl.muted = true;
-            if (item.gainNode) item.gainNode.gain.value = 0;
-            item.videoEl.volume = 0;
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(rx, wy, rw, rh);
           }
-        }
+          ctx.restore();
+        });
+      }
 
-        if (!isVisible) return;
-
-        const rx = W_HALF + 44;
-        const rw = 872;
-        const rh = WIN_H;
-
-        ctx.save();
-        ctx.beginPath();
-        roundRect(ctx, rx, wy, rw, rh, 20, false, false);
-        ctx.clip();
-
-        if (item.isVideo && item.videoEl) {
-          // Live playing video
-          try {
-            const v = item.videoEl;
-            const vw = v.videoWidth || 640;
-            const vh = v.videoHeight || 480;
-            const s = Math.max(rw / vw, rh / vh);
-            const dw = vw * s;
-            const dh = vh * s;
-            ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
-          } catch (e) {
-            if (item.imgEl && item.imgEl.complete) ctx.drawImage(item.imgEl, rx, wy, rw, rh);
-          }
-        } else if (item.imgEl && item.imgEl.complete) {
-          // Image
-          const img = item.imgEl;
-          const iw = img.naturalWidth || rw;
-          const ih = img.naturalHeight || rh;
-          const s = Math.max(rw / iw, rh / ih);
-          const dw = iw * s;
-          const dh = ih * s;
-          ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
-        } else {
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(rx, wy, rw, rh);
-        }
-        ctx.restore();
-      });
-
-      // 2. Vintage Sprocket Holes (Luminous light perforations)
+      // 3. Vintage Sprocket Holes (Luminous light perforations strictly below wy0!)
       [W_HALF + 8, CW - 30].forEach(sx => {
         let ySp = -(Math.round(yScroll) % 80);
         while (ySp < CH + 80) {
-          ctx.fillStyle = '#f8fafc';
-          ctx.strokeStyle = '#94a3b8';
-          ctx.lineWidth = 1.5;
-          roundRect(ctx, sx, ySp + 10, 22, 40, 5, true, true);
+          if (ySp + 10 >= wy0 - 15) {
+            ctx.fillStyle = '#f8fafc';
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.5;
+            roundRect(ctx, sx, ySp + 10, 22, 40, 5, true, true);
+          }
           ySp += 80;
         }
       });
 
-      // 3. Film Stock Gap Markings (Guaranteed strictly in 44px gaps!)
-      const film = FILM_CONFIGS[currentFilmStyle] || FILM_CONFIGS.portra400;
-      for (let k = -1; k <= numWindows + 1; k++) {
+      // 4. Film Stock Gap Markings (Strictly below photo 0, starting from k = 0)
+      for (let k = 0; k <= numWindows + 1; k++) {
         const wy = Math.round(k * STRIDE - yScroll + 298);
         const gapY = wy + WIN_H + 13;
         if (gapY >= -30 && gapY <= CH + 30) {
-          const fnum = Math.max(0, k + 1);
+          const fnum = Math.max(1, k + 1);
 
           // Left Brand
           ctx.fillStyle = film.accent;
@@ -1529,13 +1597,79 @@
         }
       }
 
-      // Vertical Separation Lines
-      ctx.strokeStyle = '#2d3748';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(W_HALF + 38, 0); ctx.lineTo(W_HALF + 38, CH);
-      ctx.moveTo(CW - 38, 0); ctx.lineTo(CW - 38, CH);
-      ctx.stroke();
+      // 5. Vertical Separation Lines (strictly below wy0)
+      if (wy0 < CH) {
+        ctx.strokeStyle = '#2d3748';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const lineTop = Math.max(0, wy0);
+        ctx.moveTo(W_HALF + 38, lineTop); ctx.lineTo(W_HALF + 38, CH);
+        ctx.moveTo(CW - 38, lineTop); ctx.lineTo(CW - 38, CH);
+        ctx.stroke();
+      }
+
+      // 6. FILM LEADER INTRO TITLE CARD (Rendered directly above Photo 0)
+      if (wy0 > -50) {
+        const cx = W_HALF + W_HALF / 2;
+
+        // A. Top Film Stock Pill Badge
+        const badgeY = wy0 - 180;
+        if (badgeY > -40) {
+          const badgeText = `🎞️ ${film.brand} · LEADER NO. 01`;
+          ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          const bw = ctx.measureText(badgeText).width;
+
+          ctx.fillStyle = 'rgba(20, 24, 36, 0.9)';
+          ctx.strokeStyle = film.accent;
+          ctx.lineWidth = 1.2;
+          roundRect(ctx, cx - bw / 2 - 14, badgeY - 14, bw + 28, 28, 14, true, true);
+
+          ctx.fillStyle = film.accent;
+          ctx.textAlign = 'center';
+          ctx.fillText(badgeText, cx, badgeY + 5);
+        }
+
+        // B. Main Route Title (包含线路左上角抬头文字)
+        const titleY = wy0 - 120;
+        if (titleY > -40) {
+          ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+          ctx.shadowBlur = 12;
+          ctx.fillText(customRouteTitle, cx, titleY);
+          ctx.shadowBlur = 0;
+        }
+
+        // C. Intro Subtitle (默认片头文字，支持自定义修改)
+        const subY = wy0 - 70;
+        if (subY > -40) {
+          ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText(customIntroTitle, cx, subY);
+        }
+
+        // D. Bottom Divider & Roll Transition Notch
+        const divY = wy0 - 22;
+        if (divY > -20) {
+          ctx.strokeStyle = 'rgba(51, 65, 85, 0.7)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx - 260, divY);
+          ctx.lineTo(cx + 260, divY);
+          ctx.stroke();
+
+          const markerText = '— START OF ROLL · FRAME 01 ▶ —';
+          ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+          ctx.textAlign = 'center';
+          const mw = ctx.measureText(markerText).width;
+          ctx.fillStyle = '#0e121d';
+          ctx.fillRect(cx - mw / 2 - 8, divY - 8, mw + 16, 16);
+          ctx.fillStyle = '#64748b';
+          ctx.fillText(markerText, cx, divY + 4);
+        }
+      }
 
       ctx.restore();
 
@@ -1891,9 +2025,10 @@
 
     document.getElementById('copyCliBtn').addEventListener('click', () => {
       const titleArg = customRouteTitle !== 'CYCLING ROUTE RECAP' ? ` --hud-title "${customRouteTitle}"` : '';
+      const introArg = customIntroTitle !== 'MEMORIES ON THE ROAD · 沿途风光与光影纪实' ? ` --intro-title "${customIntroTitle}"` : '';
       const mapArg = currentMapStyle !== 'satellite' ? ` --map-style ${currentMapStyle}` : '';
       const filmArg = currentFilmStyle !== 'portra400' ? ` --film-style ${currentFilmStyle}` : '';
-      const cmd = `cd cycling-route-video\npython3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default${titleArg}${mapArg}${filmArg}`;
+      const cmd = `cd cycling-route-video\npython3 -m engine.pipeline --gpx "./my_route.gpx" --media "./my_photos" --output "./recap_video.mp4" --bgm default${titleArg}${introArg}${mapArg}${filmArg}`;
       navigator.clipboard.writeText(cmd).then(() => {
         alert("已复制本地 GPU 渲染命令到剪贴板！\n\n📌 运行说明：\n1. 请先在终端进入项目目录：cd cycling-route-video\n2. 首次使用请安装依赖：pip install -r requirements.txt\n3. 执行命令即可跑满硬件加速！\n\n命令详情：\n" + cmd);
       });
