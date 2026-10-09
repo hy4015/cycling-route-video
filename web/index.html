@@ -1188,6 +1188,11 @@
       ctx.fillStyle = '#0e1117';
       ctx.fillRect(W_HALF, 0, W_HALF, CH);
 
+      // Sprocket hole track margins (subtle film edge tone)
+      ctx.fillStyle = '#141824';
+      ctx.fillRect(W_HALF, 0, 38, CH);
+      ctx.fillRect(CW - 38, 0, 38, CH);
+
       // Film scroll offset calculation
       const numWindows = Math.max(1, mediaItems.length);
       const yTotal = Math.max(0, (numWindows - 1) * STRIDE);
@@ -1237,13 +1242,13 @@
         ctx.restore();
       });
 
-      // 2. Vintage Sprocket Holes
+      // 2. Vintage Sprocket Holes (Luminous light perforations)
       [W_HALF + 8, CW - 30].forEach(sx => {
         let ySp = -(Math.round(yScroll) % 80);
         while (ySp < CH + 80) {
-          ctx.fillStyle = '#040508';
-          ctx.strokeStyle = '#232832';
-          ctx.lineWidth = 1;
+          ctx.fillStyle = '#f8fafc';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1.5;
           roundRect(ctx, sx, ySp + 10, 22, 40, 5, true, true);
           ySp += 80;
         }
@@ -1287,7 +1292,7 @@
       }
 
       // Vertical Separation Lines
-      ctx.strokeStyle = '#282d37';
+      ctx.strokeStyle = '#2d3748';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(W_HALF + 38, 0); ctx.lineTo(W_HALF + 38, CH);

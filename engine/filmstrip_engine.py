@@ -90,12 +90,15 @@ def render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, m
             im_R = Image.open(flist_R[flocal % len(flist_R)])
             canvas.paste(im_R, (44 + W_SUB + GAP_MID, wy), mask_b)
             
-    # 2. Draw sprocket film border holes
+    # 2. Draw sprocket film border tracks & holes (luminous light perforations)
+    draw.rectangle([(0, 0), (38, H)], fill=(20, 24, 36))
+    draw.rectangle([(W_HALF - 38, 0), (W_HALF, H)], fill=(20, 24, 36))
+
     for x_sprocket in [8, 930]:
         y_sp = -(int(y_scroll) % 80)
         while y_sp < H + 80:
             draw.rounded_rectangle((x_sprocket, y_sp + 10, x_sprocket + 22, y_sp + 50),
-                                   radius=5, fill=(4, 5, 8), outline=(35, 40, 50), width=1)
+                                   radius=5, fill=(248, 250, 252), outline=(148, 163, 184), width=1)
             y_sp += 80
             
     # 3. 35mm Film Stock Gap Typography (strictly in the 44px gap)
@@ -126,7 +129,7 @@ def render_filmstrip_frame(t, y_scroll, windows, window_frames, fps, v_actual, m
             draw.polygon([(arrow_x, arrow_y - 5), (arrow_x + 6, arrow_y), (arrow_x, arrow_y + 5)], fill=accent_col)
             
     # 4. Vertical Separation Guide Lines
-    draw.line([(38, 0), (38, H)], fill=(40, 45, 55), width=2)
-    draw.line([(922, 0), (922, H)], fill=(40, 45, 55), width=2)
+    draw.line([(38, 0), (38, H)], fill=(45, 55, 72), width=2)
+    draw.line([(922, 0), (922, H)], fill=(45, 55, 72), width=2)
     
     return canvas
