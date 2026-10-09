@@ -1117,8 +1117,14 @@
       grid.innerHTML = '';
 
       mediaItems.forEach((item, idx) => {
+        const isActive = (activePreviewIndex === idx);
         const card = document.createElement('div');
-        card.className = 'draggable-card aspect-square bg-slate-800 rounded-xl flex items-center justify-center text-[10px] text-slate-400 relative overflow-hidden border border-slate-700/80 shadow group';
+        card.className = `draggable-card aspect-square bg-slate-800 rounded-xl flex items-center justify-center text-[10px] text-slate-400 relative overflow-hidden border shadow group cursor-pointer transition-all ${
+          isActive 
+            ? 'border-rose-500 ring-2 ring-rose-500 shadow-lg shadow-rose-500/30' 
+            : 'border-slate-700/80 hover:border-slate-500'
+        }`;
+        card.title = item.isVideo ? '点击在右侧监视器预览并播放此视频 (可拖拽排序)' : '点击在右侧监视器查看此照片 (可拖拽排序)';
         card.setAttribute('draggable', 'true');
         card.dataset.index = idx;
 
@@ -1184,8 +1190,10 @@
         };
         card.appendChild(delBtn);
 
-        // HTML5 Drag and Drop events
+        // HTML5 Drag and Drop & Click events
+        let wasDragging = false;
         card.addEventListener('dragstart', (e) => {
+          wasDragging = true;
           draggedIndex = idx;
           card.classList.add('dragging');
           e.dataTransfer.effectAllowed = 'move';
@@ -1194,6 +1202,7 @@
         card.addEventListener('dragend', () => {
           card.classList.remove('dragging');
           document.querySelectorAll('.draggable-card').forEach(c => c.classList.remove('drag-over'));
+          setTimeout(() => { wasDragging = false; }, 150);
         });
 
         card.addEventListener('dragover', (e) => {
@@ -1213,16 +1222,140 @@
           if (draggedIndex !== null && draggedIndex !== targetIndex) {
             const movedItem = mediaItems.splice(draggedIndex, 1)[0];
             mediaItems.splice(targetIndex, 0, movedItem);
+            if (activePreviewIndex === draggedIndex) {
+              activePreviewIndex = targetIndex;
+            }
             renderMediaGrid();
             renderFrameAt(previewTime);
           }
+        });
+
+        // Click card to audition / preview in right screen
+        card.addEventListener('click', () => {
+          if (wasDragging) return;
+          previewSingleMediaItem(idx);
         });
 
         grid.appendChild(card);
       });
     }
 
+    let singleClipAnimId = null;
+    let isSingleClipPlaying = false;
+    let activePreviewIndex = null;
+
+    function stopSingleClipPreview() {
+      if (singleClipAnimId) {
+        cancelAnimationFrame(singleClipAnimId);
+        singleClipAnimId = null;
+      }
+      isSingleClipPlaying = false;
+      mediaItems.forEach(item => {
+        if (item.isVideo && item.videoEl) {
+          item.videoEl.pause();
+          item.videoEl.muted = true;
+          item.videoEl.onended = null;
+        }
+      });
+    }
+
+    // Audition single media item on the monitor screen
+    function previewSingleMediaItem(idx) {
+      if (idx < 0 || idx >= mediaItems.length) return;
+      const item = mediaItems[idx];
+      activePreviewIndex = idx;
+
+      // Stop any ongoing general preview or single-clip preview
+      pausePreview();
+      stopSingleClipPreview();
+
+      // Highlight active card
+      document.querySelectorAll('.draggable-card').forEach((card, i) => {
+        if (i === idx) {
+          card.classList.add('border-rose-500', 'ring-2', 'ring-rose-500', 'shadow-lg', 'shadow-rose-500/30');
+          card.classList.remove('border-slate-700/80');
+        } else {
+          card.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500', 'shadow-lg', 'shadow-rose-500/30');
+          card.classList.add('border-slate-700/80');
+        }
+      });
+
+      // Calculate time so this item is centered in the filmstrip
+      const targetTime = mediaItems.length > 1
+        ? (idx / (mediaItems.length - 1)) * totalDuration
+        : 0;
+
+      previewTime = targetTime;
+
+      // Update scrubber & time display
+      const scrubber = document.getElementById('previewScrubber');
+      if (scrubber) scrubber.value = totalDuration > 0 ? (previewTime / totalDuration) * 100 : 0;
+      const m = Math.floor(previewTime / 60);
+      const s = Math.floor(previewTime % 60);
+      const tm = Math.floor(totalDuration / 60);
+      const ts = Math.floor(totalDuration % 60);
+      document.getElementById('timeDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} / ${tm.toString().padStart(2, '0')}:${ts.toString().padStart(2, '0')}`;
+
+      // Render the frame immediately
+      renderFrameAt(previewTime);
+
+      // If it's a video: play through once with sound if not muted
+      if (item.isVideo && item.videoEl) {
+        const v = item.videoEl;
+        getAudioContext();
+        attachVideoAudioNodes(item);
+
+        const isAudOn = (item.audioEnabled !== false);
+        v.loop = false;
+        v.muted = !isAudOn;
+        if (isAudOn) {
+          v.volume = Math.min(1.0, VIDEO_TARGET_RATIO * (item.normalizedGain || 1.0));
+          if (item.gainNode) {
+            item.gainNode.gain.value = (item.normalizedGain || 1.0);
+          }
+        } else {
+          v.volume = 0;
+          if (item.gainNode) {
+            item.gainNode.gain.value = 0;
+          }
+        }
+
+        v.currentTime = 0;
+        isSingleClipPlaying = true;
+
+        const loop = () => {
+          if (!isSingleClipPlaying || v.paused) return;
+          if (v.duration > 0 && v.currentTime >= v.duration - 0.05) {
+            stopSingleClipPreview();
+            renderFrameAt(previewTime);
+            return;
+          }
+          renderFrameAt(previewTime);
+          singleClipAnimId = requestAnimationFrame(loop);
+        };
+
+        v.onended = () => {
+          stopSingleClipPreview();
+          renderFrameAt(previewTime);
+        };
+
+        v.play().then(() => {
+          singleClipAnimId = requestAnimationFrame(loop);
+        }).catch(err => {
+          console.warn('Single clip play warning:', err);
+          stopSingleClipPreview();
+          renderFrameAt(previewTime);
+        });
+      }
+    }
+
     function deleteMediaItem(idx) {
+      if (activePreviewIndex === idx) {
+        stopSingleClipPreview();
+        activePreviewIndex = null;
+      } else if (activePreviewIndex !== null && activePreviewIndex > idx) {
+        activePreviewIndex--;
+      }
       const item = mediaItems[idx];
       if (item && item.videoEl) {
         item.videoEl.pause();
@@ -1238,6 +1371,8 @@
     }
 
     document.getElementById('clearMediaBtn').addEventListener('click', () => {
+      stopSingleClipPreview();
+      activePreviewIndex = null;
       mediaItems.forEach(item => {
         if (item.videoEl) {
           item.videoEl.pause();
@@ -1649,7 +1784,7 @@
           // Active Audio Management: Only visible video plays sound at normalized 80% loudness
           if (item.isVideo && item.videoEl) {
             if (isVisible) {
-              if (isPreviewPlaying && item.videoEl.paused) {
+              if (isPreviewPlaying && !isSingleClipPlaying && item.videoEl.paused) {
                 item.videoEl.play().catch(e => console.warn(e));
               }
               if (item.audioEnabled !== false) {
@@ -1689,8 +1824,8 @@
 
           if (item.isVideo) {
             let drawn = false;
-            // 1. Live video frame when preview is actively playing
-            if (isPreviewPlaying && item.videoEl && item.videoEl.videoWidth > 0 && item.videoEl.readyState >= 2) {
+            // 1. Live video frame when preview is actively playing or single clip is auditioning
+            if ((isPreviewPlaying || isSingleClipPlaying) && item.videoEl && item.videoEl.videoWidth > 0 && !item.videoEl.paused && item.videoEl.readyState >= 2) {
               try {
                 const v = item.videoEl;
                 const vw = v.videoWidth;
@@ -1945,6 +2080,13 @@
     }
 
     function startPreview() {
+      stopSingleClipPreview();
+      activePreviewIndex = null;
+      document.querySelectorAll('.draggable-card').forEach(c => {
+        c.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500', 'shadow-rose-500/30');
+        c.classList.add('border-slate-700/80');
+      });
+
       if (previewTime >= totalDuration) previewTime = 0;
       isPreviewPlaying = true;
       lastTimestamp = performance.now();
@@ -2002,6 +2144,7 @@
 
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
+          item.videoEl.loop = true; // Restore loop for full recap playback
           item.videoEl.currentTime = 0;
           item.videoEl.play().catch(e => console.warn(e));
         }
@@ -2011,6 +2154,7 @@
     }
 
     function pausePreview() {
+      stopSingleClipPreview();
       isPreviewPlaying = false;
       document.getElementById('togglePlayIcon').innerText = '▶';
       document.getElementById('togglePlayText').innerText = '点击预览';
@@ -2061,6 +2205,12 @@
     masterCanvas.addEventListener('click', togglePreviewPlayback);
     document.getElementById('togglePlayBtn').addEventListener('click', togglePreviewPlayback);
     document.getElementById('restartPlayBtn').addEventListener('click', () => {
+      stopSingleClipPreview();
+      activePreviewIndex = null;
+      document.querySelectorAll('.draggable-card').forEach(c => {
+        c.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500', 'shadow-rose-500/30');
+        c.classList.add('border-slate-700/80');
+      });
       previewTime = 0;
       try { audioPlayer.currentTime = 0; } catch (err) {}
       renderFrameAt(0);
@@ -2068,6 +2218,12 @@
     });
 
     document.getElementById('previewScrubber').addEventListener('input', (e) => {
+      stopSingleClipPreview();
+      activePreviewIndex = null;
+      document.querySelectorAll('.draggable-card').forEach(c => {
+        c.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500', 'shadow-rose-500/30');
+        c.classList.add('border-slate-700/80');
+      });
       previewTime = (parseFloat(e.target.value) / 100.0) * totalDuration;
       try {
         if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
