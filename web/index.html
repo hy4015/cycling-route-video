@@ -78,6 +78,92 @@
     #mediaPreviewGrid::-webkit-scrollbar-thumb:hover {
       background: rgba(148, 163, 184, 0.8);
     }
+
+    /* Pseudo-fullscreen (Theater Mode) for Video Live Monitor Preview Card */
+    #previewCard.pseudo-fullscreen {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      z-index: 9999 !important;
+      margin: 0 !important;
+      padding: 14px 24px !important;
+      border-radius: 0 !important;
+      border: none !important;
+      background: #070a13 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      box-shadow: none !important;
+    }
+
+    #previewCard.pseudo-fullscreen #previewHeader {
+      flex-shrink: 0;
+      width: 100%;
+      max-width: 1540px;
+      margin: 0 auto 10px auto;
+    }
+
+    #previewCard.pseudo-fullscreen #canvasViewport {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      max-width: 1540px;
+      margin: 0 auto;
+      aspect-ratio: auto !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    #previewCard.pseudo-fullscreen #monitorMasterCanvas {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto !important;
+      height: auto !important;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(51, 65, 85, 0.4);
+    }
+
+    #previewCard.pseudo-fullscreen #monitorControlsBar {
+      flex-shrink: 0;
+      width: 100%;
+      max-width: 1540px;
+      margin: 10px auto 0 auto;
+      padding: 12px 20px;
+      background: rgba(15, 23, 42, 0.92) !important;
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(51, 65, 85, 0.8) !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    #previewCard.pseudo-fullscreen #controlsScrubberContainer {
+      max-width: none !important;
+      flex: 1 1 auto;
+    }
+
+    #previewCard.pseudo-fullscreen #previewScrubber {
+      width: 100% !important;
+    }
+
+    #previewCard.pseudo-fullscreen #renderProgressContainer {
+      width: 100%;
+      max-width: 1540px;
+      margin: 8px auto 0 auto;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body class="bg-darkbg text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand selection:text-white">
@@ -491,35 +577,46 @@
     <div class="lg:col-span-5 space-y-6">
       
       <!-- Video Live Monitor Preview Card -->
-      <div class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl sticky top-24">
-        <div class="flex items-center justify-between mb-4">
+      <div id="previewCard" class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-xl sticky top-24 transition-all duration-200">
+        <div id="previewHeader" class="flex items-center justify-between mb-4">
           <h2 class="font-semibold text-base text-white flex items-center space-x-2">
             <span>📺</span>
-            <span>预览合成效果</span>
+            <span id="previewTitleText">预览合成效果</span>
           </h2>
-          <span id="filmStyleBadge" class="text-xs px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">
-            方案 1 柯达 Portra 400
-          </span>
+          <div class="flex items-center space-x-2">
+            <span id="filmStyleBadge" class="text-xs px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">
+              方案 1 柯达 Portra 400
+            </span>
+            <button id="toggleFullscreenBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-600 text-xs flex items-center space-x-1.5 transition cursor-pointer shadow" title="全屏沉浸预览 (Esc 退出，快捷键 F)">
+              <span id="fullscreenIcon">⛶</span>
+              <span id="fullscreenText">全屏预览</span>
+            </button>
+          </div>
         </div>
 
         <!-- 16:9 Aspect Ratio Master Canvas Monitor Container -->
-        <div class="relative w-full aspect-[16/9] bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl group">
-          <canvas id="monitorMasterCanvas" width="1920" height="1080" class="w-full h-full object-contain bg-[#0b0f19] cursor-pointer" title="点击画面可直接播放/暂停预览"></canvas>
+        <div id="canvasViewport" class="relative w-full aspect-[16/9] bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl group flex items-center justify-center">
+          <canvas id="monitorMasterCanvas" width="1920" height="1080" class="w-full h-full object-contain bg-[#0b0f19] cursor-pointer" title="点击画面播放/暂停 (双击切换全屏)"></canvas>
         </div>
 
         <!-- Monitor Live Controls Bar -->
-        <div class="mt-3 p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
-          <div class="flex items-center space-x-2.5">
-            <button id="togglePlayBtn" class="p-1.5 px-3 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-medium flex items-center space-x-1.5 transition">
+        <div id="monitorControlsBar" class="mt-3 p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+          <div class="flex items-center space-x-2.5 shrink-0">
+            <button id="togglePlayBtn" class="p-1.5 px-3 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-medium flex items-center space-x-1.5 transition cursor-pointer">
               <span id="togglePlayIcon">▶</span>
               <span id="togglePlayText">点击预览</span>
             </button>
-            <button id="restartPlayBtn" class="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition" title="重新从头播放">
+            <button id="restartPlayBtn" class="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer" title="重新从头播放">
               <span>⏮ 重头</span>
             </button>
-            <span id="timeDisplay" class="font-mono text-slate-400">00:00 / 00:30</span>
+            <span id="timeDisplay" class="font-mono text-slate-400 whitespace-nowrap">00:00 / 00:30</span>
           </div>
-          <input type="range" id="previewScrubber" min="0" max="100" value="0" class="w-28 sm:w-36 accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+          <div id="controlsScrubberContainer" class="flex items-center space-x-3 flex-1 max-w-xs sm:max-w-md justify-end ml-3">
+            <input type="range" id="previewScrubber" min="0" max="100" value="0" class="w-full accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+            <button id="controlBarFullscreenBtn" type="button" class="p-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-600 transition flex items-center text-xs shrink-0 cursor-pointer" title="全屏预览 (Esc 退出，快捷键 F)">
+              <span id="controlBarFullscreenIcon">⛶</span>
+            </button>
+          </div>
         </div>
 
         <!-- Render Detailed Progress Bar with Step Log & Direct Download -->
@@ -3166,6 +3263,88 @@
           audioPlayer.currentTime = previewTime % audioPlayer.duration;
         }
       } catch (err) {}
+    });
+
+    // 5.1 Pseudo-Fullscreen (Theater Mode) Controller
+    let isPseudoFullscreen = false;
+    const previewCard = document.getElementById('previewCard');
+    const toggleFullscreenBtn = document.getElementById('toggleFullscreenBtn');
+    const controlBarFullscreenBtn = document.getElementById('controlBarFullscreenBtn');
+    const fullscreenIcon = document.getElementById('fullscreenIcon');
+    const fullscreenText = document.getElementById('fullscreenText');
+    const controlBarFullscreenIcon = document.getElementById('controlBarFullscreenIcon');
+
+    function setPseudoFullscreen(enable) {
+      isPseudoFullscreen = !!enable;
+      if (isPseudoFullscreen) {
+        previewCard.classList.add('pseudo-fullscreen');
+        document.body.style.overflow = 'hidden';
+        if (fullscreenIcon) fullscreenIcon.innerText = '⤓';
+        if (fullscreenText) fullscreenText.innerText = '退出全屏 (Esc)';
+        if (controlBarFullscreenIcon) controlBarFullscreenIcon.innerText = '⤓';
+        if (toggleFullscreenBtn) {
+          toggleFullscreenBtn.classList.remove('bg-slate-800', 'text-slate-300');
+          toggleFullscreenBtn.classList.add('bg-rose-500/25', 'text-rose-300', 'border-rose-500/50');
+        }
+        if (controlBarFullscreenBtn) {
+          controlBarFullscreenBtn.classList.remove('bg-slate-800', 'text-slate-300');
+          controlBarFullscreenBtn.classList.add('bg-rose-500/25', 'text-rose-300', 'border-rose-500/50');
+          controlBarFullscreenBtn.title = '退出全屏 (Esc)';
+        }
+      } else {
+        previewCard.classList.remove('pseudo-fullscreen');
+        document.body.style.overflow = '';
+        if (fullscreenIcon) fullscreenIcon.innerText = '⛶';
+        if (fullscreenText) fullscreenText.innerText = '全屏预览';
+        if (controlBarFullscreenIcon) controlBarFullscreenIcon.innerText = '⛶';
+        if (toggleFullscreenBtn) {
+          toggleFullscreenBtn.classList.add('bg-slate-800', 'text-slate-300');
+          toggleFullscreenBtn.classList.remove('bg-rose-500/25', 'text-rose-300', 'border-rose-500/50');
+        }
+        if (controlBarFullscreenBtn) {
+          controlBarFullscreenBtn.classList.add('bg-slate-800', 'text-slate-300');
+          controlBarFullscreenBtn.classList.remove('bg-rose-500/25', 'text-rose-300', 'border-rose-500/50');
+          controlBarFullscreenBtn.title = '全屏预览 (Esc 退出，快捷键 F)';
+        }
+      }
+      renderFrameAt(previewTime);
+    }
+
+    function togglePseudoFullscreen() {
+      setPseudoFullscreen(!isPseudoFullscreen);
+    }
+
+    if (toggleFullscreenBtn) {
+      toggleFullscreenBtn.addEventListener('click', togglePseudoFullscreen);
+    }
+    if (controlBarFullscreenBtn) {
+      controlBarFullscreenBtn.addEventListener('click', togglePseudoFullscreen);
+    }
+
+    // Keyboard shortcut handlers: Esc to exit, F to toggle, Space to play/pause
+    window.addEventListener('keydown', (e) => {
+      // Do not capture shortcuts when editing text inputs
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        if (e.key === 'Escape' && isPseudoFullscreen) {
+          setPseudoFullscreen(false);
+        }
+        return;
+      }
+
+      if (e.key === 'Escape' && isPseudoFullscreen) {
+        setPseudoFullscreen(false);
+      } else if (e.key === 'f' || e.key === 'F') {
+        togglePseudoFullscreen();
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        togglePreviewPlayback();
+      }
+    });
+
+    // Double click master canvas to toggle pseudo-fullscreen
+    masterCanvas.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      togglePseudoFullscreen();
     });
 
     // 6. Genuine Web Video Rendering with Detailed Stage Progress and Direct Download
