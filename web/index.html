@@ -1405,7 +1405,7 @@
           video.preload = 'auto'; // Load frame buffers for instant canvas capture
           video.muted = true; // Essential for autoplay & decode policies
           video.playsInline = true;
-          video.loop = true;
+          video.loop = false; // Managed strictly by state machine: false during audio playback, true only when muted
           video.src = url;
 
           const pool = document.getElementById('videoWorkerPool');
@@ -1528,9 +1528,9 @@
             img.src = thumbUrl;
             item.thumbImg = img;
 
-            // Restore audio for preview playback
-            video.muted = (item.audioEnabled === false);
-            video.volume = Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0));
+            // Keep muted in background until triggered upon bottom entrance in renderFrameAt
+            video.muted = true;
+            video.volume = 0;
 
             updateCardInGrid(item);
             renderFrameAt(previewTime);
@@ -1764,13 +1764,23 @@
           sndBtn.innerHTML = isAudOn ? '🔊' : '🔇';
           sndBtn.onclick = (e) => {
             e.stopPropagation();
-            item.audioEnabled = item.audioEnabled === false ? true : false;
-            if (item.gainNode) {
-              item.gainNode.gain.value = item.audioEnabled ? (item.normalizedGain || 1.0) : 0;
-            }
-            if (item.videoEl) {
-              item.videoEl.muted = !item.audioEnabled;
-              item.videoEl.volume = item.audioEnabled ? Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0)) : 0;
+            item.audioEnabled = (item.audioEnabled === false);
+            if (!item.audioEnabled) {
+              if (item.gainNode) item.gainNode.gain.value = 0;
+              if (item.videoEl) {
+                item.videoEl.muted = true;
+                item.videoEl.volume = 0;
+              }
+            } else {
+              item._audioPlayedOnce = false;
+              if (item._playState === 'playing_audio') {
+                const effGain = item.normalizedGain || 1.0;
+                if (item.gainNode) item.gainNode.gain.value = effGain;
+                if (item.videoEl) {
+                  item.videoEl.muted = false;
+                  item.videoEl.volume = 1.0;
+                }
+              }
             }
             updateUnifiedLoudness();
             renderMediaGrid();
@@ -1855,6 +1865,8 @@
         if (item.isVideo && item.videoEl) {
           item.videoEl.pause();
           item.videoEl.muted = true;
+          if (item.gainNode) item.gainNode.gain.value = 0;
+          item.videoEl.volume = 0;
           item.videoEl.onended = null;
         }
       });
@@ -2462,20 +2474,15 @@
         // Window k top coordinate: wy = k * STRIDE - yScroll + 298
         // Top reaches screen bottom (CH = 1080) when wy <= 1080:
         // k * STRIDE - vScroll * t + 298 <= 1080 => vScroll * t >= k * STRIDE - 782
-        let lastAudioEnd = 0;
         const itemSchedules = mediaItems.map((item, k) => {
           const tEnter = (vScroll > 0)
             ? Math.max(0, (k * STRIDE - 782) / vScroll)
             : 0;
-          const clipDur = item.duration || 5.0;
-          let tAudioStart = tEnter;
-          let tAudioEnd = tEnter + clipDur;
-
-          if (item.isVideo && item.audioEnabled !== false) {
-            tAudioStart = Math.max(tEnter, lastAudioEnd);
-            tAudioEnd = tAudioStart + clipDur;
-            lastAudioEnd = tAudioEnd;
-          }
+          const clipDur = (item.isVideo && item.videoEl && isFinite(item.videoEl.duration) && item.videoEl.duration > 0)
+            ? item.videoEl.duration
+            : (item.duration && isFinite(item.duration) && item.duration > 0 ? item.duration : 5.0);
+          const tAudioStart = tEnter;
+          const tAudioEnd = tAudioStart + clipDur;
           return { tEnter, tAudioStart, tAudioEnd, clipDur };
         });
 
@@ -2488,9 +2495,26 @@
           const tAudioEnd = sched.tAudioEnd;
           const clipDur = sched.clipDur;
 
-          // Video Playback & Audio Synchronization (Bottom Entrance Trigger + Single-Play Audio + Loop Video)
+          // Video Playback & Audio Synchronization (Bottom Entrance Trigger + Strict Single-Play Audio + Seamless Visual Loop)
           const isLive = (isPreviewPlaying || isExportRecording);
           if (item.isVideo && item.videoEl) {
+            // Attach ended listener once to guarantee instantaneous audio shutoff and smooth loop restart
+            if (!item._endedHookAttached) {
+              item._endedHookAttached = true;
+              item.videoEl.addEventListener('ended', () => {
+                if (item._playState === 'playing_audio') {
+                  item._audioPlayedOnce = true;
+                  item._playState = 'loop_muted';
+                  item.videoEl.muted = true;
+                  if (item.gainNode) item.gainNode.gain.value = 0;
+                  item.videoEl.volume = 0;
+                  item.videoEl.loop = true;
+                  try { item.videoEl.currentTime = 0; } catch (e) {}
+                  item.videoEl.play().catch(e => console.warn('Ended loop restart:', e));
+                }
+              });
+            }
+
             if (isSingleClipPlaying && activePreviewIndex === k) {
               // Auditioning single clip: handled by playSingleClip loop
               if (item.audioEnabled !== false) activeVideoSoundPlaying = true;
@@ -2499,12 +2523,14 @@
 
               if (elapsedFromEnter < 0) {
                 // Phase 1 (未从下方出现): 处于屏幕底沿下方之外，保持静音待命
+                item._audioPlayedOnce = false; // Reset so that upon entering, audio can play once
                 if (item._playState !== 'before_enter') {
                   item._playState = 'before_enter';
                   if (!item.videoEl.paused) item.videoEl.pause();
                   item.videoEl.muted = true;
                   if (item.gainNode) item.gainNode.gain.value = 0;
                   item.videoEl.volume = 0;
+                  item.videoEl.loop = false;
                   if (Math.abs(item.videoEl.currentTime) > 0.05) {
                     try { item.videoEl.currentTime = 0; } catch (e) {}
                   }
@@ -2519,18 +2545,53 @@
                   item.videoEl.volume = 0;
                 }
               } else {
-                // Phase 2 & 3: 已经在屏幕内（从下方出现后，画面全程循环播放）
-                const isAudioActive = (item.audioEnabled !== false && t >= tAudioStart && t < tAudioEnd);
+                // In Viewport!
+                const audioElapsed = Math.max(0, t - tAudioStart);
+                const isAudioFinished = (
+                  item._audioPlayedOnce === true ||
+                  item.audioEnabled === false ||
+                  t >= tAudioEnd ||
+                  item.videoEl.ended ||
+                  (item.videoEl.currentTime >= (clipDur - 0.08) && audioElapsed >= 0.5) ||
+                  audioElapsed >= (clipDur - 0.05)
+                );
 
-                if (isAudioActive) {
-                  // Phase 2 (下方出现并释放原声): 从第1帧开始播放，原声同步释放（只播放一遍）
+                if (isAudioFinished) {
+                  // Phase 3 (音频播放完毕 1 次): 画面继续无缝循环播放，但原声永久静音！
+                  item._audioPlayedOnce = true;
+
+                  if (item._playState !== 'loop_muted') {
+                    item._playState = 'loop_muted';
+                    item.videoEl.muted = true; // 彻底静音
+                    if (item.gainNode) item.gainNode.gain.value = 0;
+                    item.videoEl.volume = 0;
+                    item.videoEl.loop = true; // 画面始终循环播放
+                    // 若视频停留在末尾或处于暂停状态，重置到第0帧继续循环
+                    if (item.videoEl.ended || item.videoEl.currentTime >= clipDur - 0.1 || item.videoEl.paused) {
+                      try { item.videoEl.currentTime = 0; } catch (e) {}
+                      item.videoEl.play().catch(e => console.warn('Loop muted play:', e));
+                    }
+                  } else {
+                    // 常规循环期间的双重防御守卫：确保 loop=true、muted=true，零音频输出
+                    if (!item.videoEl.loop) item.videoEl.loop = true;
+                    if (!item.videoEl.muted) item.videoEl.muted = true;
+                    if (item.videoEl.volume > 0) item.videoEl.volume = 0;
+                    if (item.gainNode && item.gainNode.gain.value > 0) item.gainNode.gain.value = 0;
+                    if (item.videoEl.paused) {
+                      item.videoEl.play().catch(e => console.warn('Loop keep-alive:', e));
+                    }
+                  }
+                  // activeVideoSoundPlaying 保持 false，BGM 音量平滑恢复
+                } else {
+                  // Phase 2 (下方出现并释放原声): 从第1帧开始播放，原声同步释放（严格只播放 1 遍！）
                   if (item._playState !== 'playing_audio') {
                     item._playState = 'playing_audio';
-                    item.videoEl.loop = true; // 画面循环播放
-                    const audioElapsed = Math.max(0, t - tAudioStart);
+                    // 关键：在播放原声音频期间，必须关闭原生 loop，绝不允许底层解码器自动重播音频！
+                    item.videoEl.loop = false;
+
                     // 首次进入时精准对齐到第1帧
                     if (audioElapsed < 0.25 || Math.abs(item.videoEl.currentTime - audioElapsed) > 0.4) {
-                      try { item.videoEl.currentTime = audioElapsed % clipDur; } catch (e) {}
+                      try { item.videoEl.currentTime = Math.max(0, audioElapsed); } catch (e) {}
                     }
 
                     // 原声同步释放
@@ -2546,22 +2607,23 @@
                     if (item.videoEl.paused) {
                       item.videoEl.play().catch(e => console.warn('Enter play:', e));
                     }
+                  } else {
+                    // 保持单次音频播放状态
+                    item.videoEl.loop = false;
+                    item.videoEl.muted = false;
+                    const effGain = item.normalizedGain || 1.0;
+                    if (item.gainNode) {
+                      item.gainNode.gain.value = effGain;
+                      item.videoEl.volume = 1.0;
+                    } else {
+                      item.videoEl.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * effGain));
+                    }
+                    if (item.videoEl.paused) {
+                      item.videoEl.play().catch(e => console.warn('Enter play:', e));
+                    }
                   }
 
                   activeVideoSoundPlaying = true; // 触发 BGM 动态闪避 ducking
-                } else {
-                  // Phase 3 (音频播放完毕后，或未在音频区间): 画面继续循环播放，但原声静音
-                  if (item._playState !== 'loop_muted') {
-                    item._playState = 'loop_muted';
-                    item.videoEl.loop = true; // 画面始终循环播放
-                    item.videoEl.muted = true; // 但原声静音
-                    if (item.gainNode) item.gainNode.gain.value = 0;
-                    item.videoEl.volume = 0;
-                    if (item.videoEl.paused) {
-                      item.videoEl.play().catch(e => console.warn('Loop muted play:', e));
-                    }
-                  }
-                  // activeVideoSoundPlaying 保持 false，BGM 音量平滑恢复
                 }
               }
             } else {
@@ -2577,6 +2639,11 @@
               const targetTime = elapsedFromEnter < 0 ? 0 : (elapsedFromEnter % clipDur);
               if (Math.abs(item.videoEl.currentTime - targetTime) > 0.08) {
                 try { item.videoEl.currentTime = targetTime; } catch (e) {}
+              }
+              if (t < tAudioStart) {
+                item._audioPlayedOnce = false;
+              } else if (t >= tAudioEnd) {
+                item._audioPlayedOnce = true;
               }
             }
           }
@@ -2930,7 +2997,9 @@
         if (item.isVideo) {
           attachVideoAudioNodes(item);
           if (item.videoEl) {
-            item.videoEl.muted = (item.audioEnabled === false);
+            item.videoEl.muted = true;
+            if (item.gainNode) item.gainNode.gain.value = 0;
+            item.videoEl.volume = 0;
           }
         }
       });
@@ -2966,6 +3035,9 @@
       mediaItems.forEach(item => {
         if (item.isVideo && item.videoEl) {
           item._playState = null;
+          if (previewTime <= 0.05) {
+            item._audioPlayedOnce = false;
+          }
         }
       });
 
@@ -3054,6 +3126,12 @@
       previewTime = 0;
       audioPlayer.volume = bgmVolumeRatio;
       try { audioPlayer.currentTime = 0; } catch (err) {}
+      mediaItems.forEach(item => {
+        if (item.isVideo) {
+          item._audioPlayedOnce = false;
+          item._playState = null;
+        }
+      });
       renderFrameAt(0);
       startPreview();
     });
@@ -3171,8 +3249,12 @@
               item.videoEl.currentTime = 0;
               item.videoEl.pause();
               item.videoEl.muted = true;
+              item.videoEl.loop = false;
+              if (item.gainNode) item.gainNode.gain.value = 0;
+              item.videoEl.volume = 0;
             }
           }
+          item._audioPlayedOnce = false;
           item._playState = null;
         });
         updateUnifiedLoudness();
