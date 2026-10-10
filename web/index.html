@@ -588,7 +588,7 @@
               方案 1 柯达 Portra 400
             </span>
             <button id="toggleFullscreenBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-600 text-xs flex items-center space-x-1.5 transition cursor-pointer shadow" title="全屏沉浸预览 (Esc 退出，快捷键 F)">
-              <span id="fullscreenIcon">⛶</span>
+              <span id="fullscreenIcon" class="inline-flex items-center"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span>
               <span id="fullscreenText">全屏预览</span>
             </button>
           </div>
@@ -614,7 +614,7 @@
           <div id="controlsScrubberContainer" class="flex items-center space-x-3 flex-1 max-w-xs sm:max-w-md justify-end ml-3">
             <input type="range" id="previewScrubber" min="0" max="100" value="0" class="w-full accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
             <button id="controlBarFullscreenBtn" type="button" class="p-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-600 transition flex items-center text-xs shrink-0 cursor-pointer" title="全屏预览 (Esc 退出，快捷键 F)">
-              <span id="controlBarFullscreenIcon">⛶</span>
+              <span id="controlBarFullscreenIcon" class="inline-flex items-center"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span>
             </button>
           </div>
         </div>
@@ -3297,17 +3297,21 @@
     const fullscreenText = document.getElementById('fullscreenText');
     const controlBarFullscreenIcon = document.getElementById('controlBarFullscreenIcon');
 
+    const ICON_FULLSCREEN = `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+    const ICON_EXIT_FULLSCREEN = `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>`;
+
     function setPseudoFullscreen(enable) {
       isPseudoFullscreen = !!enable;
       if (isPseudoFullscreen) {
         previewCard.classList.add('pseudo-fullscreen');
         document.body.style.overflow = 'hidden';
-        if (fullscreenIcon) fullscreenIcon.innerText = '⤓';
+        if (fullscreenIcon) fullscreenIcon.innerHTML = ICON_EXIT_FULLSCREEN;
         if (fullscreenText) fullscreenText.innerText = '退出全屏 (Esc)';
-        if (controlBarFullscreenIcon) controlBarFullscreenIcon.innerText = '⤓';
+        if (controlBarFullscreenIcon) controlBarFullscreenIcon.innerHTML = ICON_EXIT_FULLSCREEN;
         if (toggleFullscreenBtn) {
           toggleFullscreenBtn.classList.remove('bg-slate-800', 'text-slate-300');
           toggleFullscreenBtn.classList.add('bg-rose-500/25', 'text-rose-300', 'border-rose-500/50');
+          toggleFullscreenBtn.title = '退出全屏预览 (Esc 退出，快捷键 F)';
         }
         if (controlBarFullscreenBtn) {
           controlBarFullscreenBtn.classList.remove('bg-slate-800', 'text-slate-300');
@@ -3317,12 +3321,13 @@
       } else {
         previewCard.classList.remove('pseudo-fullscreen');
         document.body.style.overflow = '';
-        if (fullscreenIcon) fullscreenIcon.innerText = '⛶';
+        if (fullscreenIcon) fullscreenIcon.innerHTML = ICON_FULLSCREEN;
         if (fullscreenText) fullscreenText.innerText = '全屏预览';
-        if (controlBarFullscreenIcon) controlBarFullscreenIcon.innerText = '⛶';
+        if (controlBarFullscreenIcon) controlBarFullscreenIcon.innerHTML = ICON_FULLSCREEN;
         if (toggleFullscreenBtn) {
           toggleFullscreenBtn.classList.add('bg-slate-800', 'text-slate-300');
           toggleFullscreenBtn.classList.remove('bg-rose-500/25', 'text-rose-300', 'border-rose-500/50');
+          toggleFullscreenBtn.title = '全屏沉浸预览 (Esc 退出，快捷键 F)';
         }
         if (controlBarFullscreenBtn) {
           controlBarFullscreenBtn.classList.add('bg-slate-800', 'text-slate-300');
