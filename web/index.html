@@ -888,21 +888,23 @@
     // Curated Geographic Landmarks Database (Tier 1 Core Cities & Tier 2 Classic Towns / Passes / Milestones)
     const GEOGRAPHIC_LANDMARKS = [
       // === TAIWAN TIER 1 CITIES (一级核心城市/县市首府) ===
-      { name: "台北", tier: 1, lat: 25.0330, lon: 121.5654 },
-      { name: "新北", tier: 1, lat: 25.0124, lon: 121.4657 },
-      { name: "桃园", tier: 1, lat: 24.9936, lon: 121.3010 },
-      { name: "新竹", tier: 1, lat: 24.8039, lon: 120.9647 },
-      { name: "苗栗", tier: 1, lat: 24.5602, lon: 120.8214 },
-      { name: "台中", tier: 1, lat: 24.1477, lon: 120.6736 },
-      { name: "彰化", tier: 1, lat: 24.0818, lon: 120.5385 },
-      { name: "嘉义", tier: 1, lat: 23.4800, lon: 120.4491 },
-      { name: "台南", tier: 1, lat: 22.9997, lon: 120.2270 },
-      { name: "高雄", tier: 1, lat: 22.6273, lon: 120.3014 },
-      { name: "屏东", tier: 1, lat: 22.6761, lon: 120.4941 },
-      { name: "台东", tier: 1, lat: 22.7583, lon: 121.1444 },
-      { name: "花莲", tier: 1, lat: 23.9872, lon: 121.6016 },
-      { name: "宜兰", tier: 1, lat: 24.7570, lon: 121.7530 },
-      { name: "基隆", tier: 1, lat: 25.1276, lon: 121.7392 },
+      { name: "台北市", tier: 1, lat: 25.0330, lon: 121.5654 },
+      { name: "新北市", tier: 1, lat: 25.0124, lon: 121.4657 },
+      { name: "基隆市", tier: 1, lat: 25.1276, lon: 121.7392 },
+      { name: "桃园市", tier: 1, lat: 24.9936, lon: 121.3010 },
+      { name: "新竹市", tier: 1, lat: 24.8039, lon: 120.9647 },
+      { name: "苗栗县", tier: 1, lat: 24.5602, lon: 120.8214 },
+      { name: "台中市", tier: 1, lat: 24.1477, lon: 120.6736 },
+      { name: "彰化县", tier: 1, lat: 24.0818, lon: 120.5385 },
+      { name: "南投县", tier: 1, lat: 23.9037, lon: 120.6859 },
+      { name: "云林县", tier: 1, lat: 23.7092, lon: 120.4313 },
+      { name: "嘉义市", tier: 1, lat: 23.4800, lon: 120.4491 },
+      { name: "台南市", tier: 1, lat: 22.9997, lon: 120.2270 },
+      { name: "高雄市", tier: 1, lat: 22.6273, lon: 120.3014 },
+      { name: "屏东县", tier: 1, lat: 22.6761, lon: 120.4941 },
+      { name: "台东市", tier: 1, lat: 22.7583, lon: 121.1444 },
+      { name: "花莲市", tier: 1, lat: 23.9872, lon: 121.6016 },
+      { name: "宜兰市", tier: 1, lat: 24.7570, lon: 121.7530 },
 
       // === TAIWAN TIER 2 TOWNS & MILESTONES (二级特色城镇/著名驿站) ===
       { name: "南崁", tier: 2, lat: 25.0472, lon: 121.2910 },
@@ -1019,27 +1021,125 @@
       { name: "广州", tier: 1, lat: 23.1291, lon: 113.2644 }
     ];
 
+    // Highway Shields (省道主线与滨海/快速公路盾牌)
+    const GEOGRAPHIC_ROADS = [
+      { name: "台1", lat: 23.4500, lon: 120.3500, color: "#166534" },
+      { name: "台9", lat: 23.3500, lon: 121.2800, color: "#166534" },
+      { name: "台11", lat: 23.0000, lon: 121.3800, color: "#1e40af" },
+      { name: "台2", lat: 25.1800, lon: 121.7800, color: "#1e40af" },
+      { name: "台61", lat: 24.5200, lon: 120.7200, color: "#b91c1c" },
+      { name: "台26", lat: 22.0800, lon: 120.6800, color: "#1e40af" }
+    ];
+
+    // Geographic Features (山脉与海峡大字)
+    const GEOGRAPHIC_FEATURES = [
+      { text: "中 央 山 脉", lat: 23.8000, lon: 121.0500, color: "rgba(203, 213, 225, 0.85)", font: "bold 13px sans-serif" },
+      { text: "▲ 玉山 3952m", lat: 23.4700, lon: 120.9573, color: "#fbbf24", font: "bold 12px sans-serif" },
+      { text: "台 湾 海 峡", subText: "TAIWAN STRAIT", lat: 23.8000, lon: 119.8000, color: "rgba(148, 163, 184, 0.75)", font: "bold 14px sans-serif" },
+      { text: "太 平 洋", subText: "PACIFIC OCEAN", lat: 23.4000, lon: 121.9000, color: "rgba(148, 163, 184, 0.75)", font: "bold 14px sans-serif" },
+      { text: "巴 士 海 峡", lat: 21.7500, lon: 120.7000, color: "rgba(148, 163, 184, 0.75)", font: "bold 14px sans-serif" }
+    ];
+
+    // Real Ride Stage Locations for Telemetry HUD
+    const LOCATION_STAGES = [
+      [0.0000, '桃园南崁 (起跑倒计时)'],
+      [0.0150, '新竹十七公里海岸线'],
+      [0.0450, '新竹城隍庙 (D1)'],
+      [0.0750, '苗栗后龙好望角大风车'],
+      [0.1200, '台中大甲镇澜宫'],
+      [0.1600, '彰化八卦山大佛'],
+      [0.1850, '西螺大桥·浊水溪 (D2)'],
+      [0.2200, '嘉义水上·北回归线 23.5°N'],
+      [0.2600, '台南赤嵌府城 (D3)'],
+      [0.3200, '高雄爱河·驳二特区'],
+      [0.3800, '屏东东港大鹏湾'],
+      [0.4200, '恒春古城南国 (D4)'],
+      [0.4600, '征服寿卡最高点 460m (D5)'],
+      [0.4900, '台东多良车站·太平洋'],
+      [0.5250, '台东知本温泉 (D5)'],
+      [0.5700, '花东纵谷天然走廊'],
+      [0.6000, '池上金黄稻浪·伯朗大道 (D6)'],
+      [0.6400, '花莲瑞穗温泉 (D6)'],
+      [0.6750, '193 最美林荫公路 (D7)'],
+      [0.7100, '花莲七星潭深蓝'],
+      [0.7300, '新城太鲁阁大门 (D7)'],
+      [0.7550, '拂晓破风·旧苏花险壁'],
+      [0.7800, '清水断崖绝壁 390m (D8)'],
+      [0.8150, '宜兰罗东夜市 (D8)'],
+      [0.8400, '旧草岭百年隧道 (D9)'],
+      [0.8750, '极东: 三貂角灯塔'],
+      [0.9050, '基隆港都夜色 (D9)'],
+      [0.9300, '极北: 富贵角灯塔 (D10)'],
+      [0.9550, '淡水金色水岸'],
+      [0.9850, '捷安特南崁店 (成功环台！)']
+    ];
+
+    function getStageLocationName(progress) {
+      let name = LOCATION_STAGES[0][1];
+      for (const [p, locName] of LOCATION_STAGES) {
+        if (progress >= p) name = locName;
+        else break;
+      }
+      return name;
+    }
+
+    let cachedRoadShields = [];
+    let cachedGeoFeatures = [];
+
+    function drawTextHalo(ctx, text, x, y, font, fillStyle, haloStyle = 'rgba(15, 23, 42, 0.95)', haloWidth = 3.5, align = 'left') {
+      ctx.save();
+      ctx.font = font;
+      ctx.textAlign = align;
+      ctx.strokeStyle = haloStyle;
+      ctx.lineWidth = haloWidth;
+      ctx.lineJoin = 'round';
+      ctx.miterLimit = 2;
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = fillStyle;
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    function drawHighwayShield(ctx, x, y, text, bgColor) {
+      const w = 32, h = 18;
+      ctx.save();
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, x - w / 2, y - h / 2, w, h, 4, true, true);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
     function computeRouteLandmarks() {
       cachedRouteLandmarks = [];
+      cachedRoadShields = [];
+      cachedGeoFeatures = [];
       if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
       const { pts, zoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon, totalDist } = gpxData;
+      const mcX = gpxData.mapScreenCenterX || 530;
+      const mcY = gpxData.mapScreenCenterY || (CH / 2);
 
       const latSpan = maxLat - minLat;
       const lonSpan = maxLon - minLon;
-      const latPad = Math.max(0.12, latSpan * 0.20);
-      const lonPad = Math.max(0.12, lonSpan * 0.20);
+      const latPad = Math.max(0.18, latSpan * 0.25);
+      const lonPad = Math.max(0.18, lonSpan * 0.25);
 
-      // Proximity threshold from route: up to 24km for long tours, scaled for shorter trips
+      // Proximity threshold from route: up to 24km for long tours
       const maxProximityKm = Math.min(24.0, Math.max(8.0, totalDist * 0.08));
 
       GEOGRAPHIC_LANDMARKS.forEach(lm => {
-        // 1. Broad Bounding Box Check
+        // Broad Bounding Box Check for regional relevance
         if (lm.lat < minLat - latPad || lm.lat > maxLat + latPad ||
             lm.lon < minLon - lonPad || lm.lon > maxLon + lonPad) {
           return;
         }
 
-        // 2. Efficient closest point search
+        // Efficient closest point search
         let minDist = Infinity;
         let closestIdx = 0;
         const step = pts.length > 4000 ? Math.floor(pts.length / 2000) : 1;
@@ -1062,20 +1162,48 @@
           }
         }
 
-        const allowedDist = lm.tier === 1 ? maxProximityKm : Math.min(16.0, maxProximityKm);
-        if (minDist <= allowedDist) {
-          const sx = W_HALF / 2 + (lon2pix(lm.lon, zoom) - cxWorld);
-          const sy = CH / 2 + (lat2pix(lm.lat, zoom) - cyWorld);
-          cachedRouteLandmarks.push({
-            name: lm.name,
-            tier: lm.tier,
-            lat: lm.lat,
-            lon: lm.lon,
-            minDistKm: minDist,
-            closestIdx: closestIdx,
-            closestProgress: closestIdx / (pts.length - 1),
-            screenX: sx,
-            screenY: sy
+        const sx = mcX + (lon2pix(lm.lon, zoom) - cxWorld);
+        const sy = mcY + (lat2pix(lm.lat, zoom) - cyWorld);
+        const isOnRoute = minDist <= maxProximityKm;
+
+        cachedRouteLandmarks.push({
+          name: lm.name,
+          tier: lm.tier,
+          lat: lm.lat,
+          lon: lm.lon,
+          isOnRoute: isOnRoute,
+          minDistKm: minDist,
+          closestIdx: closestIdx,
+          closestProgress: closestIdx / (pts.length - 1),
+          screenX: sx,
+          screenY: sy
+        });
+      });
+
+      // Highway shields projection
+      GEOGRAPHIC_ROADS.forEach(road => {
+        if (road.lat >= minLat - latPad && road.lat <= maxLat + latPad &&
+            road.lon >= minLon - lonPad && road.lon <= maxLon + lonPad) {
+          cachedRoadShields.push({
+            name: road.name,
+            color: road.color,
+            screenX: mcX + (lon2pix(road.lon, zoom) - cxWorld),
+            screenY: mcY + (lat2pix(road.lat, zoom) - cyWorld)
+          });
+        }
+      });
+
+      // Geographic features projection
+      GEOGRAPHIC_FEATURES.forEach(feat => {
+        if (feat.lat >= minLat - latPad && feat.lat <= maxLat + latPad &&
+            feat.lon >= minLon - lonPad && feat.lon <= maxLon + lonPad) {
+          cachedGeoFeatures.push({
+            text: feat.text,
+            subText: feat.subText,
+            color: feat.color,
+            font: feat.font,
+            screenX: mcX + (lon2pix(feat.lon, zoom) - cxWorld),
+            screenY: mcY + (lat2pix(feat.lat, zoom) - cyWorld)
           });
         }
       });
@@ -1086,58 +1214,91 @@
 
     function drawCityLandmarks(ctx, progress, currIdx, t) {
       if (currentLandmarkMode === 'none') return;
-      if (!cachedRouteLandmarks || !cachedRouteLandmarks.length) return;
       if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
+
+      // 1. Draw Geographic Seas & Mountains
+      if (cachedGeoFeatures && cachedGeoFeatures.length) {
+        cachedGeoFeatures.forEach(feat => {
+          if (feat.screenX >= 20 && feat.screenX <= W_HALF - 20 &&
+              feat.screenY >= 20 && feat.screenY <= CH - 20) {
+            drawTextHalo(ctx, feat.text, feat.screenX, feat.screenY, feat.font, feat.color, 'rgba(15, 23, 42, 0.85)', 4, 'center');
+            if (feat.subText) {
+              drawTextHalo(ctx, feat.subText, feat.screenX, feat.screenY + 18, 'bold 11px sans-serif', 'rgba(148, 163, 184, 0.65)', 'rgba(15, 23, 42, 0.85)', 3, 'center');
+            }
+          }
+        });
+      }
+
+      // 2. Draw Highway Shields
+      if (cachedRoadShields && cachedRoadShields.length) {
+        cachedRoadShields.forEach(road => {
+          if (road.screenX >= 20 && road.screenX <= W_HALF - 20 &&
+              road.screenY >= 20 && road.screenY <= CH - 20) {
+            drawHighwayShield(ctx, road.screenX, road.screenY, road.name, road.color);
+          }
+        });
+      }
+
+      // 3. Draw City and Town Landmarks
+      if (!cachedRouteLandmarks || !cachedRouteLandmarks.length) return;
 
       const pts = gpxData.pts;
       const passWindow = Math.max(16, Math.floor(pts.length * 0.012));
 
-      // Filter visible landmarks by mode and canvas bounds
+      // Filter visible landmarks by canvas bounds and landmark mode
       const visible = cachedRouteLandmarks.filter(lm => {
-        if (currentLandmarkMode === 'tier1' && lm.tier !== 1) return false;
+        if (currentLandmarkMode === 'tier1' && lm.tier !== 1 && !lm.isOnRoute) return false;
         if (lm.screenX < 15 || lm.screenX > W_HALF - 15 || lm.screenY < 15 || lm.screenY > CH - 15) return false;
         return true;
       });
       if (!visible.length) return;
 
-      // Determine real-time active status
+      // Determine real-time active / passed status
       visible.forEach(lm => {
-        const diff = Math.abs(currIdx - lm.closestIdx);
-        lm.isActive = diff <= passWindow;
-        lm.isPassed = currIdx > (lm.closestIdx + passWindow);
-        lm.activeIntensity = lm.isActive ? (1.0 - diff / passWindow) : 0;
+        if (lm.isOnRoute) {
+          const diff = Math.abs(currIdx - lm.closestIdx);
+          lm.isActive = diff <= passWindow;
+          lm.isPassed = currIdx > (lm.closestIdx + passWindow);
+          lm.activeIntensity = lm.isActive ? (1.0 - diff / passWindow) : 0;
+        } else {
+          lm.isActive = false;
+          lm.isPassed = false;
+          lm.activeIntensity = 0;
+        }
       });
 
-      // Collision Avoidance Setup: Priority = isActive > Tier 1 > Tier 2
-      const sorted = [...visible].sort((a, b) => {
-        if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
-        if (a.tier !== b.tier) return a.tier - b.tier;
-        return a.minDistKm - b.minDistKm;
-      });
-
-      // Reserved zones: HUD Telemetry Card & Trophy Plaque
+      // Reserved zones: HUD Telemetry Card (compact top-left) & Trophy Plaque
       const occupied = [
-        { x: 38, y: 46, w: 340, h: 300 }
+        { x: 18, y: 30, w: 246, h: 300 }
       ];
       if (progress >= 0.93) {
         occupied.push({ x: 38, y: CH - 155, w: 540, h: 110 });
       }
 
+      // Priority sort: active > passed > tier 1 > tier 2
+      const sorted = [...visible].sort((a, b) => {
+        if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+        if (a.isPassed !== b.isPassed) return a.isPassed ? -1 : 1;
+        if (a.tier !== b.tier) return a.tier - b.tier;
+        return a.minDistKm - b.minDistKm;
+      });
+
       const drawList = [];
       for (const lm of sorted) {
         const isTier1 = lm.tier === 1;
         const fontSz = lm.isActive ? 13 : (isTier1 ? 12.5 : 11);
-        ctx.font = `bold ${fontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+        const font = `bold ${fontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+        ctx.font = font;
         const labelText = lm.isActive ? `📍 途经 · ${lm.name}` : lm.name;
         const tw = ctx.measureText(labelText).width;
-        const padX = lm.isActive ? 8 : (isTier1 ? 6 : 5);
+        const padX = lm.isActive ? 8 : 4;
         const boxW = Math.round(tw + padX * 2);
         const boxH = Math.round(fontSz + 9);
 
-        const candRight = { x: Math.round(lm.screenX + 10), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'R' };
-        const candLeft  = { x: Math.round(lm.screenX - 10 - boxW), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'L' };
-        const candTop   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY - 14 - boxH), w: boxW, h: boxH, pos: 'T' };
-        const candBot   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY + 14), w: boxW, h: boxH, pos: 'B' };
+        const candRight = { x: Math.round(lm.screenX + 8), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'R' };
+        const candLeft  = { x: Math.round(lm.screenX - 8 - boxW), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'L' };
+        const candTop   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY - 12 - boxH), w: boxW, h: boxH, pos: 'T' };
+        const candBot   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY + 12), w: boxW, h: boxH, pos: 'B' };
 
         const candidates = [candRight, candLeft, candTop, candBot];
 
@@ -1160,26 +1321,16 @@
         }
 
         if (!chosen) {
-          if (lm.isActive) {
-            chosen = candTop.y >= 10 ? candTop : candRight;
-          } else if (isTier1) {
-            chosen = (candRight.x + candRight.w <= W_HALF - 10) ? candRight : candLeft;
-          }
+          if (lm.isActive) chosen = candTop.y >= 10 ? candTop : candRight;
+          else if (isTier1) chosen = candRight;
+          else continue;
         }
 
-        if (chosen) {
-          occupied.push({ x: chosen.x - 3, y: chosen.y - 3, w: chosen.w + 6, h: chosen.h + 6 });
-        }
-
-        drawList.push({
-          lm,
-          labelText,
-          fontSz,
-          box: chosen
-        });
+        occupied.push({ x: chosen.x - 2, y: chosen.y - 2, w: chosen.w + 4, h: chosen.h + 4 });
+        drawList.push({ lm, labelText, fontSz, font, box: chosen });
       }
 
-      // 1. Draw Pins & Dynamic Pulse
+      // Render dots & dynamic active radar pulses
       for (const item of drawList) {
         const { lm } = item;
         const isTier1 = lm.tier === 1;
@@ -1210,31 +1361,37 @@
           ctx.stroke();
         } else if (lm.isPassed) {
           ctx.beginPath();
-          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 5 : 3.5, 0, Math.PI * 2);
+          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 4.5 : 3.5, 0, Math.PI * 2);
           ctx.fillStyle = isTier1 ? '#10b981' : '#34d399';
           ctx.fill();
           ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = isTier1 ? 2 : 1.5;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else if (lm.isOnRoute) {
+          ctx.beginPath();
+          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 4.0 : 3.0, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.strokeStyle = '#0f172a';
+          ctx.lineWidth = 1.5;
           ctx.stroke();
         } else {
+          // Background cities across the map
           ctx.beginPath();
-          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 4.5 : 3, 0, Math.PI * 2);
-          ctx.fillStyle = isTier1 ? 'rgba(255, 255, 255, 0.95)' : 'rgba(203, 213, 225, 0.75)';
+          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 3.0 : 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = isTier1 ? 'rgba(241, 245, 249, 0.85)' : 'rgba(203, 213, 225, 0.65)';
           ctx.fill();
-          ctx.strokeStyle = isTier1 ? 'rgba(30, 41, 59, 0.9)' : 'rgba(15, 23, 42, 0.8)';
-          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.lineWidth = 1.2;
           ctx.stroke();
         }
       }
 
-      // 2. Draw Pill Labels
+      // Render text labels with halos or badges
       for (const item of drawList) {
-        if (!item.box) continue;
-        const { lm, labelText, fontSz, box } = item;
-        const isTier1 = lm.tier === 1;
-
+        const { lm, labelText, font, box } = item;
         ctx.save();
-        ctx.font = `bold ${fontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+        ctx.font = font;
 
         if (lm.isActive) {
           ctx.shadowColor = 'rgba(6, 182, 212, 0.85)';
@@ -1249,26 +1406,22 @@
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2);
-        } else if (isTier1) {
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
-          ctx.strokeStyle = lm.isPassed ? 'rgba(16, 185, 129, 0.65)' : 'rgba(148, 163, 184, 0.65)';
-          ctx.lineWidth = 1.2;
-          roundRect(ctx, box.x, box.y, box.w, box.h, 5, true, true);
-
-          ctx.fillStyle = lm.isPassed ? '#a7f3d0' : '#ffffff';
-          ctx.textAlign = 'center';
+        } else if (lm.isPassed) {
           ctx.textBaseline = 'middle';
-          ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2);
+          const tx = box.pos === 'R' ? box.x + 3 : (box.pos === 'L' ? box.x + box.w - 3 : box.x + box.w / 2);
+          const align = box.pos === 'R' ? 'left' : (box.pos === 'L' ? 'right' : 'center');
+          drawTextHalo(ctx, labelText, tx, box.y + box.h / 2, font, '#d1fae5', 'rgba(15, 23, 42, 0.95)', 3.5, align);
+        } else if (lm.isOnRoute) {
+          ctx.textBaseline = 'middle';
+          const tx = box.pos === 'R' ? box.x + 3 : (box.pos === 'L' ? box.x + box.w - 3 : box.x + box.w / 2);
+          const align = box.pos === 'R' ? 'left' : (box.pos === 'L' ? 'right' : 'center');
+          drawTextHalo(ctx, labelText, tx, box.y + box.h / 2, font, '#f8fafc', 'rgba(15, 23, 42, 0.95)', 3.5, align);
         } else {
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
-          ctx.strokeStyle = lm.isPassed ? 'rgba(52, 211, 153, 0.45)' : 'rgba(71, 85, 105, 0.45)';
-          ctx.lineWidth = 1.0;
-          roundRect(ctx, box.x, box.y, box.w, box.h, 4, true, true);
-
-          ctx.fillStyle = lm.isPassed ? '#cbd5e1' : '#94a3b8';
-          ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2);
+          const tx = box.pos === 'R' ? box.x + 2 : (box.pos === 'L' ? box.x + box.w - 2 : box.x + box.w / 2);
+          const align = box.pos === 'R' ? 'left' : (box.pos === 'L' ? 'right' : 'center');
+          const col = lm.tier === 1 ? 'rgba(248, 250, 252, 0.90)' : 'rgba(203, 213, 225, 0.75)';
+          drawTextHalo(ctx, labelText, tx, box.y + box.h / 2, font, col, 'rgba(15, 23, 42, 0.90)', 3, align);
         }
         ctx.restore();
       }
@@ -1311,9 +1464,11 @@
       }
 
       // Calculate Optimal Integer Zoom & World Center for Web Mercator Registration
-      const pad = 120;
-      const targetW = W_HALF - 2 * pad; // 720
-      const targetH = CH - 2 * pad;     // 840
+      // Shift mapScreenCenterX to 530 so left HUD data card (width 236 at x=22) leaves full clearance for the route
+      const mapScreenCenterX = 530;
+      const mapScreenCenterY = Math.round(CH / 2);
+      const targetW = (W_HALF - 260) - 80; // 620
+      const targetH = CH - 160;     // 920
       let bestZoom = 11;
 
       for (let z = 16; z >= 3; z--) {
@@ -1330,11 +1485,11 @@
 
       // Project all track points to canvas screen coordinates with 1:1 map alignment
       pts.forEach(p => {
-        p.screenX = W_HALF / 2 + (lon2pix(p.lon, bestZoom) - cxWorld);
-        p.screenY = CH / 2 + (lat2pix(p.lat, bestZoom) - cyWorld);
+        p.screenX = mapScreenCenterX + (lon2pix(p.lon, bestZoom) - cxWorld);
+        p.screenY = mapScreenCenterY + (lat2pix(p.lat, bestZoom) - cyWorld);
       });
 
-      gpxData = { pts, totalDist, climb, maxEle, zoom: bestZoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon };
+      gpxData = { pts, totalDist, climb, maxEle, zoom: bestZoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon, mapScreenCenterX, mapScreenCenterY };
       computeRouteLandmarks();
 
       // Update UI
@@ -1358,18 +1513,20 @@
       mapTileCtx.fillRect(0, 0, W_HALF, CH);
 
       const { zoom, cxWorld, cyWorld } = gpxData;
-      const minTx = Math.floor((cxWorld - W_HALF / 2) / 256);
-      const maxTx = Math.floor((cxWorld + W_HALF / 2) / 256);
-      const minTy = Math.floor((cyWorld - CH / 2) / 256);
-      const maxTy = Math.floor((cyWorld + CH / 2) / 256);
+      const mcX = gpxData.mapScreenCenterX || 530;
+      const mcY = gpxData.mapScreenCenterY || Math.round(CH / 2);
+      const minTx = Math.floor((cxWorld - mcX) / 256);
+      const maxTx = Math.floor((cxWorld + (W_HALF - mcX)) / 256);
+      const minTy = Math.floor((cyWorld - mcY) / 256);
+      const maxTy = Math.floor((cyWorld + (CH - mcY)) / 256);
 
       const promises = [];
       for (let tx = minTx; tx <= maxTx; tx++) {
         for (let ty = minTy; ty <= maxTy; ty++) {
           const primaryUrl = provider.getTileUrl(zoom, tx, ty);
           const fallbackUrl = provider.fallbackUrl ? provider.fallbackUrl(zoom, tx, ty) : null;
-          const sx = W_HALF / 2 + (tx * 256 - cxWorld);
-          const sy = CH / 2 + (ty * 256 - cyWorld);
+          const sx = mcX + (tx * 256 - cxWorld);
+          const sy = mcY + (ty * 256 - cyWorld);
 
           const p = new Promise((resolve) => {
             const img = new Image();
@@ -2407,56 +2564,62 @@
       if (gpxData && gpxData.pts.length > 1) {
         const pts = gpxData.pts;
 
-        // 1. Ghost Route Backdrop
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(30, 41, 59, 0.90)';
-        ctx.lineWidth = 10;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        pts.forEach((p, i) => {
-          if (i === 0) ctx.moveTo(p.screenX, p.screenY);
-          else ctx.lineTo(p.screenX, p.screenY);
-        });
-        ctx.stroke();
-
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        // 2. Active Glowing Route
         const currIdx = Math.min(pts.length - 1, Math.floor(progress * (pts.length - 1)));
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(244, 63, 94, 0.45)';
-        ctx.lineWidth = 16;
-        for (let i = 0; i <= currIdx; i++) {
-          if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
-          else ctx.lineTo(pts[i].screenX, pts[i].screenY);
-        }
-        ctx.stroke();
 
-        ctx.beginPath();
-        ctx.strokeStyle = '#f43f5e';
-        ctx.lineWidth = 8;
-        for (let i = 0; i <= currIdx; i++) {
-          if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
-          else ctx.lineTo(pts[i].screenX, pts[i].screenY);
-        }
-        ctx.stroke();
+        // 1. Progressive Neon Glowing Route (Reveals strictly as cursor moves forward, never shown upfront)
+        if (currIdx > 0) {
+          // Ambient neon glow
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(244, 63, 94, 0.40)';
+          ctx.lineWidth = 14;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          for (let i = 0; i <= currIdx; i++) {
+            if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
+            else ctx.lineTo(pts[i].screenX, pts[i].screenY);
+          }
+          ctx.stroke();
 
+          // Saturated core neon line
+          ctx.beginPath();
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 7;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          for (let i = 0; i <= currIdx; i++) {
+            if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
+            else ctx.lineTo(pts[i].screenX, pts[i].screenY);
+          }
+          ctx.stroke();
+
+          // Crisp white center highlight
+          ctx.beginPath();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.5;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          for (let i = 0; i <= currIdx; i++) {
+            if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
+            else ctx.lineTo(pts[i].screenX, pts[i].screenY);
+          }
+          ctx.stroke();
+        }
+
+        // Start point marker pin (emerald green dot)
+        const startPt = pts[0];
         ctx.beginPath();
+        ctx.arc(startPt.screenX, startPt.screenY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981';
+        ctx.fill();
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        for (let i = 0; i <= currIdx; i++) {
-          if (i === 0) ctx.moveTo(pts[i].screenX, pts[i].screenY);
-          else ctx.lineTo(pts[i].screenX, pts[i].screenY);
-        }
+        ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 3. Pulsing Rider Dot
+        // 2. Pulsing Rider Dot (at headPt)
         const headPt = pts[currIdx];
         const pulse = 1.0 + 0.3 * Math.sin(t * 8.0);
         ctx.beginPath();
-        ctx.arc(headPt.screenX, headPt.screenY, 22 * pulse, 0, Math.PI * 2);
+        ctx.arc(headPt.screenX, headPt.screenY, 20 * pulse, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
         ctx.fill();
         ctx.strokeStyle = '#38bdf8';
@@ -2464,47 +2627,64 @@
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(headPt.screenX, headPt.screenY, 8, 0, Math.PI * 2);
+        ctx.arc(headPt.screenX, headPt.screenY, 7.5, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
         ctx.strokeStyle = '#0284c7';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // 4. City and Town Landmarks (with Dynamic Passing Activation & Collision Avoidance)
+        // 3. City and Town Landmarks + Highway Shields + Geo Features
         drawCityLandmarks(ctx, progress, currIdx, t);
 
-        // 5. HUD Telemetry Card (Top Left)
+        // 4. Compact HUD Telemetry Card (Top Left, no occlusion of start route)
+        const hud_x = 22, hud_y = 36, hud_w = 236, hud_h = 286;
         ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
         ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 2;
-        roundRect(ctx, 48, 56, 320, 280, 16, true, true);
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, hud_x, hud_y, hud_w, hud_h, 14, true, true);
 
         // Header Tag with Dynamic Custom Title Support
         ctx.fillStyle = '#e11d48';
-        const titleStr = (customRouteTitle || 'CYCLING ROUTE RECAP').trim();
-        let fontSize = 15;
+        const titleStr = (customRouteTitle || 'TOUR DE TAIWAN · 2026').trim();
+        let fontSize = 13;
         ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
         let tm = ctx.measureText(titleStr);
-        while (tm.width > 255 && fontSize > 11) {
+        while (tm.width > hud_w - 36 && fontSize > 10) {
           fontSize--;
           ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
           tm = ctx.measureText(titleStr);
         }
-        const tagW = Math.max(160, Math.min(292, tm.width + 30));
-        roundRect(ctx, 62, 70, tagW, 34, 8, true, false);
+        const tagW = hud_w - 20;
+        roundRect(ctx, hud_x + 10, hud_y + 10, tagW, 30, 8, true, false);
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(titleStr, 76, 92);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(titleStr, hud_x + 10 + tagW / 2, hud_y + 25);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+
+        // Stage or Current Location Subtitle
+        const currLocName = getStageLocationName(progress);
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+        roundRect(ctx, hud_x + 10, hud_y + 46, tagW, 26, 6, true, false);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif';
+        ctx.fillText(currLocName, hud_x + 18, hud_y + 63);
 
         const currSpeed = (22.5 + 4.5 * Math.sin(t * 1.5)).toFixed(1);
         const currDist = (progress * gpxData.totalDist).toFixed(1);
         const currClimb = Math.round(progress * gpxData.climb);
         const currEle = Math.round(pts[currIdx].ele);
 
-        drawHudRow(ctx, '实时速度', `${currSpeed} km/h`, '#38bdf8', 140);
-        drawHudRow(ctx, '累计爬升', `${currClimb} m`, '#34d399', 180);
-        drawHudRow(ctx, '实时海拔', `${currEle} m`, '#ffffff', 220);
-        drawHudRow(ctx, '已骑里程', `${currDist} km`, '#ffffff', 260);
+        // Metrics rows
+        drawHudRow(ctx, '实时速度', `${currSpeed} km/h`, '#38bdf8', hud_y + 102, hud_x + 16, hud_x + hud_w - 16);
+        drawHudRow(ctx, '累计爬升', `${currClimb} m`, '#34d399', hud_y + 138, hud_x + 16, hud_x + hud_w - 16);
+        drawHudRow(ctx, '实时海拔', `${currEle} m`, '#ffffff', hud_y + 174, hud_x + 16, hud_x + hud_w - 16);
+        drawHudRow(ctx, '已骑里程', `${currDist} km`, '#ffffff', hud_y + 210, hud_x + 16, hud_x + hud_w - 16);
+        const secElapsed = Math.floor(progress * totalDuration * 45);
+        const timeStr = `${String(Math.floor(secElapsed / 3600)).padStart(2, '0')}:${String(Math.floor((secElapsed % 3600) / 60)).padStart(2, '0')}:${String(secElapsed % 60).padStart(2, '0')}`;
+        drawHudRow(ctx, '运动时间', timeStr, '#fbbf24', hud_y + 246, hud_x + 16, hud_x + hud_w - 16);
 
         // 5. Victory Plaque upon completion (progress >= 0.95)
         if (progress >= 0.95) {
@@ -3050,14 +3230,14 @@
       }
     }
 
-    function drawHudRow(ctx, label, val, color, y) {
+    function drawHudRow(ctx, label, val, color, y, leftX = 38, rightX = 242) {
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '14px sans-serif';
-      ctx.fillText(label, 70, y);
+      ctx.font = '12px -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif';
+      ctx.fillText(label, leftX, y);
       ctx.fillStyle = color;
-      ctx.font = 'bold 16px sans-serif';
+      ctx.font = 'bold 14px "Helvetica Neue", Arial, sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(val, 340, y);
+      ctx.fillText(val, rightX, y);
       ctx.textAlign = 'left';
     }
 

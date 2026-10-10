@@ -31,7 +31,7 @@ def compute_track_projection(points, canvas_w=960, canvas_h=1080, padding=120):
     
     cx_geo = (min_lon + max_lon) / 2.0
     cy_geo = (min_lat + max_lat) / 2.0
-    cx_pix = canvas_w / 2.0
+    cx_pix = canvas_w / 2.0 + 50.0 # Shift right to leave room for left HUD telemetry card
     cy_pix = canvas_h / 2.0
     
     projected = []
@@ -49,23 +49,18 @@ def compute_track_projection(points, canvas_w=960, canvas_h=1080, padding=120):
 
 def create_base_canvas(projected_pts):
     """
-    Creates a dark tactical styled canvas with the ghost route silhouette.
+    Creates a dark tactical styled canvas with the start marker.
+    Full route is revealed progressively with cursor rather than shown upfront.
     """
     canvas = Image.new('RGB', (W_HALF, H), (11, 15, 25))
     draw = ImageDraw.Draw(canvas)
     
-    # Draw faint route backdrop
+    # Start point marker pin
     pts = [(p['x'], p['y']) for p in projected_pts]
-    if len(pts) >= 2:
-        draw.line(pts, fill=(30, 41, 59), width=8)
-        draw.line(pts, fill=(51, 65, 85), width=3)
+    if len(pts) >= 1:
+        sx, sy = pts[0]
+        draw.ellipse((sx - 6, sy - 6, sx + 6, sy + 6), fill=(16, 185, 129), outline=(255, 255, 255), width=2)
         
-    # Start and End markers
-    sx, sy = pts[0]
-    ex, ey = pts[-1]
-    draw.ellipse((sx - 7, sy - 7, sx + 7, sy + 7), fill=(16, 185, 129), outline=(255, 255, 255), width=2)
-    draw.ellipse((ex - 7, ey - 7, ex + 7, ey + 7), fill=(239, 68, 68), outline=(255, 255, 255), width=2)
-    
     return canvas
 
 # Curated Geographic Landmarks Database (Tier 1 Core Cities & Tier 2 Classic Towns / Passes / Milestones)
@@ -155,7 +150,7 @@ def compute_route_landmarks(points, projected_pts):
     draw_w, draw_h = W_HALF - 240, H - 240
     scale = min(draw_w / max(0.0001, geo_w), draw_h / max(0.0001, geo_h))
     cx_geo, cy_geo = (min_lon + max_lon) / 2.0, (min_lat + max_lat) / 2.0
-    cx_pix, cy_pix = W_HALF / 2.0, H / 2.0
+    cx_pix, cy_pix = W_HALF / 2.0 + 50.0, H / 2.0 # Shift right to leave room for left HUD telemetry card
     
     matched = []
     for lm in GEOGRAPHIC_LANDMARKS:
@@ -167,13 +162,14 @@ def compute_route_landmarks(points, projected_pts):
             if d < min_d:
                 min_d = d
                 best_i = i
-        if min_d <= 22.0:
-            x = cx_pix + (lm['lon'] - cx_geo) * lon_scale * scale
-            y = cy_pix - (lm['lat'] - cy_geo) * scale
+        x = cx_pix + (lm['lon'] - cx_geo) * lon_scale * scale
+        y = cy_pix - (lm['lat'] - cy_geo) * scale
+        if 15 <= x <= W_HALF - 15 and 15 <= y <= H - 15:
             matched.append({
                 "name": lm["name"],
                 "tier": lm["tier"],
                 "dist_km": min_d,
+                "is_on_route": min_d <= 24.0,
                 "idx": best_i,
                 "x": int(round(x)),
                 "y": int(round(y))
@@ -185,18 +181,19 @@ def draw_city_landmarks(draw, landmarks, curr_idx, total_pts, f_idx, fonts):
         return
     f_hud_title, f_hud_sub, f_hud_lbl, f_hud_val, f_trophy_title, f_trophy_sub = fonts
     pass_window = max(16, int(total_pts * 0.012))
-    occupied = [{"x": 36, "y": 44, "w": 252, "h": 234}]
+    occupied = [{"x": 20, "y": 30, "w": 250, "h": 260}]
     draw_list = []
     
     sorted_lms = sorted(landmarks, key=lambda lm: (
-        0 if abs(curr_idx - lm["idx"]) <= pass_window else (1 if lm["tier"] == 1 else 2),
+        0 if (lm.get("is_on_route", True) and abs(curr_idx - lm["idx"]) <= pass_window) else (1 if lm["tier"] == 1 else 2),
         lm["dist_km"]
     ))
     
     for lm in sorted_lms:
         diff = abs(curr_idx - lm["idx"])
-        is_active = diff <= pass_window
-        is_passed = curr_idx > (lm["idx"] + pass_window)
+        is_on_route = lm.get("is_on_route", True)
+        is_active = is_on_route and (diff <= pass_window)
+        is_passed = is_on_route and (curr_idx > (lm["idx"] + pass_window))
         label = ("途经 · " + lm['name']) if is_active else lm["name"]
         font = f_hud_sub if (is_active or lm["tier"] == 1) else f_hud_lbl
         try:
