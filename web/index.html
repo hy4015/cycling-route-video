@@ -1793,6 +1793,16 @@
             return false;
           }
 
+          // Scheme A: Pristine full-resolution Head Frame canvas for seamless cross-dissolve looping
+          try {
+            const headC = document.createElement('canvas');
+            headC.width = vw;
+            headC.height = vh;
+            const headCx = headC.getContext('2d');
+            headCx.drawImage(video, 0, 0, vw, vh);
+            item.headFrameCanvas = headC;
+          } catch (e) {}
+
           const thumbUrl = c.toDataURL('image/jpeg', 0.82);
           if (thumbUrl && thumbUrl.length > 200) {
             captured = true;
@@ -2815,12 +2825,13 @@
               });
             }
 
+            const elapsedFromEnter = t - tEnter;
+            const targetTime = elapsedFromEnter < 0 ? 0 : (elapsedFromEnter % clipDur);
+
             if (isSingleClipPlaying && activePreviewIndex === k) {
               // Auditioning single clip: handled by playSingleClip loop
               if (item.audioEnabled !== false) activeVideoSoundPlaying = true;
             } else if (isLive) {
-              const elapsedFromEnter = t - tEnter;
-
               if (elapsedFromEnter < 0) {
                 // Phase 1 (未从下方出现): 处于屏幕底沿下方之外，保持静音待命
                 item._audioPlayedOnce = false; // Reset so that upon entering, audio can play once
@@ -2866,8 +2877,8 @@
                     if (item.gainNode) item.gainNode.gain.value = 0;
                     item.videoEl.volume = 0;
                     item.videoEl.loop = true; // 画面始终循环播放
-                    // 若视频停留在末尾或处于暂停状态，重置到第0帧继续循环
-                    if (item.videoEl.ended || item.videoEl.currentTime >= clipDur - 0.1 || item.videoEl.paused) {
+                    // 若视频停留在末尾或处于暂停状态，重置到第0帧继续循环（不提前硬切，让尾帧与首帧平滑溶接）
+                    if (item.videoEl.ended || item.videoEl.paused) {
                       try { item.videoEl.currentTime = 0; } catch (e) {}
                       item.videoEl.play().catch(e => console.warn('Loop muted play:', e));
                     }
@@ -2935,8 +2946,6 @@
                 if (item.gainNode) item.gainNode.gain.value = 0;
                 item.videoEl.volume = 0;
               }
-              const elapsedFromEnter = t - tEnter;
-              const targetTime = elapsedFromEnter < 0 ? 0 : (elapsedFromEnter % clipDur);
               if (Math.abs(item.videoEl.currentTime - targetTime) > 0.08) {
                 try { item.videoEl.currentTime = targetTime; } catch (e) {}
               }
@@ -2965,6 +2974,43 @@
             const isPlayingNow = (isLive || isSingleClipPlaying) && !item.videoEl.paused;
             const isSeekedPastZero = item.videoEl && item.videoEl.currentTime > 0.08;
 
+            // Scheme A: Seamless Cross-Dissolve Overlay Helper (首尾交叉叠化溶接)
+            const drawCrossDissolveOverlay = () => {
+              try {
+                const v = item.videoEl;
+                if (!v) return;
+                const clipDurVal = (v.duration && isFinite(v.duration) && v.duration > 0.5) ? v.duration : (clipDur || 3.0);
+                const curVTime = (isLive || isSingleClipPlaying) ? (v.currentTime || 0) : targetTime;
+                const FADE_DUR = Math.min(0.42, Math.max(0.18, clipDurVal * 0.15));
+                const HANDOFF_DUR = 0.08;
+                let blendAlpha = 0;
+
+                if (curVTime >= clipDurVal - FADE_DUR) {
+                  const timeLeft = Math.max(0, clipDurVal - curVTime);
+                  const p = Math.max(0, Math.min(1.0, 1.0 - (timeLeft / FADE_DUR)));
+                  blendAlpha = p * p * (3 - 2 * p); // smoothstep ease-in-out
+                } else if (curVTime <= HANDOFF_DUR) {
+                  const h = Math.max(0, Math.min(1.0, curVTime / HANDOFF_DUR));
+                  blendAlpha = 1.0 - (h * h * (3 - 2 * h)); // smoothstep handoff
+                }
+
+                if (blendAlpha > 0.005) {
+                  const headTarget = item.headFrameCanvas || (item.thumbImg && item.thumbImg.complete && item.thumbImg.naturalWidth > 0 && !item.isPlaceholderThumb ? item.thumbImg : null);
+                  if (headTarget) {
+                    const hw = headTarget.naturalWidth || headTarget.width || rw;
+                    const hh = headTarget.naturalHeight || headTarget.height || rh;
+                    const hs = Math.max(rw / hw, rh / hh);
+                    const hdw = hw * hs;
+                    const hdh = hh * hs;
+                    ctx.save();
+                    ctx.globalAlpha = blendAlpha;
+                    ctx.drawImage(headTarget, rx + (rw - hdw) / 2, wy + (rh - hdh) / 2, hdw, hdh);
+                    ctx.restore();
+                  }
+                }
+              } catch (e) {}
+            };
+
             // Auto-heal & live upgrade: If card/monitor currently has a placeholder (or empty thumb), but videoEl has decoded a valid frame:
             if ((!item.thumbUrl || item.isPlaceholderThumb) && hasDecoded) {
               try {
@@ -2985,6 +3031,18 @@
               } catch (e) {}
             }
 
+            // Ensure native full-resolution head frame canvas is captured for smooth cross-dissolve looping
+            if (!item.headFrameCanvas && hasDecoded && item.videoEl.currentTime <= 0.35) {
+              try {
+                const headC = document.createElement('canvas');
+                headC.width = item.videoEl.videoWidth;
+                headC.height = item.videoEl.videoHeight;
+                const headCx = headC.getContext('2d');
+                headCx.drawImage(item.videoEl, 0, 0, headC.width, headC.height);
+                item.headFrameCanvas = headC;
+              } catch (e) {}
+            }
+
             // 1. Live video frame when playing or when current frame is decoded past start
             if (hasDecoded && (isPlayingNow || isSeekedPastZero)) {
               try {
@@ -2996,6 +3054,7 @@
                 const dh = vh * s;
                 ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
                 drawn = true;
+                drawCrossDissolveOverlay();
               } catch (e) {
                 // fall through
               }
@@ -3024,8 +3083,9 @@
                 const s = Math.max(rw / vw, rh / vh);
                 const dw = vw * s;
                 const dh = vh * s;
-                ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dw) / 2, dw, dh);
+                ctx.drawImage(v, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
                 drawn = true;
+                drawCrossDissolveOverlay();
               } catch (e) {
                 // fall through
               }
