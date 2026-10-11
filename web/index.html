@@ -1240,8 +1240,9 @@
       cachedGeoFeatures = [];
       if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
       const { pts, zoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon, totalDist } = gpxData;
-      const mcX = gpxData.mapScreenCenterX || 530;
-      const mcY = gpxData.mapScreenCenterY || (CH / 2);
+      const mcX = gpxData.mapScreenCenterX || Math.round(W_HALF / 2);
+      const mcY = gpxData.mapScreenCenterY || Math.round(CH / 2);
+      const sc = gpxData.mapScale || 1.0;
 
       const latSpan = maxLat - minLat;
       const lonSpan = maxLon - minLon;
@@ -1285,8 +1286,8 @@
           }
         }
 
-        const sx = mcX + (lon2pix(lm.lon, zoom) - cxWorld);
-        const sy = mcY + (lat2pix(lm.lat, zoom) - cyWorld);
+        const sx = mcX + (lon2pix(lm.lon, zoom) - cxWorld) * sc;
+        const sy = mcY + (lat2pix(lm.lat, zoom) - cyWorld) * sc;
         const isOnRoute = minDist <= maxProximityKm;
         const midLon = (bandMinLon < Infinity && bandMaxLon > -Infinity)
           ? (bandMinLon + bandMaxLon) / 2
@@ -1313,21 +1314,20 @@
           cachedRoadShields.push({
             name: road.name,
             color: road.color,
-            screenX: mcX + (lon2pix(road.lon, zoom) - cxWorld),
-            screenY: mcY + (lat2pix(road.lat, zoom) - cyWorld)
+            screenX: mcX + (lon2pix(road.lon, zoom) - cxWorld) * sc,
+            screenY: mcY + (lat2pix(road.lat, zoom) - cyWorld) * sc
           });
         }
       });
 
       GEOGRAPHIC_FEATURES.forEach(feat => {
-        if (feat.lat >= minLat - latPad && feat.lat <= maxLat + latPad &&
-            feat.lon >= minLon - lonPad && feat.lon <= maxLon + lonPad) {
+        if (roadOrFeatInBounds(feat.lat, feat.lon, minLat, maxLat, minLon, maxLon, latPad, lonPad)) {
           cachedGeoFeatures.push({
             text: feat.text,
             color: feat.color,
             font: feat.font,
-            screenX: mcX + (lon2pix(feat.lon, zoom) - cxWorld),
-            screenY: mcY + (lat2pix(feat.lat, zoom) - cyWorld)
+            screenX: mcX + (lon2pix(feat.lon, zoom) - cxWorld) * sc,
+            screenY: mcY + (lat2pix(feat.lat, zoom) - cyWorld) * sc
           });
         }
       });
@@ -1335,14 +1335,17 @@
       cachedRouteLandmarks.sort((a, b) => a.closestIdx - b.closestIdx);
     }
 
+    function roadOrFeatInBounds(lat, lon, minLat, maxLat, minLon, maxLon, latPad, lonPad) {
+      return lat >= minLat - latPad && lat <= maxLat + latPad &&
+             lon >= minLon - lonPad && lon <= maxLon + lonPad;
+    }
+
     function drawCityLandmarks(ctx, progress, currIdx, t) {
       if (currentLandmarkMode === 'none') return;
       if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
 
-      // Reserved zones: HUD Telemetry Card & Trophy Plaque
-      const occupied = [
-        { x: 18, y: 30, w: 248, h: 305 }
-      ];
+      // Reserved zones: only reserve Trophy Plaque at bottom when visible (top-left HUD is 70% translucent and allows partial overlap)
+      const occupied = [];
       if (progress >= 0.93) {
         occupied.push({ x: 38, y: CH - 155, w: 540, h: 110 });
       }
@@ -1581,33 +1584,38 @@
         pts.push({ lat, lon, ele, dist: totalDist });
       }
 
-      // Calculate Optimal Integer Zoom & World Center for Web Mercator Registration
-      // Shift mapScreenCenterX to 530 so left HUD data card (width 236 at x=22) leaves full clearance for the route
-      const mapScreenCenterX = 530;
-      const mapScreenCenterY = Math.round(CH / 2);
-      const targetW = (W_HALF - 260) - 80; // 620
-      const targetH = CH - 160;     // 920
+      // Center route on the left screen and scale continuously to fill ~72-74% of the viewport (allowing partial overlap with 70%-transparent HUD card)
+      const mapScreenCenterX = Math.round(W_HALF / 2); // 480
+      const mapScreenCenterY = Math.round(CH / 2);     // 540
+      const targetW = Math.round(W_HALF * 0.73);       // 701px (~73% of 960)
+      const targetH = Math.round(CH * 0.74);           // 799px (~74% of 1080)
       let bestZoom = 11;
 
       for (let z = 16; z >= 3; z--) {
-        const w = lon2pix(maxLon, z) - lon2pix(minLon, z);
-        const h = lat2pix(minLat, z) - lat2pix(maxLat, z);
-        if (w <= targetW && h <= targetH) {
+        const w = Math.max(1, lon2pix(maxLon, z) - lon2pix(minLon, z));
+        const h = Math.max(1, lat2pix(minLat, z) - lat2pix(maxLat, z));
+        const fitScale = Math.min(targetW / w, targetH / h);
+        // Pick the crispest integer tile zoom where continuous scale is >= 0.58 (slight downsampling keeps map tiles razor-sharp)
+        if (fitScale >= 0.58) {
           bestZoom = z;
           break;
         }
       }
 
+      const wWorld = Math.max(1, lon2pix(maxLon, bestZoom) - lon2pix(minLon, bestZoom));
+      const hWorld = Math.max(1, lat2pix(minLat, bestZoom) - lat2pix(maxLat, bestZoom));
+      const mapScale = Math.min(targetW / wWorld, targetH / hWorld);
+
       const cxWorld = (lon2pix(minLon, bestZoom) + lon2pix(maxLon, bestZoom)) / 2;
       const cyWorld = (lat2pix(minLat, bestZoom) + lat2pix(maxLat, bestZoom)) / 2;
 
-      // Project all track points to canvas screen coordinates with 1:1 map alignment
+      // Project all track points to canvas screen coordinates with 1:1 map alignment & 70%+ screen fill
       pts.forEach(p => {
-        p.screenX = mapScreenCenterX + (lon2pix(p.lon, bestZoom) - cxWorld);
-        p.screenY = mapScreenCenterY + (lat2pix(p.lat, bestZoom) - cyWorld);
+        p.screenX = mapScreenCenterX + (lon2pix(p.lon, bestZoom) - cxWorld) * mapScale;
+        p.screenY = mapScreenCenterY + (lat2pix(p.lat, bestZoom) - cyWorld) * mapScale;
       });
 
-      gpxData = { pts, totalDist, climb, maxEle, zoom: bestZoom, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon, mapScreenCenterX, mapScreenCenterY };
+      gpxData = { pts, totalDist, climb, maxEle, zoom: bestZoom, mapScale, cxWorld, cyWorld, minLat, maxLat, minLon, maxLon, mapScreenCenterX, mapScreenCenterY };
       computeRouteLandmarks();
 
       // Update UI
@@ -1631,27 +1639,29 @@
       mapTileCtx.fillRect(0, 0, W_HALF, CH);
 
       const { zoom, cxWorld, cyWorld } = gpxData;
-      const mcX = gpxData.mapScreenCenterX || 530;
+      const sc = gpxData.mapScale || 1.0;
+      const mcX = gpxData.mapScreenCenterX || Math.round(W_HALF / 2);
       const mcY = gpxData.mapScreenCenterY || Math.round(CH / 2);
-      const minTx = Math.floor((cxWorld - mcX) / 256);
-      const maxTx = Math.floor((cxWorld + (W_HALF - mcX)) / 256);
-      const minTy = Math.floor((cyWorld - mcY) / 256);
-      const maxTy = Math.floor((cyWorld + (CH - mcY)) / 256);
+      const minTx = Math.floor((cxWorld - mcX / sc) / 256);
+      const maxTx = Math.floor((cxWorld + (W_HALF - mcX) / sc) / 256);
+      const minTy = Math.floor((cyWorld - mcY / sc) / 256);
+      const maxTy = Math.floor((cyWorld + (CH - mcY) / sc) / 256);
+      const tileDrawSize = Math.ceil(256 * sc + 0.6);
 
       const promises = [];
       for (let tx = minTx; tx <= maxTx; tx++) {
         for (let ty = minTy; ty <= maxTy; ty++) {
           const primaryUrl = provider.getTileUrl(zoom, tx, ty);
           const fallbackUrl = provider.fallbackUrl ? provider.fallbackUrl(zoom, tx, ty) : null;
-          const sx = mcX + (tx * 256 - cxWorld);
-          const sy = mcY + (ty * 256 - cyWorld);
+          const sx = mcX + (tx * 256 - cxWorld) * sc;
+          const sy = mcY + (ty * 256 - cyWorld) * sc;
 
           const p = new Promise((resolve) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => {
               if (token === mapTileLoadToken) {
-                mapTileCtx.drawImage(img, sx, sy, 256, 256);
+                mapTileCtx.drawImage(img, sx, sy, tileDrawSize, tileDrawSize);
                 isMapTilesReady = true;
                 renderFrameAt(previewTime);
               }
@@ -1663,7 +1673,7 @@
                 fbImg.crossOrigin = 'anonymous';
                 fbImg.onload = () => {
                   if (token === mapTileLoadToken) {
-                    mapTileCtx.drawImage(fbImg, sx, sy, 256, 256);
+                    mapTileCtx.drawImage(fbImg, sx, sy, tileDrawSize, tileDrawSize);
                     isMapTilesReady = true;
                     renderFrameAt(previewTime);
                   }
@@ -3151,15 +3161,15 @@
         // 3. City and Town Landmarks + Highway Shields + Geo Features
         drawCityLandmarks(ctx, progress, currIdx, t);
 
-        // 4. Compact HUD Telemetry Card (Top Left, no occlusion of start route)
+        // 4. Compact HUD Telemetry Card (Top Left, 70% opacity translucent glass, allows partial route overlap)
         const hud_x = 22, hud_y = 36, hud_w = 236, hud_h = 286;
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
-        ctx.strokeStyle = '#334155';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.70)';
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.70)';
         ctx.lineWidth = 1.5;
         roundRect(ctx, hud_x, hud_y, hud_w, hud_h, 14, true, true);
 
-        // Header Tag with Dynamic Custom Title Support
-        ctx.fillStyle = '#e11d48';
+        // Header Tag with Dynamic Custom Title Support (70% translucent rose)
+        ctx.fillStyle = 'rgba(225, 29, 72, 0.75)';
         const titleStr = (customRouteTitle || 'TOUR DE TAIWAN · 2026').trim();
         let fontSize = 13;
         ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
@@ -3180,7 +3190,7 @@
 
         // Stage or Current Location Subtitle
         const currLocName = getStageLocationName(progress);
-        ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.70)';
         roundRect(ctx, hud_x + 10, hud_y + 46, tagW, 26, 6, true, false);
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif';
