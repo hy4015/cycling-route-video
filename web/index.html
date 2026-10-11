@@ -362,26 +362,47 @@
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center space-x-2.5">
             <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs font-bold border border-rose-500/30">3</span>
-            <h2 class="font-semibold text-base text-white">批量上传照片与视频素材</h2>
+            <h2 class="font-semibold text-base text-white">批量上传照片、实况照片与视频素材</h2>
           </div>
-          <span class="text-xs text-emerald-400 font-medium">支持拖动排序 · 单独删除 · 真实视频封面</span>
+          <span class="text-xs text-emerald-400 font-medium">支持实况照片 · 拖动排序 · 单独静音</span>
         </div>
 
-        <!-- Strict Size Limits Callout -->
-        <div class="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start space-x-2.5 text-xs text-amber-300">
+        <!-- Updated Size Limits Callout -->
+        <div class="mb-3.5 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start space-x-2.5 text-xs text-amber-300">
           <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
           <div>
-            <span class="font-semibold">防浏览器崩溃规格限制：</span>
-            图片单张不超过 <strong class="text-white">10MB</strong>；视频单个不超过 <strong class="text-white">100MB</strong> 且时长不超过 <strong class="text-white">10秒</strong>。
+            <span class="font-semibold">当前素材规格上限（已扩容优化）：</span>
+            图片单张不超过 <strong class="text-white">50MB</strong>；视频单个不超过 <strong class="text-white">500MB</strong> 且时长不超过 <strong class="text-white">60秒</strong>。
+          </div>
+        </div>
+
+        <!-- iPhone Live Photo Import Mode Selector -->
+        <div class="mb-3.5 p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+          <div class="flex items-center space-x-2">
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/40">◉</span>
+            <div>
+              <div class="text-xs font-semibold text-slate-200">iPhone 实况照片 (Live Photo) 导入模式</div>
+              <div class="text-[11px] text-slate-400">开启后可播放实况动态画面与现场原声，卡片支持独立静音开关</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 bg-slate-950/80 p-1 rounded-lg border border-slate-800 shrink-0" id="livePhotoModeGroup">
+            <button type="button" data-live-mode="on" class="live-mode-btn active px-2.5 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center space-x-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm cursor-pointer">
+              <span>◉</span>
+              <span>打开实况 (视频+声音)</span>
+            </button>
+            <button type="button" data-live-mode="off" class="live-mode-btn px-2.5 py-1.5 rounded-md text-xs font-medium transition flex items-center justify-center space-x-1 text-slate-400 hover:text-slate-200 border border-transparent cursor-pointer">
+              <span>🖼️</span>
+              <span>关闭实况 (仅导入照片)</span>
+            </button>
           </div>
         </div>
 
         <div id="mediaDropzone" class="border-2 border-dashed border-slate-700 hover:border-sky-500/60 rounded-xl p-6 text-center cursor-pointer transition bg-slate-900/40 hover:bg-slate-900/70">
-          <input type="file" id="mediaFileInput" accept="image/*,video/*,.heic,.mov,.mp4" multiple class="hidden">
+          <input type="file" id="mediaFileInput" accept="image/*,video/*,.heic,.heif,.avif,.jpg,.jpeg,.png,.webp,.mov,.mp4,.m4v,.webm" multiple class="hidden">
           <div class="flex flex-col items-center space-y-2">
             <svg class="w-10 h-10 text-sky-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <p class="text-sm font-medium text-slate-200">批量拖入照片或短视频（或点击多选）</p>
-            <p class="text-xs text-slate-500">支持 JPG, PNG, HEIC, MP4, MOV</p>
+            <p class="text-sm font-medium text-slate-200">批量拖入照片、iPhone 实况照片或短视频（或点击多选）</p>
+            <p class="text-xs text-slate-500">支持 JPG, PNG, HEIC, 实况照片 (HEIC+MOV / 实况视频), MP4, MOV · 点击卡片可切换实况/静音</p>
           </div>
         </div>
 
@@ -390,7 +411,7 @@
           <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
             <div>
               <span>已加载素材清单 (<span id="mediaCount" class="font-bold text-white">0</span> 项)</span>
-              <span class="text-slate-500 ml-2">· 按住卡片可自由拖动排序，点击 ❌ 可单独移除</span>
+              <span class="text-slate-500 ml-2">· 按住卡片可自由拖动排序，点击 🔊/🔇 开关声音，点击 ❌ 移除</span>
             </div>
             <button id="clearMediaBtn" class="text-rose-400 hover:underline">全部清空</button>
           </div>
@@ -663,7 +684,8 @@
   <script>
     // State & Personalization
     let gpxData = null;
-    let mediaItems = []; // Array of { id, file, isVideo, thumbUrl, imgEl, videoEl, duration, name, size }
+    let mediaItems = []; // Array of { id, file, isVideo, isLivePhoto, liveActive, thumbUrl, imgEl, videoEl, duration, name, size }
+    let livePhotoImportMode = 'on'; // 'on' (打开实况: 播放视频+声音) | 'off' (关闭实况: 仅导入静态照片)
     let currentBgmPath = './audio/bgm_rice_field.mp3';
     const audioPlayer = document.getElementById('globalAudioPlayer');
     audioPlayer.src = currentBgmPath;
@@ -674,10 +696,17 @@
     let videoVolumeRatio = 1.0;       // 100% Video audio volume (foreground immersion)
     let isAudioDuckingEnabled = true; // Auto Ducking enabled
     let isAnyVideoAudioActive = false; // Live status for dynamic ducking
+    let currentEffectiveBgmVol = bgmVolumeRatio;
     audioPlayer.volume = bgmVolumeRatio;
     audioPlayer.loop = true;
 
     let webAudioCtx = null;
+    let bgmGainNode = null;
+    let bgmSourceNode = null;
+    let bgmStartContextTime = 0;
+    let bgmStartOffset = 0;
+    const bgmBufferCache = new Map();
+    let bgmLoadingPromises = new Map();
     let masterVideoBus = null;
     let loudnessCompressor = null;
 
@@ -685,6 +714,11 @@
       if (!webAudioCtx) {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         webAudioCtx = new AudioCtx();
+
+        // 0. Dedicated BGM Gain Node (Works 100% on iOS Safari where HTMLAudioElement.volume is locked, and never gets preempted by <video> unmuting!)
+        bgmGainNode = webAudioCtx.createGain();
+        bgmGainNode.gain.value = currentEffectiveBgmVol;
+        bgmGainNode.connect(webAudioCtx.destination);
 
         // 1. Master Video Bus Gain Node (Calibrated to videoVolumeRatio)
         masterVideoBus = webAudioCtx.createGain();
@@ -705,6 +739,138 @@
         webAudioCtx.resume().catch(e => console.warn(e));
       }
       return webAudioCtx;
+    }
+
+    function setBgmEffectiveVolume(vol) {
+      currentEffectiveBgmVol = Math.max(0, Math.min(1.0, vol));
+      try {
+        audioPlayer.volume = currentEffectiveBgmVol;
+      } catch (e) {}
+      if (bgmGainNode && webAudioCtx) {
+        try {
+          bgmGainNode.gain.setTargetAtTime(currentEffectiveBgmVol, webAudioCtx.currentTime, 0.04);
+        } catch (e) {
+          bgmGainNode.gain.value = currentEffectiveBgmVol;
+        }
+      }
+    }
+
+    function getBgmEffectiveVolume() {
+      return currentEffectiveBgmVol;
+    }
+
+    async function ensureBgmAudioBuffer(path) {
+      if (!path) return null;
+      if (bgmBufferCache.has(path)) return bgmBufferCache.get(path);
+      if (bgmLoadingPromises.has(path)) return bgmLoadingPromises.get(path);
+
+      const loadPromise = (async () => {
+        const ctx = getAudioContext();
+        const tryUrls = [path];
+        if (path.endsWith('.mp3')) {
+          tryUrls.push(path.replace('.mp3', '.m4a'));
+        }
+        for (const u of tryUrls) {
+          try {
+            const resp = await fetch(u);
+            if (!resp.ok) continue;
+            const arr = await resp.arrayBuffer();
+            const decoded = await new Promise((resolve, reject) => {
+              ctx.decodeAudioData(arr, resolve, reject);
+            });
+            if (decoded) {
+              bgmBufferCache.set(path, decoded);
+              return decoded;
+            }
+          } catch (err) {
+            // May fail on local file:// protocol; fallback to HTML5 audioPlayer is automatic
+          }
+        }
+        return null;
+      })();
+
+      bgmLoadingPromises.set(path, loadPromise);
+      const res = await loadPromise;
+      bgmLoadingPromises.delete(path);
+      return res;
+    }
+
+    function stopBgmWebAudio() {
+      if (bgmSourceNode) {
+        try {
+          bgmSourceNode.onended = null;
+          bgmSourceNode.stop();
+          bgmSourceNode.disconnect();
+        } catch (e) {}
+        bgmSourceNode = null;
+      }
+    }
+
+    function startBgmEngine(offsetSec = 0, exportDest = null) {
+      const ctx = getAudioContext();
+      stopBgmWebAudio();
+
+      const buf = bgmBufferCache.get(currentBgmPath);
+      if (buf && buf.duration > 0) {
+        // Pure Web Audio BGM playback: immune to iOS <video> media session preemption!
+        try {
+          audioPlayer.pause();
+        } catch (e) {}
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        src.connect(bgmGainNode);
+        if (exportDest) {
+          try { bgmGainNode.connect(exportDest); } catch (e) {}
+        }
+        const startOffset = ((offsetSec % buf.duration) + buf.duration) % buf.duration;
+        bgmStartContextTime = ctx.currentTime;
+        bgmStartOffset = startOffset;
+        src.start(0, startOffset);
+        bgmSourceNode = src;
+        return true;
+      }
+
+      // Fallback: start HTML5 audioPlayer immediately, and asynchronously upgrade to Web Audio buffer once decoded
+      try {
+        if (!audioPlayer.src || audioPlayer.src === '' || audioPlayer.src.endsWith('/')) {
+          audioPlayer.src = currentBgmPath;
+        }
+        if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
+          audioPlayer.currentTime = offsetSec % audioPlayer.duration;
+        } else {
+          audioPlayer.currentTime = 0;
+        }
+      } catch (e) {}
+
+      audioPlayer.loop = true;
+      const playPromise = audioPlayer.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          if (currentBgmPath.endsWith('.mp3')) {
+            const fallback = currentBgmPath.replace('.mp3', '.m4a');
+            audioPlayer.src = fallback;
+            currentBgmPath = fallback;
+            audioPlayer.play().catch(() => {});
+          }
+        });
+      }
+
+      // Async decode & hot-swap to Web Audio BGM so <video> unmuting never interrupts BGM
+      ensureBgmAudioBuffer(currentBgmPath).then(decodedBuf => {
+        if (decodedBuf && (isPreviewPlaying || isExportRecording) && !bgmSourceNode) {
+          const curTime = isPreviewPlaying ? previewTime : (audioPlayer.currentTime || 0);
+          startBgmEngine(curTime, exportDest);
+        }
+      });
+      return false;
+    }
+
+    function pauseBgmEngine() {
+      stopBgmWebAudio();
+      try {
+        audioPlayer.pause();
+      } catch (e) {}
     }
 
     function attachVideoAudioNodes(item) {
@@ -1482,10 +1648,34 @@
       }
     }
 
-    // 2. Media Upload & Processing with Genuine Video Thumbnails & Size Protection
+    // 2. Media Upload & Processing with Genuine Video Thumbnails, iPhone Live Photo Support & Size Protection
     const mediaDropzone = document.getElementById('mediaDropzone');
     const mediaInput = document.getElementById('mediaFileInput');
-    
+    const livePhotoModeGroup = document.getElementById('livePhotoModeGroup');
+
+    if (livePhotoModeGroup) {
+      livePhotoModeGroup.querySelectorAll('.live-mode-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const mode = btn.getAttribute('data-live-mode') || 'on';
+          livePhotoImportMode = mode;
+          livePhotoModeGroup.querySelectorAll('.live-mode-btn').forEach(b => {
+            if (b === btn) {
+              b.className = 'live-mode-btn active px-2.5 py-1.5 rounded-md text-xs font-semibold transition flex items-center justify-center space-x-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm cursor-pointer';
+            } else {
+              b.className = 'live-mode-btn px-2.5 py-1.5 rounded-md text-xs font-medium transition flex items-center justify-center space-x-1 text-slate-400 hover:text-slate-200 border border-transparent cursor-pointer';
+            }
+          });
+          // Adjust input accept hint: when Live Photo is OFF, prioritize image/* on iOS picker while still allowing manual selection
+          if (livePhotoImportMode === 'off') {
+            mediaInput.setAttribute('accept', 'image/*,video/*,.heic,.heif,.avif,.jpg,.jpeg,.png,.webp,.mov,.mp4,.m4v,.webm');
+          } else {
+            mediaInput.setAttribute('accept', 'image/*,video/*,.heic,.heif,.avif,.jpg,.jpeg,.png,.webp,.mov,.mp4,.m4v,.webm');
+          }
+        });
+      });
+    }
+
     mediaDropzone.addEventListener('click', () => mediaInput.click());
 
     // Drag and Drop support on dropzone
@@ -1511,11 +1701,15 @@
       e.target.value = ''; // Reset input so same or new files can be uploaded repeatedly
     });
 
-    const MAX_IMG_BYTES = 10 * 1024 * 1024; // 10MB
-    const MAX_VID_BYTES = 100 * 1024 * 1024; // 100MB
-    const MAX_VID_SECONDS = 10.0;
+    // Relaxed Media Limits (Previously: 10MB image, 100MB video, 10s duration)
+    const MAX_IMG_BYTES = 50 * 1024 * 1024;  // 50MB
+    const MAX_VID_BYTES = 500 * 1024 * 1024; // 500MB
+    const MAX_VID_SECONDS = 60.0;            // 60.0s
 
-    function createVideoDefaultPlaceholder() {
+    function createVideoDefaultPlaceholder(isLive = false) {
+      const icon = isLive ? '◉' : '🎬';
+      const label = isLive ? '解析实况中...' : '解析封面中...';
+      const color = isLive ? '#f59e0b' : '#f43f5e';
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
         <defs>
           <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1524,40 +1718,245 @@
           </linearGradient>
         </defs>
         <rect width="240" height="240" fill="url(#bg)"/>
-        <circle cx="120" cy="105" r="32" fill="#e11d48" opacity="0.15"/>
-        <text x="120" y="116" font-size="28" text-anchor="middle" fill="#f43f5e">🎬</text>
-        <text x="120" y="152" font-size="11" font-weight="600" text-anchor="middle" fill="#94a3b8" font-family="-apple-system,BlinkMacSystemFont,sans-serif">解析封面中...</text>
+        <circle cx="120" cy="105" r="32" fill="${color}" opacity="0.15"/>
+        <text x="120" y="116" font-size="28" text-anchor="middle" fill="${color}">${icon}</text>
+        <text x="120" y="152" font-size="11" font-weight="600" text-anchor="middle" fill="#94a3b8" font-family="-apple-system,BlinkMacSystemFont,sans-serif">${label}</text>
       </svg>`;
       return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    }
+
+    function createManagedVideoElement(url) {
+      const video = document.createElement('video');
+      video.width = 320;
+      video.height = 180;
+      // Use 'metadata' initially instead of 'auto' so uploading 15-30 videos on iPhone/Safari never exhausts hardware H.264/HEVC decoders!
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.loop = false;
+      video.src = url;
+
+      const pool = document.getElementById('videoWorkerPool');
+      if (pool) pool.appendChild(video);
+      return video;
+    }
+
+    // Detect embedded MP4/MOV video stream inside single-file Live Photo / Motion Photo (JPEG/HEIC container)
+    async function tryExtractEmbeddedLiveVideo(item) {
+      if (!item || !item.file || item.videoEl) return;
+      try {
+        const f = item.file;
+        if (f.size < 65536 || f.size > MAX_IMG_BYTES) return;
+        const buf = await f.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        // Scan after first 4KB for ISO Base Media File 'ftyp' header belonging to an embedded MP4/MOV stream ('mp42', 'isom', 'qt  ', 'M4V ')
+        let foundOffset = -1;
+        for (let i = 4096; i < bytes.length - 16; i++) {
+          if (bytes[i] === 0x66 && bytes[i + 1] === 0x74 && bytes[i + 2] === 0x79 && bytes[i + 3] === 0x70) {
+            const brand = String.fromCharCode(bytes[i + 4], bytes[i + 5], bytes[i + 6], bytes[i + 7]);
+            if (brand === 'mp42' || brand === 'isom' || brand === 'qt  ' || brand === 'M4V ' || brand === 'avc1') {
+              const boxStart = i - 4;
+              if (boxStart > 1024) {
+                foundOffset = boxStart;
+                break;
+              }
+            }
+          }
+        }
+        if (foundOffset > 0) {
+          const videoBlob = new Blob([buf.slice(foundOffset)], { type: 'video/mp4' });
+          item.pairedVideoBlob = videoBlob;
+          item.isLivePhoto = true;
+          if (livePhotoImportMode === 'on') {
+            activateLivePhotoVideo(item, videoBlob);
+          } else {
+            item.liveActive = false;
+            renderMediaGrid();
+          }
+        }
+      } catch (e) {}
+    }
+
+    function activateLivePhotoVideo(item, videoFileOrBlob) {
+      const sourceBlob = videoFileOrBlob || item.pairedVideoFile || item.pairedVideoBlob || item.file;
+      if (!sourceBlob) return;
+      if (!item.videoEl) {
+        const vUrl = URL.createObjectURL(sourceBlob);
+        item.videoEl = createManagedVideoElement(vUrl);
+        item._endedHookAttached = false;
+      }
+      item.isLivePhoto = true;
+      item.liveActive = true;
+      item.isVideo = true;
+      if (item.audioEnabled === undefined) item.audioEnabled = true;
+      enqueueVideoThumb(item);
+      updateUnifiedLoudness();
+      updateDurationBasedOnMedia();
+      renderMediaGrid();
+      renderFrameAt(previewTime);
+    }
+
+    function deactivateLivePhotoToStatic(item) {
+      if (!item) return;
+      item.liveActive = false;
+      item.isVideo = false;
+      if (item.videoEl) {
+        item.videoEl.pause();
+        item.videoEl.muted = true;
+        if (item.gainNode) item.gainNode.gain.value = 0;
+        item.videoEl.volume = 0;
+      }
+      // Ensure static imgEl is populated from headFrameCanvas or thumbImg if it came from a standalone .MOV Live Photo
+      if ((!item.imgEl || !item.imgEl.complete || item.imgEl.naturalWidth === 0) && item.thumbImg) {
+        item.imgEl = item.thumbImg;
+      }
+      updateUnifiedLoudness();
+      updateDurationBasedOnMedia();
+      renderMediaGrid();
+      renderFrameAt(previewTime);
+    }
+
+    function getBaseFileName(filename) {
+      return filename.replace(/\.[^/.]+$/, '').trim().toLowerCase();
     }
 
     function handleUploadedFiles(files) {
       if (!files || files.length === 0) return;
       let rejected = [];
 
-      for (const f of files) {
+      const classifyFile = (f) => {
         const ext = f.name.toLowerCase();
-        const isVideo = f.type.startsWith('video/') || ext.endsWith('.mov') || ext.endsWith('.mp4');
-        const isImage = f.type.startsWith('image/') || ext.endsWith('.heic') || ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp');
+        const isVideo = f.type.startsWith('video/') || /\.(mov|mp4|m4v|webm|3gp)$/i.test(ext);
+        const isImage = f.type.startsWith('image/') || /\.(heic|heif|avif|jpg|jpeg|png|webp)$/i.test(ext);
+        return { isVideo, isImage, ext, base: getBaseFileName(f.name) };
+      };
+
+      // Step A: Detect iPhone Live Photo pairs (same base name e.g. IMG_1234.HEIC/.JPG + IMG_1234.MOV)
+      const imageByBase = new Map();
+      const videoByBase = new Map();
+      for (const f of files) {
+        const info = classifyFile(f);
+        if (info.isImage && !imageByBase.has(info.base)) {
+          imageByBase.set(info.base, f);
+        } else if (info.isVideo && !videoByBase.has(info.base)) {
+          videoByBase.set(info.base, f);
+        }
+      }
+
+      const consumedFiles = new Set();
+
+      for (const f of files) {
+        if (consumedFiles.has(f)) continue;
+        const { isVideo, isImage, ext, base } = classifyFile(f);
+
+        // Check if this file is part of a paired iPhone Live Photo (Image + Video with matching base name)
+        const pairedImg = imageByBase.get(base);
+        const pairedVid = videoByBase.get(base);
+        if (pairedImg && pairedVid && (f === pairedImg || f === pairedVid)) {
+          consumedFiles.add(pairedImg);
+          consumedFiles.add(pairedVid);
+
+          if (pairedImg.size > MAX_IMG_BYTES) {
+            rejected.push(`${pairedImg.name} (图片大小 ${(pairedImg.size / (1024 * 1024)).toFixed(1)}MB > 50MB)`);
+            continue;
+          }
+          if (pairedVid.size > MAX_VID_BYTES) {
+            rejected.push(`${pairedVid.name} (实况视频大小 ${(pairedVid.size / (1024 * 1024)).toFixed(1)}MB > 500MB)`);
+            continue;
+          }
+
+          const imgUrl = URL.createObjectURL(pairedImg);
+          const img = new Image();
+          const enableLiveNow = (livePhotoImportMode === 'on');
+          const vidUrl = URL.createObjectURL(pairedVid);
+          const video = createManagedVideoElement(vidUrl);
+
+          const item = {
+            id: 'm_' + Math.random().toString(36).substr(2, 9),
+            file: pairedImg,
+            pairedVideoFile: pairedVid,
+            name: pairedImg.name,
+            size: pairedImg.size + pairedVid.size,
+            isLivePhoto: true,
+            liveActive: enableLiveNow,
+            isVideo: enableLiveNow,
+            audioEnabled: true,
+            normalizedGain: 1.0,
+            thumbUrl: imgUrl,
+            thumbImg: img,
+            isPlaceholderThumb: false,
+            imgEl: img,
+            videoEl: video,
+            duration: 3.0
+          };
+
+          img.onload = () => {
+            item.isPlaceholderThumb = false;
+            updateCardInGrid(item);
+            renderFrameAt(previewTime);
+          };
+          img.onerror = () => {
+            // If pairedImg is .HEIC on a desktop browser that cannot decode HEIC natively, extract cover & static frame from the paired .MOV!
+            item.isPlaceholderThumb = true;
+            enqueueVideoThumb(item);
+          };
+          img.src = imgUrl;
+
+          mediaItems.push(item);
+
+          // Fast background downscaling for card thumbnail
+          if ('createImageBitmap' in window) {
+            createImageBitmap(pairedImg, { resizeWidth: 240, resizeHeight: 240, resizeQuality: 'medium' })
+              .then(bmp => {
+                const c = document.createElement('canvas');
+                c.width = 240;
+                c.height = 240;
+                const cx = c.getContext('2d');
+                cx.drawImage(bmp, 0, 0, 240, 240);
+                bmp.close();
+                item.thumbUrl = c.toDataURL('image/jpeg', 0.82);
+                const tImg = new Image();
+                tImg.onload = () => renderFrameAt(previewTime);
+                tImg.src = item.thumbUrl;
+                item.thumbImg = tImg;
+                item.isPlaceholderThumb = false;
+                updateCardInGrid(item);
+              })
+              .catch(() => {});
+          }
+
+          // Always enqueue video thumb so duration + headFrameCanvas (and HEIC fallback cover) are ready
+          enqueueVideoThumb(item);
+          continue;
+        }
 
         if (isImage) {
           if (f.size > MAX_IMG_BYTES) {
-            rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 10MB)`);
+            rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 50MB)`);
             continue;
           }
           const url = URL.createObjectURL(f);
           const img = new Image();
-          img.src = url;
           const item = {
             id: 'm_' + Math.random().toString(36).substr(2, 9),
             file: f,
             name: f.name,
             size: f.size,
+            isLivePhoto: false,
+            liveActive: false,
             isVideo: false,
             thumbUrl: url,
+            thumbImg: img,
             imgEl: img,
             duration: 0
           };
+          img.onload = () => {
+            updateCardInGrid(item);
+            renderFrameAt(previewTime);
+          };
+          img.src = url;
           mediaItems.push(item);
 
           // Fast background downscaling for card thumbnail to avoid main thread lag from 24MP/48MP photos
@@ -1571,42 +1970,43 @@
                 cx.drawImage(bmp, 0, 0, 240, 240);
                 bmp.close();
                 item.thumbUrl = c.toDataURL('image/jpeg', 0.82);
+                const tImg = new Image();
+                tImg.onload = () => renderFrameAt(previewTime);
+                tImg.src = item.thumbUrl;
+                item.thumbImg = tImg;
                 updateCardInGrid(item);
               })
               .catch(() => {});
           }
+
+          // Check if this photo contains an embedded Live Photo / Motion Photo video stream
+          tryExtractEmbeddedLiveVideo(item);
         } else if (isVideo) {
           if (f.size > MAX_VID_BYTES) {
-            rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 100MB)`);
+            rejected.push(`${f.name} (大小 ${(f.size / (1024 * 1024)).toFixed(1)}MB > 500MB)`);
             continue;
           }
 
           const url = URL.createObjectURL(f);
-          const video = document.createElement('video');
-          video.width = 320;
-          video.height = 180;
-          video.preload = 'auto'; // Load frame buffers for instant canvas capture
-          video.muted = true; // Essential for autoplay & decode policies
-          video.playsInline = true;
-          video.loop = false; // Managed strictly by state machine: false during audio playback, true only when muted
-          video.src = url;
-
-          const pool = document.getElementById('videoWorkerPool');
-          if (pool) pool.appendChild(video);
+          const video = createManagedVideoElement(url);
+          const isLikelyLiveMov = ext.endsWith('.mov') && f.size < 25 * 1024 * 1024;
 
           const item = {
             id: 'm_' + Math.random().toString(36).substr(2, 9),
             file: f,
             name: f.name,
             size: f.size,
+            isLivePhoto: isLikelyLiveMov,
+            liveActive: isLikelyLiveMov ? (livePhotoImportMode === 'on') : false,
+            _importLiveMode: livePhotoImportMode,
             isVideo: true,
             audioEnabled: true,
             normalizedGain: 1.0,
-            thumbUrl: createVideoDefaultPlaceholder(),
+            thumbUrl: createVideoDefaultPlaceholder(isLikelyLiveMov),
             thumbImg: null,
             isPlaceholderThumb: true,
             videoEl: video,
-            duration: 5.0
+            duration: isLikelyLiveMov ? 3.0 : 5.0
           };
           mediaItems.push(item);
 
@@ -1616,7 +2016,7 @@
       }
 
       if (rejected.length > 0) {
-        alert("部分素材超过规格限制，已自动过滤：\n\n" + rejected.join("\n"));
+        alert("部分素材超过规格限制（图片50MB / 视频500MB / 60秒），已自动过滤：\n\n" + rejected.join("\n"));
       }
 
       // Synchronous instant render: UI appears in < 10ms!
@@ -1626,13 +2026,15 @@
       renderFrameAt(previewTime);
     }
 
-    // High-Performance Queue for Video Thumbnail Extraction (Max 6 concurrent decoders)
+    // High-Performance Queue for Video Thumbnail Extraction (Max 3 concurrent decoders to protect iOS Safari hardware pool!)
     const thumbQueue = [];
     let activeThumbWorkers = 0;
-    const MAX_CONCURRENT_THUMB = 6;
+    const MAX_CONCURRENT_THUMB = 3;
 
     function enqueueVideoThumb(item) {
-      thumbQueue.push(item);
+      if (!thumbQueue.includes(item)) {
+        thumbQueue.push(item);
+      }
       processThumbQueue();
     }
 
@@ -1649,8 +2051,20 @@
 
     function extractAndApplyVideoThumb(item, onDone) {
       const video = item.videoEl;
+      if (!video) {
+        if (typeof onDone === 'function') onDone();
+        return;
+      }
       let captured = false;
       let finished = false;
+
+      // Upgrade preload to 'auto' only when this worker is actively extracting
+      if (video.preload !== 'auto') {
+        video.preload = 'auto';
+        if (video.readyState === 0) {
+          try { video.load(); } catch (e) {}
+        }
+      }
 
       const finish = () => {
         if (finished) return;
@@ -1674,7 +2088,7 @@
           ];
           for (let i = 0; i < pts.length; i++) {
             const pixel = cx.getImageData(Math.floor(pts[i][0]), Math.floor(pts[i][1]), 1, 1).data;
-            if (pixel[0] > 16 || pixel[1] > 16 || pixel[2] > 16) {
+            if (pixel[0] > 14 || pixel[1] > 14 || pixel[2] > 14) {
               return false; // Found bright pixel!
             }
           }
@@ -1684,8 +2098,24 @@
         }
       }
 
+      function applyLivePhotoModeRule() {
+        // If this is a short .MOV Live Photo (<= 4.2s) and user imported with "关闭实况 (仅导入照片)"
+        if (item.duration > 0 && item.duration <= 4.2 && item.name.toLowerCase().endsWith('.mov')) {
+          item.isLivePhoto = true;
+        }
+        if (item.isLivePhoto && (item._importLiveMode === 'off' || item.liveActive === false)) {
+          item.liveActive = false;
+          item.isVideo = false;
+          if ((!item.imgEl || !item.imgEl.complete || item.imgEl.naturalWidth === 0) && item.thumbImg) {
+            item.imgEl = item.thumbImg;
+          }
+          video.pause();
+          video.muted = true;
+        }
+      }
+
       function captureCurrentFrame(force = false) {
-        if (captured && !item.isPlaceholderThumb) return true;
+        if (captured && !item.isPlaceholderThumb && item.headFrameCanvas) return true;
         if (!video || video.videoWidth <= 0 || video.videoHeight <= 0) return false;
 
         try {
@@ -1705,7 +2135,8 @@
             return false;
           }
 
-          // Scheme A: Pristine full-resolution Head Frame canvas for seamless cross-dissolve looping
+          // Scheme A: Pristine full-resolution Head Frame canvas for seamless cross-dissolve looping & static photo fallback
+          let fullFrameDataUrl = null;
           try {
             const headC = document.createElement('canvas');
             headC.width = vw;
@@ -1713,25 +2144,39 @@
             const headCx = headC.getContext('2d');
             headCx.drawImage(video, 0, 0, vw, vh);
             item.headFrameCanvas = headC;
+            if (item.isLivePhoto && (!item.imgEl || !item.imgEl.complete || item.imgEl.naturalWidth === 0)) {
+              fullFrameDataUrl = headC.toDataURL('image/jpeg', 0.90);
+            }
           } catch (e) {}
 
-          const thumbUrl = c.toDataURL('image/jpeg', 0.82);
+          const thumbUrl = c.toDataURL('image/jpeg', 0.85);
           if (thumbUrl && thumbUrl.length > 200) {
             captured = true;
-            item.isPlaceholderThumb = false;
-            item.thumbUrl = thumbUrl;
-            const img = new Image();
-            img.onload = () => {
-              renderFrameAt(previewTime);
-            };
-            img.src = thumbUrl;
-            item.thumbImg = img;
+            // Only overwrite thumbUrl if item didn't already have a decoded paired photo cover, or if placeholder was active
+            if (item.isPlaceholderThumb || !item.thumbImg || item.thumbImg.naturalWidth === 0) {
+              item.isPlaceholderThumb = false;
+              item.thumbUrl = thumbUrl;
+              const img = new Image();
+              img.onload = () => {
+                renderFrameAt(previewTime);
+              };
+              img.src = fullFrameDataUrl || thumbUrl;
+              item.thumbImg = img;
+              if (!item.imgEl || item.imgEl.naturalWidth === 0) {
+                item.imgEl = img;
+              }
+            }
 
-            // Keep muted in background
+            // Keep muted and paused in background so decoder slot is freed for remaining items
             video.muted = true;
             video.volume = 0;
+            if (!isPreviewPlaying && !isExportRecording && !isSingleClipPlaying) {
+              video.pause();
+            }
 
+            applyLivePhotoModeRule();
             updateCardInGrid(item);
+            renderMediaGrid();
             renderFrameAt(previewTime);
             finish();
             return true;
@@ -1746,6 +2191,7 @@
       if (video.readyState >= 2 && video.videoWidth > 0) {
         if (video.duration && isFinite(video.duration)) {
           item.duration = video.duration;
+          applyLivePhotoModeRule();
           updateCardInGrid(item);
           updateDurationBasedOnMedia();
         }
@@ -1756,12 +2202,12 @@
 
       let seekAttempts = 0;
       function doSeek(targetSec) {
-        if (captured && !item.isPlaceholderThumb) return;
+        if (captured && !item.isPlaceholderThumb && item.headFrameCanvas) return;
         seekAttempts++;
         const dur = (video.duration && isFinite(video.duration)) ? video.duration : 3.0;
         const targetTime = (targetSec !== undefined) 
           ? targetSec 
-          : (seekAttempts === 1 ? Math.min(0.2, dur * 0.2) : Math.min(0.8, dur * 0.5));
+          : (seekAttempts === 1 ? Math.min(0.15, dur * 0.15) : Math.min(0.6, dur * 0.4));
         try {
           video.currentTime = targetTime;
         } catch (e) {
@@ -1770,18 +2216,19 @@
       }
 
       const onFrameReady = () => {
-        if (captured && !item.isPlaceholderThumb) return;
         if (video.duration && isFinite(video.duration)) {
           item.duration = video.duration;
+          applyLivePhotoModeRule();
           updateCardInGrid(item);
           updateDurationBasedOnMedia();
         }
         if (captureCurrentFrame(false)) return;
-        doSeek(0.2);
+        doSeek(0.15);
       };
 
-      video.addEventListener('loadeddata', onFrameReady, { once: true });
-      video.addEventListener('canplay', onFrameReady, { once: true });
+      // Persistent listeners so even if a large 4K/HEVC video finishes decoding after the queue timeout, it still updates its cover!
+      video.addEventListener('loadeddata', onFrameReady);
+      video.addEventListener('canplay', onFrameReady);
 
       video.onloadedmetadata = () => {
         if (video.duration && isFinite(video.duration)) {
@@ -1794,37 +2241,39 @@
               updateDurationBasedOnMedia();
               renderMediaGrid();
               renderFrameAt(previewTime);
-              alert(`视频素材 "${item.name}" 时长为 ${item.duration.toFixed(1)} 秒，超过规格上限（10 秒），已自动移除以保护浏览器稳定运行。`);
+              alert(`视频素材 "${item.name}" 时长为 ${item.duration.toFixed(1)} 秒，超过规格上限（${MAX_VID_SECONDS} 秒），已自动移除。`);
               finish();
               return;
             }
           }
+          applyLivePhotoModeRule();
           updateCardInGrid(item);
           updateDurationBasedOnMedia();
         }
         if (video.readyState >= 2) {
           onFrameReady();
+        } else {
+          doSeek(0.1);
         }
       };
 
       video.addEventListener('seeked', () => {
-        if (captured && !item.isPlaceholderThumb) return;
         if (captureCurrentFrame(false)) return;
-        if (seekAttempts < 2 && (video.duration || 1) > 0.8) {
-          doSeek(0.8);
+        if (seekAttempts < 2 && (video.duration || 1) > 0.6) {
+          doSeek(0.5);
         } else {
           playAndCaptureFallback();
         }
-      }, { once: true });
+      });
 
       function playAndCaptureFallback() {
-        if (captured && !item.isPlaceholderThumb) return;
+        if (captured && !item.isPlaceholderThumb && item.headFrameCanvas) return;
         video.muted = true;
         video.playsInline = true;
 
         const onTime = () => {
           video.removeEventListener('timeupdate', onTime);
-          video.pause();
+          if (!isPreviewPlaying && !isExportRecording) video.pause();
           captureCurrentFrame(true);
         };
 
@@ -1832,11 +2281,11 @@
         video.play().catch(() => {
           setTimeout(() => {
             captureCurrentFrame(true);
-          }, 150);
+          }, 200);
         });
       }
 
-      // Responsive Safety net: reduced to 1200ms
+      // Generous 4000ms queue timeout for 4K / HEVC / iPhone MOV files
       setTimeout(() => {
         if (!captured || item.isPlaceholderThumb) {
           if (!captureCurrentFrame(true)) {
@@ -1849,16 +2298,16 @@
             grad.addColorStop(1, '#1e293b');
             cx.fillStyle = grad;
             cx.fillRect(0, 0, 240, 240);
-            cx.fillStyle = '#f43f5e';
+            cx.fillStyle = item.isLivePhoto ? '#f59e0b' : '#f43f5e';
             cx.font = 'bold 36px sans-serif';
             cx.textAlign = 'center';
-            cx.fillText('🎬', 120, 105);
+            cx.fillText(item.isLivePhoto ? '◉' : '🎬', 120, 105);
             cx.fillStyle = '#94a3b8';
             cx.font = 'bold 13px sans-serif';
-            cx.fillText(item.duration ? `视频 (${item.duration.toFixed(0)}s)` : '视频素材', 120, 142);
+            cx.fillText(item.isLivePhoto ? '实况照片' : (item.duration ? `视频 (${item.duration.toFixed(0)}s)` : '视频素材'), 120, 142);
             cx.fillStyle = '#64748b';
             cx.font = '11px sans-serif';
-            cx.fillText('点击或预览时呈现', 120, 165);
+            cx.fillText('预览时自动解码画面', 120, 165);
 
             item.thumbUrl = c.toDataURL('image/jpeg', 0.82);
             item.thumbImg = new Image();
@@ -1869,21 +2318,30 @@
           }
           finish();
         }
-      }, 1200);
+      }, 4000);
     }
 
     function updateCardInGrid(item) {
-      const idx = mediaItems.indexOf(item);
-      if (idx === -1) return;
-      const card = document.querySelector(`.draggable-card[data-index="${idx}"]`);
+      if (!item) return;
+      let card = document.querySelector(`.draggable-card[data-id="${item.id}"]`);
+      if (!card) {
+        const idx = mediaItems.indexOf(item);
+        if (idx !== -1) card = document.querySelector(`.draggable-card[data-index="${idx}"]`);
+      }
       if (card) {
         const img = card.querySelector('img');
         if (img && item.thumbUrl) {
           img.src = item.thumbUrl;
         }
         const vtag = card.querySelector('.duration-tag');
-        if (vtag && item.duration) {
-          vtag.innerText = `🎬 ${item.duration.toFixed(0)}s`;
+        if (vtag) {
+          if (item.isLivePhoto) {
+            vtag.innerText = item.liveActive !== false
+              ? `◉ 实况 ${item.duration ? item.duration.toFixed(1) + 's' : ''}`.trim()
+              : '🖼️ 静态';
+          } else if (item.duration) {
+            vtag.innerText = `🎬 ${item.duration.toFixed(0)}s`;
+          }
         }
       }
     }
@@ -1900,7 +2358,7 @@
       document.getElementById('timeDisplay').innerText = `00:00 / ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
-    // Render Media Thumbnails Grid with Drag-and-Drop & Delete Buttons
+    // Render Media Thumbnails Grid with Drag-and-Drop, Live Photo Switch & Sound Mute Buttons
     function renderMediaGrid() {
       const container = document.getElementById('mediaListContainer');
       const grid = document.getElementById('mediaPreviewGrid');
@@ -1924,13 +2382,16 @@
             ? 'border-rose-500 ring-2 ring-rose-500 shadow-lg shadow-rose-500/30' 
             : 'border-slate-700/80 hover:border-slate-500'
         }`;
-        card.title = item.isVideo ? '点击在右侧监视器预览并播放此视频 (可拖拽排序)' : '点击在右侧监视器查看此照片 (可拖拽排序)';
+        card.title = item.isLivePhoto
+          ? '实况照片：点击在右侧监视器预览，底部可开关实况动态与原声 (可拖拽排序)'
+          : (item.isVideo ? '点击在右侧监视器预览并播放此视频 (可拖拽排序)' : '点击在右侧监视器查看此照片 (可拖拽排序)');
         card.setAttribute('draggable', 'true');
         card.dataset.index = idx;
+        card.dataset.id = item.id;
 
         // Image / Video Cover
         const img = document.createElement('img');
-        img.src = item.thumbUrl || (item.isVideo ? createVideoDefaultPlaceholder() : '');
+        img.src = item.thumbUrl || (item.isVideo ? createVideoDefaultPlaceholder(item.isLivePhoto) : '');
         img.className = 'absolute inset-0 w-full h-full object-cover pointer-events-none select-none';
         card.appendChild(img);
 
@@ -1940,51 +2401,81 @@
         badge.innerText = `#${idx + 1}`;
         card.appendChild(badge);
 
-        // Integrated Video Bottom Bar (Duration Tag on left + Sound Toggle Button on right, never overlapping)
-        if (item.isVideo) {
+        // Integrated Bottom Bar for Videos & Live Photos (Mode/Duration Tag on left + Sound Mute Toggle Button on right)
+        if (item.isVideo || item.isLivePhoto) {
           const btmBar = document.createElement('div');
           btmBar.className = 'absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1 pointer-events-none select-none';
 
-          // Duration Badge (left)
-          const vtag = document.createElement('span');
-          vtag.className = 'duration-tag pointer-events-auto bg-black/80 backdrop-blur-sm text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold border border-white/20 shadow flex items-center space-x-0.5';
-          vtag.innerText = `🎬 ${item.duration ? item.duration.toFixed(0) + 's' : '视频'}`;
+          // Left Badge: For Live Photo, clickable to toggle between ◉ 实况 (dynamic video+sound) and 🖼️ 静态 (static photo only)
+          const vtag = document.createElement('button');
+          vtag.type = 'button';
+          if (item.isLivePhoto) {
+            const isLiveOn = item.liveActive !== false && item.isVideo;
+            vtag.className = `duration-tag pointer-events-auto font-mono text-[9px] px-1.5 py-0.5 rounded font-bold border shadow flex items-center space-x-0.5 transition cursor-pointer ${
+              isLiveOn
+                ? 'bg-amber-500/90 hover:bg-amber-400 text-slate-950 border-amber-300/60'
+                : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 border-slate-600/60'
+            }`;
+            vtag.innerText = isLiveOn
+              ? `◉ 实况 ${item.duration ? item.duration.toFixed(1) + 's' : ''}`.trim()
+              : '🖼️ 静态';
+            vtag.title = isLiveOn
+              ? '当前为【打开实况】模式（播放动态视频与声音），点击可切换为仅展示静态照片'
+              : '当前为【关闭实况】模式（仅展示静态照片），点击可开启实况动态视频与声音';
+            vtag.onclick = (e) => {
+              e.stopPropagation();
+              if (item.liveActive !== false && item.isVideo) {
+                deactivateLivePhotoToStatic(item);
+              } else {
+                activateLivePhotoVideo(item);
+              }
+            };
+          } else {
+            vtag.className = 'duration-tag pointer-events-auto bg-black/80 backdrop-blur-sm text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold border border-white/20 shadow flex items-center space-x-0.5';
+            vtag.innerText = `🎬 ${item.duration ? item.duration.toFixed(0) + 's' : '视频'}`;
+          }
           btmBar.appendChild(vtag);
 
-          // Audio Toggle Button (right, compact icon button)
-          const sndBtn = document.createElement('button');
-          const isAudOn = item.audioEnabled !== false;
-          sndBtn.className = `pointer-events-auto w-6 h-5 rounded flex items-center justify-center font-bold text-[10px] shadow transition backdrop-blur-md cursor-pointer select-none ${
-            isAudOn 
-              ? 'bg-emerald-600/90 hover:bg-emerald-500 text-white border border-emerald-400/50 hover:scale-105' 
-              : 'bg-slate-700/90 hover:bg-slate-600 text-slate-300 border border-slate-600/50 hover:scale-105'
-          }`;
-          sndBtn.title = isAudOn ? '视频原声：已开启 (点击静音此视频)' : '视频原声：已关闭 (点击开启此视频声音)';
-          sndBtn.innerHTML = isAudOn ? '🔊' : '🔇';
-          sndBtn.onclick = (e) => {
-            e.stopPropagation();
-            item.audioEnabled = (item.audioEnabled === false);
-            if (!item.audioEnabled) {
-              if (item.gainNode) item.gainNode.gain.value = 0;
-              if (item.videoEl) {
-                item.videoEl.muted = true;
-                item.videoEl.volume = 0;
-              }
-            } else {
-              item._audioPlayedOnce = false;
-              if (item._playState === 'playing_audio') {
-                const effGain = item.normalizedGain || 1.0;
-                if (item.gainNode) item.gainNode.gain.value = effGain;
+          // Right Button: Audio Mute / Unmute Toggle Button (shown whenever video/Live Photo dynamic playback is active)
+          if (item.isVideo) {
+            const sndBtn = document.createElement('button');
+            sndBtn.type = 'button';
+            const isAudOn = item.audioEnabled !== false;
+            sndBtn.className = `pointer-events-auto w-6 h-5 rounded flex items-center justify-center font-bold text-[10px] shadow transition backdrop-blur-md cursor-pointer select-none ${
+              isAudOn 
+                ? 'bg-emerald-600/90 hover:bg-emerald-500 text-white border border-emerald-400/50 hover:scale-105' 
+                : 'bg-slate-700/90 hover:bg-slate-600 text-slate-300 border border-slate-600/50 hover:scale-105'
+            }`;
+            sndBtn.title = isAudOn
+              ? (item.isLivePhoto ? '实况原声：已开启 (点击静音此实况照片)' : '视频原声：已开启 (点击静音此视频)')
+              : (item.isLivePhoto ? '实况原声：已静音 (点击开启此实况声音)' : '视频原声：已静音 (点击开启此视频声音)');
+            sndBtn.innerHTML = isAudOn ? '🔊' : '🔇';
+            sndBtn.onclick = (e) => {
+              e.stopPropagation();
+              item.audioEnabled = (item.audioEnabled === false);
+              if (!item.audioEnabled) {
+                if (item.gainNode) item.gainNode.gain.value = 0;
                 if (item.videoEl) {
-                  item.videoEl.muted = false;
-                  item.videoEl.volume = 1.0;
+                  item.videoEl.muted = true;
+                  item.videoEl.volume = 0;
+                }
+              } else {
+                item._audioPlayedOnce = false;
+                if (item._playState === 'playing_audio') {
+                  const effGain = item.normalizedGain || 1.0;
+                  if (item.gainNode) item.gainNode.gain.value = effGain;
+                  if (item.videoEl) {
+                    item.videoEl.muted = false;
+                    item.videoEl.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * effGain));
+                  }
                 }
               }
-            }
-            updateUnifiedLoudness();
-            renderMediaGrid();
-          };
-          btmBar.appendChild(sndBtn);
+              updateUnifiedLoudness();
+              renderMediaGrid();
+              renderFrameAt(previewTime);
+            };
+            btmBar.appendChild(sndBtn);
+          }
 
           card.appendChild(btmBar);
         }
@@ -2070,7 +2561,7 @@
         }
       });
       if (!isPreviewPlaying) {
-        audioPlayer.volume = bgmVolumeRatio;
+        setBgmEffectiveVolume(bgmVolumeRatio);
       }
     }
 
@@ -2115,22 +2606,18 @@
       // Render the frame immediately
       renderFrameAt(previewTime);
 
-      // If it's a video: play through once with sound if not muted
+      // If it's a video or active Live Photo: play through once with sound if not muted
       if (item.isVideo && item.videoEl) {
         const v = item.videoEl;
-        getAudioContext();
-        attachVideoAudioNodes(item);
+        if (v.preload !== 'auto') v.preload = 'auto';
 
         const isAudOn = (item.audioEnabled !== false);
         v.loop = false;
         v.muted = !isAudOn;
         if (isAudOn) {
-          v.volume = Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0));
+          v.volume = Math.max(0, Math.min(1.0, videoVolumeRatio * (item.normalizedGain || 1.0)));
           if (item.gainNode) {
             item.gainNode.gain.value = (item.normalizedGain || 1.0);
-          }
-          if (isAudioDuckingEnabled) {
-            audioPlayer.volume = bgmVolumeRatio * 0.40;
           }
         } else {
           v.volume = 0;
@@ -2214,6 +2701,7 @@
 
     // 3. Audio Preview & Selection Logic
     function playTrack(audioSrc, btn) {
+      stopBgmWebAudio();
       if (playingBgmBtn === btn && !audioPlayer.paused) {
         audioPlayer.pause();
         btn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
@@ -2225,9 +2713,10 @@
         playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
       }
 
-      audioPlayer.volume = bgmVolumeRatio;
+      setBgmEffectiveVolume(bgmVolumeRatio);
       audioPlayer.src = audioSrc;
       currentBgmPath = audioSrc;
+      ensureBgmAudioBuffer(audioSrc);
 
       const p = audioPlayer.play();
       if (p !== undefined) {
@@ -2239,6 +2728,7 @@
           const fallback = audioSrc.endsWith('.mp3') ? audioSrc.replace('.mp3', '.m4a') : audioSrc.replace('./audio/', './public/audio/');
           audioPlayer.src = fallback;
           currentBgmPath = fallback;
+          ensureBgmAudioBuffer(fallback);
           audioPlayer.play().then(() => {
             btn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
             playingBgmBtn = btn;
@@ -2248,7 +2738,7 @@
     }
 
     audioPlayer.addEventListener('ended', () => {
-      if (isPreviewPlaying) {
+      if (isPreviewPlaying && !bgmSourceNode) {
         audioPlayer.currentTime = 0;
         audioPlayer.play().catch(e => console.warn(e));
       } else if (playingBgmBtn) {
@@ -2291,15 +2781,9 @@
         if (btn) {
           const audioSrc = btn.getAttribute('data-audio');
           currentBgmPath = audioSrc;
+          ensureBgmAudioBuffer(audioSrc);
           if (isPreviewPlaying) {
-            audioPlayer.src = audioSrc;
-            audioPlayer.loop = true;
-            try {
-              if (audioPlayer.readyState >= 1 && audioPlayer.duration) {
-                audioPlayer.currentTime = previewTime % audioPlayer.duration;
-              }
-            } catch (err) {}
-            audioPlayer.play().catch(e => console.warn(e));
+            startBgmEngine(previewTime);
           } else {
             playTrack(audioSrc, btn);
           }
@@ -2307,15 +2791,21 @@
       });
     });
 
-    document.getElementById('customBgmInput').addEventListener('change', (e) => {
+    document.getElementById('customBgmInput').addEventListener('change', async (e) => {
       if (e.target.files.length > 0) {
         const f = e.target.files[0];
         currentBgmPath = URL.createObjectURL(f);
         audioPlayer.src = currentBgmPath;
-        audioPlayer.volume = bgmVolumeRatio;
+        setBgmEffectiveVolume(bgmVolumeRatio);
         audioPlayer.loop = true;
+        try {
+          const ctx = getAudioContext();
+          const arr = await f.arrayBuffer();
+          const decoded = await new Promise((resolve, reject) => ctx.decodeAudioData(arr, resolve, reject));
+          if (decoded) bgmBufferCache.set(currentBgmPath, decoded);
+        } catch (err) {}
         if (isPreviewPlaying) {
-          audioPlayer.play().catch(e => console.warn(e));
+          startBgmEngine(previewTime);
         } else {
           audioPlayer.play().catch(e => console.warn(e));
         }
@@ -2335,7 +2825,8 @@
       bgmVolumeRatio = val / 100.0;
       bgmVolumeVal.innerText = `${val}%`;
       if (!isSingleClipPlaying) {
-        audioPlayer.volume = (isAudioDuckingEnabled && isAnyVideoAudioActive) ? bgmVolumeRatio * 0.40 : bgmVolumeRatio;
+        const target = (isAudioDuckingEnabled && isAnyVideoAudioActive) ? bgmVolumeRatio * 0.40 : bgmVolumeRatio;
+        setBgmEffectiveVolume(target);
       }
     });
 
@@ -2356,7 +2847,8 @@
     autoDuckingToggle.addEventListener('change', (e) => {
       isAudioDuckingEnabled = e.target.checked;
       if (!isSingleClipPlaying && isPreviewPlaying) {
-        audioPlayer.volume = (isAudioDuckingEnabled && isAnyVideoAudioActive) ? bgmVolumeRatio * 0.40 : bgmVolumeRatio;
+        const target = (isAudioDuckingEnabled && isAnyVideoAudioActive) ? bgmVolumeRatio * 0.40 : bgmVolumeRatio;
+        setBgmEffectiveVolume(target);
       }
     });
 
@@ -2720,6 +3212,13 @@
           // Video Playback & Audio Synchronization (Bottom Entrance Trigger + Strict Single-Play Audio + Seamless Visual Loop)
           const isLive = (isPreviewPlaying || isExportRecording);
           if (item.isVideo && item.videoEl) {
+            // Upgrade preload when approaching viewport so frames are ready ahead of entrance
+            if (wy < CH + STRIDE * 1.5 && wy + WIN_H > -STRIDE) {
+              if (item.videoEl.preload !== 'auto') {
+                item.videoEl.preload = 'auto';
+              }
+            }
+
             // Attach ended listener once to guarantee instantaneous audio shutoff and smooth loop restart
             if (!item._endedHookAttached) {
               item._endedHookAttached = true;
@@ -2817,6 +3316,11 @@
                       try { item.videoEl.currentTime = Math.max(0, audioElapsed); } catch (e) {}
                     }
 
+                    // 仅在导出录制时挂载 MediaElementAudioSourceNode，日常预览使用原生音量 + WebAudio BGM 双轨独立通道，杜绝 iOS/Safari 抢占静音
+                    if (isExportRecording) {
+                      attachVideoAudioNodes(item);
+                    }
+
                     // 原声同步释放
                     item.videoEl.muted = false;
                     const effGain = item.normalizedGain || 1.0;
@@ -2828,7 +3332,15 @@
                     }
 
                     if (item.videoEl.paused) {
-                      item.videoEl.play().catch(e => console.warn('Enter play:', e));
+                      item.videoEl.play().then(() => {
+                        // Ensure BGM stays alive if browser media session tried to pause HTMLAudioElement on video unmute
+                        if (webAudioCtx && webAudioCtx.state === 'suspended') {
+                          webAudioCtx.resume().catch(() => {});
+                        }
+                        if (!bgmSourceNode && (isPreviewPlaying || isExportRecording) && audioPlayer.paused && !audioPlayer.ended) {
+                          audioPlayer.play().catch(() => {});
+                        }
+                      }).catch(e => console.warn('Enter play:', e));
                     }
                   } else {
                     // 保持单次音频播放状态
@@ -2971,7 +3483,7 @@
                 // fall through
               }
             }
-            // 2. High-quality static thumbnail (Frame 0) if GENUINE (not placeholder!)
+            // 2. High-quality static thumbnail (Frame 0 or Paired Photo) if GENUINE (not placeholder!)
             if (!drawn && item.thumbImg && item.thumbImg.complete && item.thumbImg.naturalWidth > 0 && !item.isPlaceholderThumb) {
               try {
                 const img = item.thumbImg;
@@ -3011,7 +3523,7 @@
                 const s = Math.max(rw / iw, rh / ih);
                 const dw = iw * s;
                 const dh = ih * s;
-                ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dw) / 2, dw, dh);
+                ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
                 drawn = true;
               } catch (e) {
                 // fall through
@@ -3021,18 +3533,33 @@
               ctx.fillStyle = '#1e293b';
               ctx.fillRect(rx, wy, rw, rh);
             }
-          } else if (item.imgEl && item.imgEl.complete) {
-            // Image
-            const img = item.imgEl;
-            const iw = img.naturalWidth || rw;
-            const ih = img.naturalHeight || rh;
-            const s = Math.max(rw / iw, rh / ih);
-            const dw = iw * s;
-            const dh = ih * s;
-            ctx.drawImage(img, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
           } else {
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(rx, wy, rw, rh);
+            // Static Photo or Live Photo in static mode: 3-tier fallback (imgEl -> headFrameCanvas -> thumbImg)
+            let photoTarget = null;
+            if (item.imgEl && item.imgEl.complete && item.imgEl.naturalWidth > 0) {
+              photoTarget = item.imgEl;
+            } else if (item.headFrameCanvas && item.headFrameCanvas.width > 0) {
+              photoTarget = item.headFrameCanvas;
+            } else if (item.thumbImg && item.thumbImg.complete && item.thumbImg.naturalWidth > 0) {
+              photoTarget = item.thumbImg;
+            }
+
+            if (photoTarget) {
+              try {
+                const iw = photoTarget.naturalWidth || photoTarget.width || rw;
+                const ih = photoTarget.naturalHeight || photoTarget.height || rh;
+                const s = Math.max(rw / iw, rh / ih);
+                const dw = iw * s;
+                const dh = ih * s;
+                ctx.drawImage(photoTarget, rx + (rw - dw) / 2, wy + (rh - dh) / 2, dw, dh);
+              } catch (e) {
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(rx, wy, rw, rh);
+              }
+            } else {
+              ctx.fillStyle = '#1e293b';
+              ctx.fillRect(rx, wy, rw, rh);
+            }
           }
           ctx.restore();
         });
@@ -3263,45 +3790,20 @@
         playingBgmBtn = null;
       }
 
-      // Initialize Web Audio Context and attach video audio nodes
+      // Initialize Web Audio Context and reset video audio states
       getAudioContext();
       mediaItems.forEach(item => {
-        if (item.isVideo) {
-          attachVideoAudioNodes(item);
-          if (item.videoEl) {
-            item.videoEl.muted = true;
-            if (item.gainNode) item.gainNode.gain.value = 0;
-            item.videoEl.volume = 0;
-          }
+        if (item.isVideo && item.videoEl) {
+          item.videoEl.muted = true;
+          if (item.gainNode) item.gainNode.gain.value = 0;
+          item.videoEl.volume = 0;
         }
       });
       updateUnifiedLoudness();
 
-      // Play BGM & Videos
-      try {
-        if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
-          audioPlayer.currentTime = previewTime % audioPlayer.duration;
-        } else {
-          audioPlayer.currentTime = 0;
-        }
-      } catch (err) {
-        console.warn('Audio seek warning:', err);
-      }
-
-      audioPlayer.volume = bgmVolumeRatio;
-      audioPlayer.loop = true;
-      const playPromise = audioPlayer.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(e => {
-          console.warn('Audio preview auto-fallback:', e);
-          if (currentBgmPath.endsWith('.mp3')) {
-            const fallback = currentBgmPath.replace('.mp3', '.m4a');
-            audioPlayer.src = fallback;
-            currentBgmPath = fallback;
-            audioPlayer.play().catch(err => console.warn('BGM fallback play error:', err));
-          }
-        });
-      }
+      // Play BGM via Web Audio BGM Engine (with instant HTMLAudioElement fallback & hot-swap)
+      setBgmEffectiveVolume(bgmVolumeRatio);
+      startBgmEngine(previewTime);
 
       // Reset play state for all media items to smoothly trigger bottom entrance and single-play audio
       mediaItems.forEach(item => {
@@ -3323,7 +3825,7 @@
       document.getElementById('togglePlayIcon').innerText = '▶';
       document.getElementById('togglePlayText').innerText = '点击预览';
 
-      audioPlayer.pause();
+      pauseBgmEngine();
       if (playingBgmBtn) {
         playingBgmBtn.innerHTML = `<svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`;
         playingBgmBtn = null;
@@ -3365,6 +3867,14 @@
 
       renderFrameAt(previewTime);
 
+      // Keep-alive guard: Ensure Web Audio Context or fallback HTMLAudioElement never stays paused when a <video> unmutes!
+      if (webAudioCtx && webAudioCtx.state === 'suspended') {
+        webAudioCtx.resume().catch(() => {});
+      }
+      if (!bgmSourceNode && audioPlayer.paused && !audioPlayer.ended) {
+        audioPlayer.play().catch(() => {});
+      }
+
       // Dynamic Audio Ducking & Outro Volume Fade with Smooth Ramping
       const outroStart = totalDuration - OUTRO_DURATION;
       let targetBgmVol = bgmVolumeRatio;
@@ -3376,11 +3886,13 @@
         targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
       }
 
-      // Smooth exponential volume glide: only update when changed to avoid audio driver buffer stutter
-      const currentVol = audioPlayer.volume;
-      if (Math.abs(currentVol - targetBgmVol) > 0.005) {
-        const nextVol = currentVol + (targetBgmVol - currentVol) * 0.12;
-        audioPlayer.volume = Math.max(0, Math.min(1.0, nextVol));
+      // Smooth exponential volume glide across both Web Audio bgmGainNode and HTMLAudioElement
+      const currentVol = getBgmEffectiveVolume();
+      if (Math.abs(currentVol - targetBgmVol) > 0.003) {
+        const nextVol = currentVol + (targetBgmVol - currentVol) * 0.14;
+        setBgmEffectiveVolume(nextVol);
+      } else if (Math.abs(currentVol - targetBgmVol) > 0.0001) {
+        setBgmEffectiveVolume(targetBgmVol);
       }
 
       animFrameId = requestAnimationFrame(previewLoop);
@@ -3396,7 +3908,7 @@
         c.classList.add('border-slate-700/80');
       });
       previewTime = 0;
-      audioPlayer.volume = bgmVolumeRatio;
+      setBgmEffectiveVolume(bgmVolumeRatio);
       try { audioPlayer.currentTime = 0; } catch (err) {}
       mediaItems.forEach(item => {
         if (item.isVideo) {
@@ -3432,12 +3944,16 @@
         const fadeProgress = Math.min(1.0, Math.max(0, (previewTime - outroStart) / OUTRO_DURATION));
         targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
       }
-      audioPlayer.volume = targetBgmVol;
-      try {
-        if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
-          audioPlayer.currentTime = previewTime % audioPlayer.duration;
-        }
-      } catch (err) {}
+      setBgmEffectiveVolume(targetBgmVol);
+      if (isPreviewPlaying && bgmSourceNode) {
+        startBgmEngine(previewTime);
+      } else {
+        try {
+          if (audioPlayer.readyState >= 1 && audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
+            audioPlayer.currentTime = previewTime % audioPlayer.duration;
+          }
+        } catch (err) {}
+      }
     });
 
     // 5.1 Pseudo-Fullscreen (Theater Mode) Controller
@@ -3572,8 +4088,9 @@
       await new Promise(r => setTimeout(r, 400));
 
       // Stage 2
-      setProgress(25, '阶段 2/5', '提取与解码照片/视频帧', `已分析 ${mediaItems.length} 个多媒体素材，生成高保真图层缓存`);
-      await new Promise(r => setTimeout(r, 500));
+      setProgress(25, '阶段 2/5', '提取与解码照片/视频帧及音轨缓存', `已分析 ${mediaItems.length} 个多媒体素材，生成高保真图层与音频混音缓存`);
+      await ensureBgmAudioBuffer(currentBgmPath);
+      await new Promise(r => setTimeout(r, 300));
 
       // Stage 3: Setup MediaRecorder & Canvas Stream
       setProgress(35, '阶段 3/5', '构建 1920x1080 动态视频帧流', '初始化 MediaRecorder 编码管道与 Canvas 流');
@@ -3589,40 +4106,39 @@
           await audioCtx.resume();
         }
         exportAudioDest = audioCtx.createMediaStreamDestination();
-        audioPlayer.currentTime = 0;
-        audioPlayer.volume = bgmVolumeRatio;
-        if (!audioPlayer._sourceNode) {
-          audioPlayer._sourceNode = audioCtx.createMediaElementSource(audioPlayer);
-          audioPlayer._sourceNode.connect(audioCtx.destination);
-        }
-        audioPlayer._sourceNode.connect(exportAudioDest);
+        setBgmEffectiveVolume(bgmVolumeRatio);
+        bgmGainNode.connect(exportAudioDest);
 
         // Connect Master Video Bus (with loudness compressor!) to export destination
         loudnessCompressor.connect(exportAudioDest);
 
-        // Ensure all videos have nodes attached and state initialized
+        // Initialize all video states cleanly (nodes attached on-demand when entering Phase 2)
         mediaItems.forEach(item => {
-          if (item.isVideo) {
-            attachVideoAudioNodes(item);
-            if (item.videoEl) {
-              item.videoEl.currentTime = 0;
-              item.videoEl.pause();
-              item.videoEl.muted = true;
-              item.videoEl.loop = false;
-              if (item.gainNode) item.gainNode.gain.value = 0;
-              item.videoEl.volume = 0;
-            }
+          if (item.isVideo && item.videoEl) {
+            item.videoEl.currentTime = 0;
+            item.videoEl.pause();
+            item.videoEl.muted = true;
+            item.videoEl.loop = false;
+            if (item.gainNode) item.gainNode.gain.value = 0;
+            item.videoEl.volume = 0;
           }
           item._audioPlayedOnce = false;
           item._playState = null;
         });
         updateUnifiedLoudness();
 
+        const startedWebBgm = startBgmEngine(0, exportAudioDest);
+        if (!startedWebBgm) {
+          if (!audioPlayer._sourceNode) {
+            audioPlayer._sourceNode = audioCtx.createMediaElementSource(audioPlayer);
+            audioPlayer._sourceNode.connect(bgmGainNode);
+          }
+        }
+
         combinedStream = new MediaStream([
           ...stream.getVideoTracks(),
           ...exportAudioDest.stream.getAudioTracks()
         ]);
-        audioPlayer.play().catch(e => console.warn('BGM export play warning:', e));
       } catch (e) {
         console.warn('Web Audio stream mix fallback:', e);
       }
@@ -3661,6 +4177,13 @@
 
         renderFrameAt(t);
 
+        if (webAudioCtx && webAudioCtx.state === 'suspended') {
+          webAudioCtx.resume().catch(() => {});
+        }
+        if (!bgmSourceNode && audioPlayer.paused && !audioPlayer.ended) {
+          audioPlayer.play().catch(() => {});
+        }
+
         // Dynamic Audio Ducking & Outro Volume Fade during export
         const outroStart = totalDuration - OUTRO_DURATION;
         let targetBgmVol = bgmVolumeRatio;
@@ -3672,10 +4195,12 @@
           targetBgmVol = Math.max(0, targetBgmVol * (1.0 - fadeProgress));
         }
 
-        const currentVol = audioPlayer.volume;
-        if (Math.abs(currentVol - targetBgmVol) > 0.005) {
-          const nextVol = currentVol + (targetBgmVol - currentVol) * 0.12;
-          audioPlayer.volume = Math.max(0, Math.min(1.0, nextVol));
+        const currentVol = getBgmEffectiveVolume();
+        if (Math.abs(currentVol - targetBgmVol) > 0.003) {
+          const nextVol = currentVol + (targetBgmVol - currentVol) * 0.14;
+          setBgmEffectiveVolume(nextVol);
+        } else if (Math.abs(currentVol - targetBgmVol) > 0.0001) {
+          setBgmEffectiveVolume(targetBgmVol);
         }
 
         const pct = Math.min(95, Math.round(35 + (t / totalDuration) * 60));
@@ -3688,7 +4213,7 @@
 
           // Stage 4: Finalize
           setProgress(98, '阶段 4/5', '正在封装多媒体音视频流', '合并双轨音频并生成高画质母带文件...');
-          audioPlayer.pause();
+          pauseBgmEngine();
           mediaItems.forEach(item => {
             if (item.isVideo && item.videoEl) {
               item.videoEl.pause();
@@ -3703,7 +4228,7 @@
           if (exportAudioDest) {
             try {
               loudnessCompressor.disconnect(exportAudioDest);
-              if (audioPlayer._sourceNode) audioPlayer._sourceNode.disconnect(exportAudioDest);
+              if (bgmGainNode) bgmGainNode.disconnect(exportAudioDest);
             } catch (err) {}
           }
 
