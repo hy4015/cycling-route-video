@@ -271,13 +271,37 @@
             <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
               <span class="flex items-center space-x-1.5">
                 <span>🎬 胶卷片头说明文字</span>
-                <span class="text-slate-500 text-[11px]">(片头卡片呈现，主标题沿用路线抬头)</span>
+                <span class="text-slate-500 text-[11px]">(片头截断卡片呈现，主标题沿用路线抬头)</span>
               </span>
               <span class="text-[11px] text-amber-400 font-medium">支持自定义修改</span>
             </label>
             <div class="relative flex items-center">
               <input type="text" id="introTitleInput" value="MEMORIES ON THE ROAD · 沿途风光与光影纪实" placeholder="输入胶卷片头说明，如：光影定格 · 35mm 胶卷骑行光影纪录" class="w-full bg-slate-900/90 border border-slate-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 pr-14 text-sm text-white placeholder-slate-500 focus:outline-none transition">
               <button type="button" id="resetIntroTitleBtn" class="absolute right-3 text-xs text-slate-400 hover:text-white px-1.5 py-0.5 rounded bg-slate-800 transition" title="恢复默认">重置</button>
+            </div>
+          </div>
+
+          <!-- 2.5 Filmstrip Outro Ending Text Customization (胶卷片尾结束文字) -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+              <span class="flex items-center space-x-1.5">
+                <span>🏁 胶卷片尾结束文字</span>
+                <span class="text-slate-500 text-[11px]">(片尾胶卷截断收卷卡片呈现)</span>
+              </span>
+              <button type="button" id="previewOutroBtn" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium flex items-center space-x-1 cursor-pointer transition" title="跳转到片尾查看截断效果">
+                <span>👁️ 点击预览片尾效果</span>
+              </button>
+            </label>
+            <div class="relative flex items-center">
+              <input type="text" id="outroTitleInput" value="车轮丈量山海，光影定格热爱 · 下一程再会" placeholder="输入胶卷片尾结束语，如：车轮丈量山海，光影定格热爱 · 下一程再会" class="w-full bg-slate-900/90 border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 pr-14 text-sm text-white placeholder-slate-500 focus:outline-none transition">
+              <button type="button" id="resetOutroTitleBtn" class="absolute right-3 text-xs text-slate-400 hover:text-white px-1.5 py-0.5 rounded bg-slate-800 transition" title="恢复默认">重置</button>
+            </div>
+            <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span class="text-slate-500">快捷金句：</span>
+              <button type="button" class="outro-preset-btn px-2 py-0.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-300 border border-slate-700/80 transition cursor-pointer" data-quote="车轮丈量山海，光影定格热爱 · 下一程再会">车轮丈量山海 (默认)</button>
+              <button type="button" class="outro-preset-btn px-2 py-0.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-300 border border-slate-700/80 transition cursor-pointer" data-quote="车轮不息，山海不止 · THE RIDE NEVER ENDS">车轮不息·山海不止</button>
+              <button type="button" class="outro-preset-btn px-2 py-0.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-300 border border-slate-700/80 transition cursor-pointer" data-quote="山海皆可平，破风向自由 · 下一站再见">破风向自由</button>
+              <button type="button" class="outro-preset-btn px-2 py-0.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-300 border border-slate-700/80 transition cursor-pointer" data-quote="终点亦是序章 · 致敬每一滴迎风的汗水">终点亦是序章</button>
             </div>
           </div>
 
@@ -939,6 +963,7 @@
     // Custom HUD Title & Style Settings
     let customRouteTitle = 'CYCLING ROUTE RECAP';
     let customIntroTitle = 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
+    let customOutroTitle = '车轮丈量山海，光影定格热爱 · 下一程再会';
     let currentMapStyle = 'satellite';
     let currentFilmStyle = 'portra400';
     let currentLandmarkMode = 'all'; // 'all' (核心+城镇, 推荐) | 'tier1' (仅一级核心城市) | 'none' (不显示)
@@ -2878,6 +2903,25 @@
     const resetTitleBtn = document.getElementById('resetTitleBtn');
     const introTitleInput = document.getElementById('introTitleInput');
     const resetIntroTitleBtn = document.getElementById('resetIntroTitleBtn');
+    const outroTitleInput = document.getElementById('outroTitleInput');
+    const resetOutroTitleBtn = document.getElementById('resetOutroTitleBtn');
+    const previewOutroBtn = document.getElementById('previewOutroBtn');
+
+    function seekPreviewToTime(targetT) {
+      if (isPreviewPlaying || isExportRecording) {
+        renderFrameAt(previewTime);
+        return;
+      }
+      previewTime = Math.max(0, Math.min(totalDuration, targetT));
+      const scrubber = document.getElementById('previewScrubber');
+      if (scrubber) scrubber.value = totalDuration > 0 ? (previewTime / totalDuration) * 100 : 0;
+      const m = Math.floor(previewTime / 60);
+      const s = Math.floor(previewTime % 60);
+      const tm = Math.floor(totalDuration / 60);
+      const ts = Math.floor(totalDuration % 60);
+      document.getElementById('timeDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} / ${tm.toString().padStart(2, '0')}:${ts.toString().padStart(2, '0')}`;
+      renderFrameAt(previewTime);
+    }
 
     titleInput.addEventListener('input', (e) => {
       customRouteTitle = e.target.value.trim() || 'CYCLING ROUTE RECAP';
@@ -2892,13 +2936,48 @@
 
     introTitleInput.addEventListener('input', (e) => {
       customIntroTitle = e.target.value.trim() || 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
-      renderFrameAt(previewTime);
+      seekPreviewToTime(0);
     });
 
     resetIntroTitleBtn.addEventListener('click', () => {
       customIntroTitle = 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
       introTitleInput.value = 'MEMORIES ON THE ROAD · 沿途风光与光影纪实';
-      renderFrameAt(previewTime);
+      seekPreviewToTime(0);
+    });
+
+    if (outroTitleInput) {
+      outroTitleInput.addEventListener('input', (e) => {
+        customOutroTitle = e.target.value.trim() || '车轮丈量山海，光影定格热爱 · 下一程再会';
+        seekPreviewToTime(Math.max(5.0, totalDuration - OUTRO_DURATION));
+      });
+      outroTitleInput.addEventListener('focus', () => {
+        seekPreviewToTime(Math.max(5.0, totalDuration - OUTRO_DURATION));
+      });
+    }
+
+    if (resetOutroTitleBtn) {
+      resetOutroTitleBtn.addEventListener('click', () => {
+        customOutroTitle = '车轮丈量山海，光影定格热爱 · 下一程再会';
+        if (outroTitleInput) outroTitleInput.value = customOutroTitle;
+        seekPreviewToTime(Math.max(5.0, totalDuration - OUTRO_DURATION));
+      });
+    }
+
+    if (previewOutroBtn) {
+      previewOutroBtn.addEventListener('click', () => {
+        seekPreviewToTime(Math.max(5.0, totalDuration - OUTRO_DURATION));
+      });
+    }
+
+    document.querySelectorAll('.outro-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const quote = btn.getAttribute('data-quote');
+        if (quote) {
+          customOutroTitle = quote;
+          if (outroTitleInput) outroTitleInput.value = quote;
+          seekPreviewToTime(Math.max(5.0, totalDuration - OUTRO_DURATION));
+        }
+      });
     });
 
     document.querySelectorAll('.map-style-btn').forEach(btn => {
@@ -3152,26 +3231,31 @@
 
       const film = FILM_CONFIGS[currentFilmStyle] || FILM_CONFIGS.portra400;
 
-      // Film scroll offset calculation
+      // Film scroll offset calculation (Symmetric 298px Intro Leader at t=0 and 298px Outro Trailer at t=contentDuration)
       const numWindows = Math.max(1, mediaItems.length);
-      const yTotal = Math.max(0, (numWindows - 1) * STRIDE);
-      const vScroll = numWindows > 1 ? yTotal / contentDuration : (STRIDE * 0.5 / contentDuration);
-      const yScroll = vScroll * t;
+      const yTotal = (numWindows - 1) * STRIDE + 44;
+      const vScroll = yTotal / contentDuration;
+      const filmProgress = Math.min(1.0, Math.max(0, t / contentDuration));
+      const yScroll = yTotal * filmProgress;
 
-      // First window top position (Film Leader Boundary)
+      // First window top position (Top Film Leader Cut Boundary)
       const wy0 = Math.round(0 * STRIDE - yScroll + 298);
+      // Last window bottom + last frame marking (Bottom Film Trailer Cut Boundary)
+      const wyLast = Math.round((numWindows - 1) * STRIDE - yScroll + 298);
+      const wyEnd = wyLast + STRIDE;
 
-      // 1. Backgrounds: Film Base (below wy0) & Intro Leader Slate (above wy0)
-      if (wy0 < CH) {
+      // 1. Backgrounds: Film Base (strictly between wy0 and wyEnd), Intro Leader Slate (above wy0), Outro Trailer Slate (below wyEnd)
+      const filmTop = Math.max(0, wy0);
+      const filmBottom = Math.min(CH, wyEnd);
+      if (filmBottom > filmTop) {
         // Authentic 35mm dark film base
         ctx.fillStyle = '#0e1117';
-        ctx.fillRect(W_HALF, Math.max(0, wy0), W_HALF, CH - Math.max(0, wy0));
+        ctx.fillRect(W_HALF, filmTop, W_HALF, filmBottom - filmTop);
 
         // Sprocket hole track margins
         ctx.fillStyle = '#141824';
-        const trackTop = Math.max(0, wy0);
-        ctx.fillRect(W_HALF, trackTop, 38, CH - trackTop);
-        ctx.fillRect(CW - 38, trackTop, 38, CH - trackTop);
+        ctx.fillRect(W_HALF, filmTop, 38, filmBottom - filmTop);
+        ctx.fillRect(CW - 38, filmTop, 38, filmBottom - filmTop);
       }
 
       if (wy0 > 0) {
@@ -3182,6 +3266,16 @@
         leaderGrad.addColorStop(1, '#0e121d');
         ctx.fillStyle = leaderGrad;
         ctx.fillRect(W_HALF, 0, W_HALF, leaderH);
+      }
+
+      if (wyEnd < CH) {
+        // Elegant cinematic slate for the Film Trailer zone (below last photo frame)
+        const trailerTop = Math.max(0, wyEnd);
+        const trailerGrad = ctx.createLinearGradient(W_HALF, wyEnd, W_HALF, wyEnd + 320);
+        trailerGrad.addColorStop(0, '#0e121d');
+        trailerGrad.addColorStop(1, '#090d16');
+        ctx.fillStyle = trailerGrad;
+        ctx.fillRect(W_HALF, trailerTop, W_HALF, CH - trailerTop);
       }
 
       // 2. Draw Media Windows
@@ -3587,11 +3681,11 @@
         isAnyVideoAudioActive = activeVideoSoundPlaying;
       }
 
-      // 3. Vintage Sprocket Holes (Luminous light perforations strictly below wy0!)
+      // 3. Vintage Sprocket Holes (Luminous light perforations strictly between wy0 and wyEnd!)
       [W_HALF + 8, CW - 30].forEach(sx => {
         let ySp = -(Math.round(yScroll) % 80);
         while (ySp < CH + 80) {
-          if (ySp + 10 >= wy0 - 15) {
+          if (ySp + 10 >= wy0 - 12 && ySp + 50 <= wyEnd + 6) {
             ctx.fillStyle = '#f8fafc';
             ctx.strokeStyle = '#94a3b8';
             ctx.lineWidth = 1.5;
@@ -3601,8 +3695,8 @@
         }
       });
 
-      // 4. Film Stock Gap Markings (Strictly below photo 0, starting from k = 0)
-      for (let k = 0; k <= numWindows + 5; k++) {
+      // 4. Film Stock Gap Markings (Strictly bounded from k = 0 to k = numWindows - 1, truncated at wyEnd!)
+      for (let k = 0; k < numWindows; k++) {
         const wy = Math.round(k * STRIDE - yScroll + 298);
         const gapY = wy + WIN_H + 13;
         if (gapY >= -30 && gapY <= CH + 30) {
@@ -3637,14 +3731,19 @@
         }
       }
 
-      // 5. Vertical Separation Lines (strictly below wy0)
-      if (wy0 < CH) {
+      // 5. Vertical Separation Lines & Horizontal Cut Edges (strictly between wy0 and wyEnd)
+      if (filmBottom > filmTop) {
         ctx.strokeStyle = '#2d3748';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        const lineTop = Math.max(0, wy0);
-        ctx.moveTo(W_HALF + 38, lineTop); ctx.lineTo(W_HALF + 38, CH);
-        ctx.moveTo(CW - 38, lineTop); ctx.lineTo(CW - 38, CH);
+        ctx.moveTo(W_HALF + 38, filmTop); ctx.lineTo(W_HALF + 38, filmBottom);
+        ctx.moveTo(CW - 38, filmTop); ctx.lineTo(CW - 38, filmBottom);
+        if (wy0 > 0 && wy0 < CH) {
+          ctx.moveTo(W_HALF, wy0); ctx.lineTo(CW, wy0);
+        }
+        if (wyEnd > 0 && wyEnd < CH) {
+          ctx.moveTo(W_HALF, wyEnd); ctx.lineTo(CW, wyEnd);
+        }
         ctx.stroke();
       }
 
@@ -3729,6 +3828,93 @@
         }
       }
 
+      // 7. FILM TRAILER OUTRO TITLE CARD (Rendered directly below the truncated end of the filmstrip at wyEnd)
+      if (wyEnd < CH + 50) {
+        const cx = W_HALF + W_HALF / 2;
+
+        // A. Top Divider & Roll Termination Notch
+        const divEndY = wyEnd + 24;
+        if (divEndY < CH + 20) {
+          ctx.strokeStyle = 'rgba(51, 65, 85, 0.7)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx - 260, divEndY);
+          ctx.lineTo(cx + 260, divEndY);
+          ctx.stroke();
+
+          const endMarkerText = `— ◀ END OF ROLL · FRAME ${String(numWindows).padStart(2, '0')} —`;
+          ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+          ctx.textAlign = 'center';
+          const mw = ctx.measureText(endMarkerText).width;
+          ctx.fillStyle = '#0e121d';
+          ctx.fillRect(cx - mw / 2 - 8, divEndY - 8, mw + 16, 16);
+          ctx.fillStyle = '#64748b';
+          ctx.fillText(endMarkerText, cx, divEndY + 4);
+        }
+
+        // B. Main Outro Ending Quote (默认“车轮丈量山海，光影定格热爱 · 下一程再会”，支持自定义修改，超长自适应字号)
+        const outroMainY = wyEnd + 82;
+        if (outroMainY < CH + 40) {
+          const outroStr = (customOutroTitle || '车轮丈量山海，光影定格热爱 · 下一程再会').trim();
+          let outroFontSz = 26;
+          ctx.font = `bold ${outroFontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+          while (ctx.measureText(outroStr).width > (W_HALF - 96) && outroFontSz > 15) {
+            outroFontSz--;
+            ctx.font = `bold ${outroFontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+          }
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+          ctx.shadowBlur = 12;
+          ctx.fillText(outroStr, cx, outroMainY);
+          ctx.shadowBlur = 0;
+        }
+
+        // C. Route & Film Telemetry Sign-off Subtitle
+        const outroSubY = wyEnd + 126;
+        if (outroSubY < CH + 40) {
+          const routeSummary = (gpxData && gpxData.totalDist > 0)
+            ? `${customRouteTitle}  ·  全程 ${gpxData.totalDist.toFixed(1)} KM  ·  累计爬升 ${Math.round(gpxData.climb)} M`
+            : `${customRouteTitle}  ·  35MM MOTION ARCHIVE  ·  FIN.`;
+          ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText(routeSummary, cx, outroSubY);
+        }
+
+        // D. Bottom Film Stock Trailer Pill Badge
+        const badgeEndY = wyEnd + 174;
+        if (badgeEndY < CH + 40) {
+          const trailerBrandText = `${film.brand} · END OF ROLL · FIN`;
+          ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          const textWidth = ctx.measureText(trailerBrandText).width;
+          const dotRadius = 3;
+          const dotGap = 8;
+          const padX = 14;
+          const pillHeight = 26;
+          const contentWidth = (dotRadius * 2) + dotGap + textWidth;
+          const pillWidth = contentWidth + padX * 2;
+          const pillX = Math.round(cx - pillWidth / 2);
+          const pillY = Math.round(badgeEndY - pillHeight / 2);
+
+          ctx.fillStyle = 'rgba(15, 20, 30, 0.92)';
+          ctx.strokeStyle = film.accent;
+          ctx.lineWidth = 1.2;
+          roundRect(ctx, pillX, pillY, pillWidth, pillHeight, pillHeight / 2, true, true);
+
+          ctx.fillStyle = film.accent;
+          ctx.beginPath();
+          ctx.arc(pillX + padX + dotRadius, pillY + pillHeight / 2, dotRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = film.accent;
+          ctx.fillText(trailerBrandText, pillX + padX + (dotRadius * 2) + dotGap, pillY + pillHeight / 2);
+          ctx.textBaseline = 'alphabetic';
+        }
+      }
+
       ctx.restore();
 
       // Divider line between left map and right filmstrip
@@ -3738,16 +3924,6 @@
       ctx.moveTo(W_HALF, 0);
       ctx.lineTo(W_HALF, CH);
       ctx.stroke();
-
-      // 5. Cinematic Outro Fade-Out (Fade to black / deep slate over the last 3.0s)
-      const outroStart = totalDuration - OUTRO_DURATION;
-      if (t >= outroStart) {
-        const fadeProgress = Math.min(1.0, Math.max(0, (t - outroStart) / OUTRO_DURATION));
-        ctx.save();
-        ctx.fillStyle = `rgba(11, 15, 25, ${fadeProgress})`;
-        ctx.fillRect(0, 0, CW, CH);
-        ctx.restore();
-      }
     }
 
     function drawHudRow(ctx, label, val, color, y, leftX = 38, rightX = 242) {
