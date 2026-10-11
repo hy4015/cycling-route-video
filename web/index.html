@@ -1049,8 +1049,9 @@
     let isPreviewPlaying = false;
     let isExportRecording = false;
     let previewTime = 0.0;
-    const OUTRO_DURATION = 3.0; // 3 seconds outro tail after last media asset
-    let totalDuration = 33.0;
+    const FADE_TO_BLACK_DURATION = 2.0; // Final 2 seconds fade to black screen
+    const OUTRO_DURATION = 4.0; // 2s clear hold on ending card + 2s fade to black
+    let totalDuration = 30.0 + OUTRO_DURATION;
     let animFrameId = null;
     let lastTimestamp = null;
     let draggedIndex = null;
@@ -3934,6 +3935,17 @@
       ctx.moveTo(W_HALF, 0);
       ctx.lineTo(W_HALF, CH);
       ctx.stroke();
+
+      // 8. Final 2-Second Smooth Fade to Black Screen (最后 2 秒渐变成黑幕)
+      const fadeBlackStart = totalDuration - FADE_TO_BLACK_DURATION;
+      if (t >= fadeBlackStart) {
+        const p = Math.min(1.0, Math.max(0, (t - fadeBlackStart) / FADE_TO_BLACK_DURATION));
+        const fadeAlpha = p * p * (3 - 2 * p); // smoothstep ease-in-out
+        ctx.save();
+        ctx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`;
+        ctx.fillRect(0, 0, CW, CH);
+        ctx.restore();
+      }
     }
 
     function drawHudRow(ctx, label, val, color, y, leftX = 38, rightX = 242) {
