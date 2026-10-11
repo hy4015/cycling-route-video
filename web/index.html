@@ -885,117 +885,40 @@
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // Curated Geographic Landmarks Database (Tier 1 Core Cities & Tier 2 Classic Towns / Passes / Milestones)
+    // Curated Minimalist Geographic Landmarks Database (Core Cities & Key Cycling Nodes)
     const GEOGRAPHIC_LANDMARKS = [
-      // === TAIWAN TIER 1 CITIES (一级核心城市/县市首府) ===
-      { name: "台北市", tier: 1, lat: 25.0330, lon: 121.5654 },
-      { name: "新北市", tier: 1, lat: 25.0124, lon: 121.4657 },
-      { name: "基隆市", tier: 1, lat: 25.1276, lon: 121.7392 },
-      { name: "桃园市", tier: 1, lat: 24.9936, lon: 121.3010 },
-      { name: "新竹市", tier: 1, lat: 24.8039, lon: 120.9647 },
-      { name: "苗栗县", tier: 1, lat: 24.5602, lon: 120.8214 },
-      { name: "台中市", tier: 1, lat: 24.1477, lon: 120.6736 },
-      { name: "彰化县", tier: 1, lat: 24.0818, lon: 120.5385 },
-      { name: "南投县", tier: 1, lat: 23.9037, lon: 120.6859 },
-      { name: "云林县", tier: 1, lat: 23.7092, lon: 120.4313 },
-      { name: "嘉义市", tier: 1, lat: 23.4800, lon: 120.4491 },
-      { name: "台南市", tier: 1, lat: 22.9997, lon: 120.2270 },
-      { name: "高雄市", tier: 1, lat: 22.6273, lon: 120.3014 },
-      { name: "屏东县", tier: 1, lat: 22.6761, lon: 120.4941 },
-      { name: "台东市", tier: 1, lat: 22.7583, lon: 121.1444 },
-      { name: "花莲市", tier: 1, lat: 23.9872, lon: 121.6016 },
-      { name: "宜兰市", tier: 1, lat: 24.7570, lon: 121.7530 },
+      // === TAIWAN TIER 1 CITIES (一级核心城市 · 极简双字命名) ===
+      { name: "台北", tier: 1, lat: 25.0330, lon: 121.5654 },
+      { name: "基隆", tier: 1, lat: 25.1350, lon: 121.7450 },
+      { name: "桃园", tier: 1, lat: 25.0600, lon: 121.1200 },
+      { name: "新竹", tier: 1, lat: 24.8150, lon: 120.9350 },
+      { name: "苗栗", tier: 1, lat: 24.5650, lon: 120.7250 },
+      { name: "台中", tier: 1, lat: 24.2650, lon: 120.5550 },
+      { name: "彰化", tier: 1, lat: 24.0600, lon: 120.4400 },
+      { name: "云林", tier: 1, lat: 23.7600, lon: 120.3500 },
+      { name: "嘉义", tier: 1, lat: 23.4700, lon: 120.3200 },
+      { name: "台南", tier: 1, lat: 22.9997, lon: 120.1950 },
+      { name: "高雄", tier: 1, lat: 22.6273, lon: 120.2850 },
+      { name: "台东", tier: 1, lat: 22.7583, lon: 121.1500 },
+      { name: "花莲", tier: 1, lat: 23.9872, lon: 121.6100 },
+      { name: "宜兰", tier: 1, lat: 24.7570, lon: 121.7650 },
 
-      // === TAIWAN TIER 2 TOWNS & MILESTONES (二级特色城镇/著名驿站) ===
-      { name: "南崁", tier: 2, lat: 25.0472, lon: 121.2910 },
-      { name: "竹围", tier: 2, lat: 25.1147, lon: 121.2483 },
-      { name: "永安渔港", tier: 2, lat: 24.9897, lon: 121.0183 },
-      { name: "南寮", tier: 2, lat: 24.8488, lon: 120.9275 },
-      { name: "香山", tier: 2, lat: 24.7867, lon: 120.9167 },
-      { name: "竹南", tier: 2, lat: 24.6865, lon: 120.8783 },
-      { name: "后龙", tier: 2, lat: 24.6166, lon: 120.7871 },
-      { name: "白沙屯", tier: 2, lat: 24.5667, lon: 120.7100 },
-      { name: "通霄", tier: 2, lat: 24.4921, lon: 120.6772 },
-      { name: "苑里", tier: 2, lat: 24.4428, lon: 120.6521 },
-      { name: "大甲", tier: 2, lat: 24.3489, lon: 120.6219 },
-      { name: "清水", tier: 2, lat: 24.2689, lon: 120.5683 },
-      { name: "鹿港", tier: 2, lat: 24.0558, lon: 120.4352 },
-      { name: "芳苑", tier: 2, lat: 23.9267, lon: 120.3167 },
-      { name: "西螺", tier: 2, lat: 23.7997, lon: 120.4633 },
-      { name: "斗南", tier: 2, lat: 23.6767, lon: 120.4800 },
-      { name: "民雄", tier: 2, lat: 23.5518, lon: 120.4294 },
-      { name: "水上", tier: 2, lat: 23.4333, lon: 120.4000 },
-      { name: "后壁", tier: 2, lat: 23.3667, lon: 120.3600 },
-      { name: "新营", tier: 2, lat: 23.3106, lon: 120.3168 },
-      { name: "麻豆", tier: 2, lat: 23.1818, lon: 120.2458 },
-      { name: "善化", tier: 2, lat: 23.1333, lon: 120.2944 },
-      { name: "冈山", tier: 2, lat: 22.7963, lon: 120.2949 },
-      { name: "楠梓", tier: 2, lat: 22.7297, lon: 120.3267 },
-      { name: "凤山", tier: 2, lat: 22.6267, lon: 120.3575 },
-      { name: "东港", tier: 2, lat: 22.4674, lon: 120.4533 },
-      { name: "林边", tier: 2, lat: 22.4333, lon: 120.5167 },
-      { name: "枋寮", tier: 2, lat: 22.3667, lon: 120.5947 },
-      { name: "枋山", tier: 2, lat: 22.2597, lon: 120.6558 },
-      { name: "枫港", tier: 2, lat: 22.1951, lon: 120.6908 },
-      { name: "车城", tier: 2, lat: 22.0725, lon: 120.7122 },
+      // === TAIWAN TIER 2 ICONIC NODES (精选关键骑行节点，保留充足留白呼吸感) ===
       { name: "恒春", tier: 2, lat: 22.0042, lon: 120.7444 },
-      { name: "垦丁", tier: 2, lat: 21.9442, lon: 120.7972 },
-      { name: "鹅銮鼻", tier: 2, lat: 21.9022, lon: 120.8525 },
-      { name: "风吹砂", tier: 2, lat: 21.9367, lon: 120.8467 },
-      { name: "佳乐水", tier: 2, lat: 21.9867, lon: 120.8467 },
-      { name: "满州", tier: 2, lat: 22.0233, lon: 120.8383 },
-      { name: "牡丹", tier: 2, lat: 22.1267, lon: 120.7717 },
       { name: "寿卡", tier: 2, lat: 22.2478, lon: 120.8647 },
-      { name: "达仁", tier: 2, lat: 22.2967, lon: 120.8867 },
-      { name: "大武", tier: 2, lat: 22.3397, lon: 120.8986 },
-      { name: "金仑", tier: 2, lat: 22.5333, lon: 120.9667 },
-      { name: "太麻里", tier: 2, lat: 22.6156, lon: 121.0069 },
-      { name: "知本", tier: 2, lat: 22.7000, lon: 121.0667 },
-      { name: "鹿野", tier: 2, lat: 22.9128, lon: 121.1350 },
-      { name: "关山", tier: 2, lat: 23.0456, lon: 121.1628 },
-      { name: "池上", tier: 2, lat: 23.1239, lon: 121.2178 },
-      { name: "富里", tier: 2, lat: 23.1783, lon: 121.2500 },
-      { name: "玉里", tier: 2, lat: 23.3364, lon: 121.3125 },
-      { name: "瑞穗", tier: 2, lat: 23.4975, lon: 121.3769 },
-      { name: "光复", tier: 2, lat: 23.6689, lon: 121.4217 },
-      { name: "凤林", tier: 2, lat: 23.7439, lon: 121.4514 },
-      { name: "寿丰", tier: 2, lat: 23.8703, lon: 121.5097 },
-      { name: "吉安", tier: 2, lat: 23.9583, lon: 121.5667 },
-      { name: "新城", tier: 2, lat: 24.1281, lon: 121.6508 },
-      { name: "和平", tier: 2, lat: 24.3097, lon: 121.7500 },
-      { name: "南澳", tier: 2, lat: 24.4633, lon: 121.8000 },
-      { name: "东澳", tier: 2, lat: 24.5167, lon: 121.8333 },
+      { name: "池上", tier: 2, lat: 23.1239, lon: 121.2200 },
+      { name: "瑞穗", tier: 2, lat: 23.4975, lon: 121.3850 },
       { name: "苏澳", tier: 2, lat: 24.5956, lon: 121.8519 },
-      { name: "冬山", tier: 2, lat: 24.6333, lon: 121.7917 },
-      { name: "罗东", tier: 2, lat: 24.6769, lon: 121.7689 },
-      { name: "礁溪", tier: 2, lat: 24.8272, lon: 121.7719 },
-      { name: "头城", tier: 2, lat: 24.8592, lon: 121.8233 },
-      { name: "福隆", tier: 2, lat: 25.0164, lon: 121.9442 },
-      { name: "三貂角", tier: 2, lat: 25.0083, lon: 122.0000 },
-      { name: "鼻头角", tier: 2, lat: 25.1267, lon: 121.9167 },
-      { name: "瑞芳", tier: 2, lat: 25.1089, lon: 121.8083 },
-      { name: "九份", tier: 2, lat: 25.1097, lon: 121.8447 },
-      { name: "野柳", tier: 2, lat: 25.2064, lon: 121.6908 },
-      { name: "金山", tier: 2, lat: 25.2217, lon: 121.6375 },
-      { name: "石门", tier: 2, lat: 25.2917, lon: 121.5683 },
-      { name: "淡水", tier: 2, lat: 25.1725, lon: 121.4439 },
-      { name: "八里", tier: 2, lat: 25.1469, lon: 121.3986 },
-      { name: "日月潭", tier: 2, lat: 23.8644, lon: 120.9167 },
-      { name: "武岭", tier: 2, lat: 24.1372, lon: 121.2758 },
-      { name: "阿里山", tier: 2, lat: 23.5100, lon: 120.8033 },
-      { name: "埔里", tier: 2, lat: 23.9667, lon: 120.9667 },
+      { name: "淡水", tier: 2, lat: 25.1850, lon: 121.4400 },
 
       // === FAMOUS CYCLING ROUTES (青海湖 / 318川藏 / 海南岛 / 千岛湖 / 洱海) ===
       { name: "西海镇", tier: 1, lat: 36.9583, lon: 100.9000 },
       { name: "刚察", tier: 2, lat: 37.3308, lon: 100.1467 },
       { name: "黑马河", tier: 2, lat: 36.7264, lon: 99.7850 },
-      { name: "茶卡", tier: 2, lat: 36.7867, lon: 99.0833 },
       { name: "二郎剑", tier: 2, lat: 36.5786, lon: 100.5050 },
-      { name: "倒淌河", tier: 2, lat: 36.5911, lon: 101.0772 },
       { name: "成都", tier: 1, lat: 30.5728, lon: 104.0668 },
       { name: "雅安", tier: 1, lat: 29.9800, lon: 103.0000 },
       { name: "康定", tier: 1, lat: 30.0500, lon: 101.9667 },
-      { name: "新都桥", tier: 2, lat: 30.0600, lon: 101.5300 },
       { name: "理塘", tier: 2, lat: 29.9967, lon: 100.2700 },
       { name: "巴塘", tier: 2, lat: 30.0033, lon: 99.1067 },
       { name: "波密", tier: 2, lat: 29.8597, lon: 95.7711 },
@@ -1003,17 +926,12 @@
       { name: "拉萨", tier: 1, lat: 29.6525, lon: 91.1721 },
       { name: "海口", tier: 1, lat: 20.0440, lon: 110.1999 },
       { name: "文昌", tier: 2, lat: 19.6100, lon: 110.7500 },
-      { name: "琼海", tier: 2, lat: 19.2600, lon: 110.4700 },
       { name: "万宁", tier: 2, lat: 18.7967, lon: 110.3889 },
-      { name: "陵水", tier: 2, lat: 18.5056, lon: 110.0389 },
       { name: "三亚", tier: 1, lat: 18.2528, lon: 109.5120 },
       { name: "东方", tier: 2, lat: 19.1000, lon: 108.6500 },
-      { name: "儋州", tier: 2, lat: 19.5200, lon: 109.5800 },
       { name: "千岛湖", tier: 1, lat: 29.6083, lon: 119.0417 },
-      { name: "淳安", tier: 2, lat: 29.6000, lon: 119.0300 },
       { name: "大理", tier: 1, lat: 25.6065, lon: 100.2676 },
       { name: "双廊", tier: 2, lat: 25.9100, lon: 100.1900 },
-      { name: "喜洲", tier: 2, lat: 25.8500, lon: 100.1300 },
       { name: "北京", tier: 1, lat: 39.9042, lon: 116.4074 },
       { name: "上海", tier: 1, lat: 31.2304, lon: 121.4737 },
       { name: "杭州", tier: 1, lat: 30.2741, lon: 120.1551 },
@@ -1021,23 +939,18 @@
       { name: "广州", tier: 1, lat: 23.1291, lon: 113.2644 }
     ];
 
-    // Highway Shields (省道主线与滨海/快速公路盾牌)
+    // Minimalist Highway Shields (仅保留4条最具代表性的干线公路微标)
     const GEOGRAPHIC_ROADS = [
-      { name: "台1", lat: 23.4500, lon: 120.3500, color: "#166534" },
-      { name: "台9", lat: 23.3500, lon: 121.2800, color: "#166534" },
-      { name: "台11", lat: 23.0000, lon: 121.3800, color: "#1e40af" },
-      { name: "台2", lat: 25.1800, lon: 121.7800, color: "#1e40af" },
-      { name: "台61", lat: 24.5200, lon: 120.7200, color: "#b91c1c" },
-      { name: "台26", lat: 22.0800, lon: 120.6800, color: "#1e40af" }
+      { name: "台1", lat: 23.2200, lon: 120.2600, color: "rgba(22, 101, 52, 0.82)" },
+      { name: "台9", lat: 23.3200, lon: 121.3100, color: "rgba(22, 101, 52, 0.82)" },
+      { name: "台11", lat: 23.6200, lon: 121.5400, color: "rgba(30, 64, 175, 0.82)" },
+      { name: "台2", lat: 25.2500, lon: 121.6200, color: "rgba(30, 64, 175, 0.82)" }
     ];
 
-    // Geographic Features (山脉与海峡大字)
+    // Subtle Ocean Watermarks (低饱和度海域背景轻标注)
     const GEOGRAPHIC_FEATURES = [
-      { text: "中 央 山 脉", lat: 23.8000, lon: 121.0500, color: "rgba(203, 213, 225, 0.85)", font: "bold 13px sans-serif" },
-      { text: "▲ 玉山 3952m", lat: 23.4700, lon: 120.9573, color: "#fbbf24", font: "bold 12px sans-serif" },
-      { text: "台 湾 海 峡", subText: "TAIWAN STRAIT", lat: 23.8000, lon: 119.8000, color: "rgba(148, 163, 184, 0.75)", font: "bold 14px sans-serif" },
-      { text: "太 平 洋", subText: "PACIFIC OCEAN", lat: 23.4000, lon: 121.9000, color: "rgba(148, 163, 184, 0.75)", font: "bold 14px sans-serif" },
-      { text: "巴 士 海 峡", lat: 21.7500, lon: 120.7000, color: "rgba(148, 163, 184, 0.75)", font: "bold 14px sans-serif" }
+      { text: "台 湾 海 峡", lat: 23.8500, lon: 119.7200, color: "rgba(148, 163, 184, 0.36)", font: "600 11.5px sans-serif" },
+      { text: "太 平 洋", lat: 23.3500, lon: 121.9500, color: "rgba(148, 163, 184, 0.36)", font: "600 11.5px sans-serif" }
     ];
 
     // Real Ride Stage Locations for Telemetry HUD
@@ -1086,7 +999,7 @@
     let cachedRoadShields = [];
     let cachedGeoFeatures = [];
 
-    function drawTextHalo(ctx, text, x, y, font, fillStyle, haloStyle = 'rgba(15, 23, 42, 0.95)', haloWidth = 3.5, align = 'left') {
+    function drawTextHalo(ctx, text, x, y, font, fillStyle, haloStyle = 'rgba(15, 23, 42, 0.85)', haloWidth = 2.8, align = 'left') {
       ctx.save();
       ctx.font = font;
       ctx.textAlign = align;
@@ -1101,17 +1014,17 @@
     }
 
     function drawHighwayShield(ctx, x, y, text, bgColor) {
-      const w = 32, h = 18;
+      const w = 25, h = 14;
       ctx.save();
       ctx.fillStyle = bgColor;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.lineWidth = 1;
-      roundRect(ctx, x - w / 2, y - h / 2, w, h, 4, true, true);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px sans-serif';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = 0.8;
+      roundRect(ctx, x - w / 2, y - h / 2, w, h, 3, true, true);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+      ctx.font = '600 9.5px -apple-system, BlinkMacSystemFont, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(text, x, y);
+      ctx.fillText(text, x, y + 0.5);
       ctx.restore();
     }
 
@@ -1129,25 +1042,29 @@
       const latPad = Math.max(0.18, latSpan * 0.25);
       const lonPad = Math.max(0.18, lonSpan * 0.25);
 
-      // Proximity threshold from route: up to 24km for long tours
-      const maxProximityKm = Math.min(24.0, Math.max(8.0, totalDist * 0.08));
+      // Proximity threshold from route: up to 22km for long tours
+      const maxProximityKm = Math.min(22.0, Math.max(8.0, totalDist * 0.08));
 
       GEOGRAPHIC_LANDMARKS.forEach(lm => {
-        // Broad Bounding Box Check for regional relevance
         if (lm.lat < minLat - latPad || lm.lat > maxLat + latPad ||
             lm.lon < minLon - lonPad || lm.lon > maxLon + lonPad) {
           return;
         }
 
-        // Efficient closest point search
         let minDist = Infinity;
         let closestIdx = 0;
+        let bandMinLon = Infinity;
+        let bandMaxLon = -Infinity;
         const step = pts.length > 4000 ? Math.floor(pts.length / 2000) : 1;
         for (let i = 0; i < pts.length; i += step) {
           const d = haversine(lm.lat, lm.lon, pts[i].lat, pts[i].lon);
           if (d < minDist) {
             minDist = d;
             closestIdx = i;
+          }
+          if (Math.abs(pts[i].lat - lm.lat) <= 0.18) {
+            if (pts[i].lon < bandMinLon) bandMinLon = pts[i].lon;
+            if (pts[i].lon > bandMaxLon) bandMaxLon = pts[i].lon;
           }
         }
         if (step > 1) {
@@ -1165,12 +1082,16 @@
         const sx = mcX + (lon2pix(lm.lon, zoom) - cxWorld);
         const sy = mcY + (lat2pix(lm.lat, zoom) - cyWorld);
         const isOnRoute = minDist <= maxProximityKm;
+        const midLon = (bandMinLon < Infinity && bandMaxLon > -Infinity)
+          ? (bandMinLon + bandMaxLon) / 2
+          : (minLon + maxLon) / 2;
 
         cachedRouteLandmarks.push({
           name: lm.name,
           tier: lm.tier,
           lat: lm.lat,
           lon: lm.lon,
+          preferLeft: lm.lon <= midLon,
           isOnRoute: isOnRoute,
           minDistKm: minDist,
           closestIdx: closestIdx,
@@ -1180,7 +1101,6 @@
         });
       });
 
-      // Highway shields projection
       GEOGRAPHIC_ROADS.forEach(road => {
         if (road.lat >= minLat - latPad && road.lat <= maxLat + latPad &&
             road.lon >= minLon - lonPad && road.lon <= maxLon + lonPad) {
@@ -1193,13 +1113,11 @@
         }
       });
 
-      // Geographic features projection
       GEOGRAPHIC_FEATURES.forEach(feat => {
         if (feat.lat >= minLat - latPad && feat.lat <= maxLat + latPad &&
             feat.lon >= minLon - lonPad && feat.lon <= maxLon + lonPad) {
           cachedGeoFeatures.push({
             text: feat.text,
-            subText: feat.subText,
             color: feat.color,
             font: feat.font,
             screenX: mcX + (lon2pix(feat.lon, zoom) - cxWorld),
@@ -1208,7 +1126,6 @@
         }
       });
 
-      // Sort landmarks in sequential traversal order along the ride
       cachedRouteLandmarks.sort((a, b) => a.closestIdx - b.closestIdx);
     }
 
@@ -1216,94 +1133,118 @@
       if (currentLandmarkMode === 'none') return;
       if (!gpxData || !gpxData.pts || !gpxData.pts.length) return;
 
-      // 1. Draw Geographic Seas & Mountains
-      if (cachedGeoFeatures && cachedGeoFeatures.length) {
-        cachedGeoFeatures.forEach(feat => {
-          if (feat.screenX >= 20 && feat.screenX <= W_HALF - 20 &&
-              feat.screenY >= 20 && feat.screenY <= CH - 20) {
-            drawTextHalo(ctx, feat.text, feat.screenX, feat.screenY, feat.font, feat.color, 'rgba(15, 23, 42, 0.85)', 4, 'center');
-            if (feat.subText) {
-              drawTextHalo(ctx, feat.subText, feat.screenX, feat.screenY + 18, 'bold 11px sans-serif', 'rgba(148, 163, 184, 0.65)', 'rgba(15, 23, 42, 0.85)', 3, 'center');
-            }
-          }
-        });
-      }
-
-      // 2. Draw Highway Shields
-      if (cachedRoadShields && cachedRoadShields.length) {
-        cachedRoadShields.forEach(road => {
-          if (road.screenX >= 20 && road.screenX <= W_HALF - 20 &&
-              road.screenY >= 20 && road.screenY <= CH - 20) {
-            drawHighwayShield(ctx, road.screenX, road.screenY, road.name, road.color);
-          }
-        });
-      }
-
-      // 3. Draw City and Town Landmarks
-      if (!cachedRouteLandmarks || !cachedRouteLandmarks.length) return;
-
-      const pts = gpxData.pts;
-      const passWindow = Math.max(16, Math.floor(pts.length * 0.012));
-
-      // Filter visible landmarks by canvas bounds and landmark mode
-      const visible = cachedRouteLandmarks.filter(lm => {
-        if (currentLandmarkMode === 'tier1' && lm.tier !== 1 && !lm.isOnRoute) return false;
-        if (lm.screenX < 15 || lm.screenX > W_HALF - 15 || lm.screenY < 15 || lm.screenY > CH - 15) return false;
-        return true;
-      });
-      if (!visible.length) return;
-
-      // Determine real-time active / passed status
-      visible.forEach(lm => {
-        if (lm.isOnRoute) {
-          const diff = Math.abs(currIdx - lm.closestIdx);
-          lm.isActive = diff <= passWindow;
-          lm.isPassed = currIdx > (lm.closestIdx + passWindow);
-          lm.activeIntensity = lm.isActive ? (1.0 - diff / passWindow) : 0;
-        } else {
-          lm.isActive = false;
-          lm.isPassed = false;
-          lm.activeIntensity = 0;
-        }
-      });
-
-      // Reserved zones: HUD Telemetry Card (compact top-left) & Trophy Plaque
+      // Reserved zones: HUD Telemetry Card & Trophy Plaque
       const occupied = [
-        { x: 18, y: 30, w: 246, h: 300 }
+        { x: 18, y: 30, w: 248, h: 305 }
       ];
       if (progress >= 0.93) {
         occupied.push({ x: 38, y: CH - 155, w: 540, h: 110 });
       }
 
-      // Priority sort: active > passed > tier 1 > tier 2
+      // 1. Draw Subtle Ocean Watermarks
+      if (cachedGeoFeatures && cachedGeoFeatures.length) {
+        cachedGeoFeatures.forEach(feat => {
+          if (feat.screenX >= 30 && feat.screenX <= W_HALF - 30 &&
+              feat.screenY >= 30 && feat.screenY <= CH - 30) {
+            drawTextHalo(ctx, feat.text, feat.screenX, feat.screenY, feat.font, feat.color, 'rgba(15, 23, 42, 0.65)', 2.5, 'center');
+          }
+        });
+      }
+
+      // 2. Draw Minimalist Highway Shields & register into occupied bounds
+      if (cachedRoadShields && cachedRoadShields.length) {
+        cachedRoadShields.forEach(road => {
+          if (road.screenX >= 25 && road.screenX <= W_HALF - 25 &&
+              road.screenY >= 25 && road.screenY <= CH - 25) {
+            drawHighwayShield(ctx, road.screenX, road.screenY, road.name, road.color);
+            occupied.push({ x: road.screenX - 18, y: road.screenY - 12, w: 36, h: 24 });
+          }
+        });
+      }
+
+      // 3. Draw Minimalist City Landmarks
+      if (!cachedRouteLandmarks || !cachedRouteLandmarks.length) return;
+
+      const pts = gpxData.pts;
+      const passWindow = Math.max(14, Math.floor(pts.length * 0.011));
+
+      // Filter visible landmarks by canvas bounds and landmark mode
+      const visible = cachedRouteLandmarks.filter(lm => {
+        if (currentLandmarkMode === 'tier1' && lm.tier !== 1) return false;
+        if (lm.screenX < 20 || lm.screenX > W_HALF - 20 || lm.screenY < 20 || lm.screenY > CH - 20) return false;
+        return true;
+      });
+      if (!visible.length) return;
+
+      // Single-focus active detection: at most ONE city is highlighted at any moment
+      let bestActiveLm = null;
+      let bestActiveDiff = Infinity;
+      visible.forEach(lm => {
+        lm.isActive = false;
+        lm.activeIntensity = 0;
+        lm.isPassed = lm.isOnRoute && (currIdx > (lm.closestIdx + passWindow));
+        if (lm.isOnRoute) {
+          const diff = Math.abs(currIdx - lm.closestIdx);
+          if (diff <= passWindow && diff < bestActiveDiff) {
+            bestActiveDiff = diff;
+            bestActiveLm = lm;
+          }
+        }
+      });
+      if (bestActiveLm) {
+        bestActiveLm.isActive = true;
+        bestActiveLm.activeIntensity = 1.0 - (bestActiveDiff / passWindow);
+      }
+
+      // Priority sort: active > tier 1 > passed > tier 2
       const sorted = [...visible].sort((a, b) => {
         if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
-        if (a.isPassed !== b.isPassed) return a.isPassed ? -1 : 1;
         if (a.tier !== b.tier) return a.tier - b.tier;
+        if (a.isPassed !== b.isPassed) return a.isPassed ? -1 : 1;
         return a.minDistKm - b.minDistKm;
       });
 
+      const placedDots = [];
+      const MIN_DOT_DIST = 36; // Minimum pixel spacing between city dots for clean breathing room
       const drawList = [];
+
       for (const lm of sorted) {
+        // Spatial density culling: prevent adjacent dots from clustering
+        if (!lm.isActive) {
+          let tooClose = false;
+          for (const pd of placedDots) {
+            if (Math.hypot(lm.screenX - pd.x, lm.screenY - pd.y) < MIN_DOT_DIST) {
+              tooClose = true;
+              break;
+            }
+          }
+          if (tooClose) continue;
+        }
+
         const isTier1 = lm.tier === 1;
-        const fontSz = lm.isActive ? 13 : (isTier1 ? 12.5 : 11);
-        const font = `bold ${fontSz}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
+        const fontSz = lm.isActive ? 12 : (isTier1 ? 11.5 : 10.5);
+        const fontWeight = lm.isActive ? '600' : (isTier1 ? '500' : '400');
+        const font = `${fontWeight} ${fontSz}px -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`;
         ctx.font = font;
-        const labelText = lm.isActive ? `📍 途经 · ${lm.name}` : lm.name;
+        const labelText = lm.name;
         const tw = ctx.measureText(labelText).width;
-        const padX = lm.isActive ? 8 : 4;
+        const padX = lm.isActive ? 7 : 3;
         const boxW = Math.round(tw + padX * 2);
-        const boxH = Math.round(fontSz + 9);
+        const boxH = Math.round(fontSz + (lm.isActive ? 8 : 5));
 
-        const candRight = { x: Math.round(lm.screenX + 8), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'R' };
-        const candLeft  = { x: Math.round(lm.screenX - 8 - boxW), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'L' };
-        const candTop   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY - 12 - boxH), w: boxW, h: boxH, pos: 'T' };
-        const candBot   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY + 12), w: boxW, h: boxH, pos: 'B' };
+        const candRight = { x: Math.round(lm.screenX + 7), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'R' };
+        const candLeft  = { x: Math.round(lm.screenX - 7 - boxW), y: Math.round(lm.screenY - boxH / 2), w: boxW, h: boxH, pos: 'L' };
+        const candTop   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY - 9 - boxH), w: boxW, h: boxH, pos: 'T' };
+        const candBot   = { x: Math.round(lm.screenX - boxW / 2), y: Math.round(lm.screenY + 9), w: boxW, h: boxH, pos: 'B' };
 
-        const candidates = [candRight, candLeft, candTop, candBot];
+        // Outward coastal placement based on local latitude band center
+        const preferLeft = lm.preferLeft;
+        const candidates = preferLeft
+          ? [candLeft, candRight, candTop, candBot]
+          : [candRight, candLeft, candTop, candBot];
 
         function collides(b) {
-          if (b.x < 10 || b.x + b.w > W_HALF - 10 || b.y < 10 || b.y + b.h > CH - 10) return true;
+          if (b.x < 12 || b.x + b.w > W_HALF - 12 || b.y < 12 || b.y + b.h > CH - 12) return true;
           for (const occ of occupied) {
             if (!(b.x + b.w < occ.x || b.x > occ.x + occ.w || b.y + b.h < occ.y || b.y > occ.y + occ.h)) {
               return true;
@@ -1321,107 +1262,78 @@
         }
 
         if (!chosen) {
-          if (lm.isActive) chosen = candTop.y >= 10 ? candTop : candRight;
-          else if (isTier1) chosen = candRight;
+          if (lm.isActive) chosen = preferLeft ? candLeft : candRight;
           else continue;
         }
 
-        occupied.push({ x: chosen.x - 2, y: chosen.y - 2, w: chosen.w + 4, h: chosen.h + 4 });
+        placedDots.push({ x: lm.screenX, y: lm.screenY });
+        // Generous breathing margin around each placed label
+        occupied.push({ x: chosen.x - 10, y: chosen.y - 6, w: chosen.w + 20, h: chosen.h + 12 });
         drawList.push({ lm, labelText, fontSz, font, box: chosen });
       }
 
-      // Render dots & dynamic active radar pulses
+      // Render minimalist dots & subtle active pulse
       for (const item of drawList) {
         const { lm } = item;
         const isTier1 = lm.tier === 1;
 
         if (lm.isActive) {
-          const pulse = Math.sin(t * 8.0);
-          const r1 = Math.max(3, 10 + 6 * pulse);
-          const r2 = Math.max(5, 18 + 10 * pulse);
-
-          ctx.beginPath();
-          ctx.arc(lm.screenX, lm.screenY, r2, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(6, 182, 212, ${0.40 * lm.activeIntensity})`;
-          ctx.lineWidth = 2;
-          ctx.stroke();
+          const pulse = Math.sin(t * 7.0);
+          const r1 = Math.max(4, 8 + 3.5 * pulse);
 
           ctx.beginPath();
           ctx.arc(lm.screenX, lm.screenY, r1, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(56, 189, 248, ${0.80 * lm.activeIntensity})`;
-          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = `rgba(56, 189, 248, ${0.65 * lm.activeIntensity})`;
+          ctx.lineWidth = 1.6;
           ctx.stroke();
 
           ctx.beginPath();
-          ctx.arc(lm.screenX, lm.screenY, 6, 0, Math.PI * 2);
+          ctx.arc(lm.screenX, lm.screenY, 3.8, 0, Math.PI * 2);
           ctx.fillStyle = '#38bdf8';
           ctx.fill();
           ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-        } else if (lm.isPassed) {
-          ctx.beginPath();
-          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 4.5 : 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = isTier1 ? '#10b981' : '#34d399';
-          ctx.fill();
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        } else if (lm.isOnRoute) {
-          ctx.beginPath();
-          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 4.0 : 3.0, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffffff';
-          ctx.fill();
-          ctx.strokeStyle = '#0f172a';
           ctx.lineWidth = 1.5;
           ctx.stroke();
         } else {
-          // Background cities across the map
           ctx.beginPath();
-          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 3.0 : 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = isTier1 ? 'rgba(241, 245, 249, 0.85)' : 'rgba(203, 213, 225, 0.65)';
+          ctx.arc(lm.screenX, lm.screenY, isTier1 ? 2.2 : 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = lm.isPassed
+            ? 'rgba(186, 230, 253, 0.88)'
+            : (isTier1 ? 'rgba(241, 245, 249, 0.80)' : 'rgba(203, 213, 225, 0.60)');
           ctx.fill();
-          ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = 'rgba(15, 23, 42, 0.75)';
+          ctx.lineWidth = 1.0;
           ctx.stroke();
         }
       }
 
-      // Render text labels with halos or badges
+      // Render minimalist typography
       for (const item of drawList) {
         const { lm, labelText, font, box } = item;
         ctx.save();
         ctx.font = font;
 
         if (lm.isActive) {
-          ctx.shadowColor = 'rgba(6, 182, 212, 0.85)';
-          ctx.shadowBlur = 12;
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-          ctx.strokeStyle = '#06b6d4';
-          ctx.lineWidth = 2;
-          roundRect(ctx, box.x, box.y, box.w, box.h, 6, true, true);
+          ctx.shadowColor = 'rgba(6, 182, 212, 0.55)';
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+          ctx.lineWidth = 1.2;
+          roundRect(ctx, box.x, box.y, box.w, box.h, 5, true, true);
 
           ctx.shadowBlur = 0;
-          ctx.fillStyle = '#38bdf8';
+          ctx.fillStyle = '#7dd3fc';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2);
-        } else if (lm.isPassed) {
-          ctx.textBaseline = 'middle';
-          const tx = box.pos === 'R' ? box.x + 3 : (box.pos === 'L' ? box.x + box.w - 3 : box.x + box.w / 2);
-          const align = box.pos === 'R' ? 'left' : (box.pos === 'L' ? 'right' : 'center');
-          drawTextHalo(ctx, labelText, tx, box.y + box.h / 2, font, '#d1fae5', 'rgba(15, 23, 42, 0.95)', 3.5, align);
-        } else if (lm.isOnRoute) {
-          ctx.textBaseline = 'middle';
-          const tx = box.pos === 'R' ? box.x + 3 : (box.pos === 'L' ? box.x + box.w - 3 : box.x + box.w / 2);
-          const align = box.pos === 'R' ? 'left' : (box.pos === 'L' ? 'right' : 'center');
-          drawTextHalo(ctx, labelText, tx, box.y + box.h / 2, font, '#f8fafc', 'rgba(15, 23, 42, 0.95)', 3.5, align);
+          ctx.fillText(labelText, box.x + box.w / 2, box.y + box.h / 2 + 0.5);
         } else {
           ctx.textBaseline = 'middle';
           const tx = box.pos === 'R' ? box.x + 2 : (box.pos === 'L' ? box.x + box.w - 2 : box.x + box.w / 2);
           const align = box.pos === 'R' ? 'left' : (box.pos === 'L' ? 'right' : 'center');
-          const col = lm.tier === 1 ? 'rgba(248, 250, 252, 0.90)' : 'rgba(203, 213, 225, 0.75)';
-          drawTextHalo(ctx, labelText, tx, box.y + box.h / 2, font, col, 'rgba(15, 23, 42, 0.90)', 3, align);
+          const col = lm.isPassed
+            ? 'rgba(224, 242, 254, 0.90)'
+            : (lm.tier === 1 ? 'rgba(241, 245, 249, 0.82)' : 'rgba(148, 163, 184, 0.70)');
+          drawTextHalo(ctx, labelText, tx, box.y + box.h / 2, font, col, 'rgba(15, 23, 42, 0.82)', 2.6, align);
         }
         ctx.restore();
       }
