@@ -469,25 +469,42 @@
         </div>
 
         <!-- Audio Player Options -->
-        <div class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar" id="bgmOptionsContainer">
-          <!-- Track 1: 周杰伦 ·《稻香》 -->
-          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-rose-500/40 bg-rose-500/5 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_rice_field">
+        <div class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar" id="bgmOptionsContainer">
+          <!-- Track 1 (Default): 环台湾岛原版 BGM · JORDANN《Dehors》 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-rose-500/40 bg-rose-500/5 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_tour_de_taiwan">
             <div class="flex items-center space-x-3">
-              <button class="bgm-play-btn w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_rice_field.mp3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_tour_de_taiwan.mp3">
                 <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               </button>
               <div>
                 <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
-                  <span>周杰伦 · 稻香 (热播推荐)</span>
+                  <span>环台湾岛原版 BGM · JORDANN《Dehors》(默认推荐)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">环台同款原声</span>
+                </div>
+                <div class="text-xs text-slate-400">法式复古浪漫独立流行 · 144s 环台湾岛大片原版配乐 · 海岸微风与自由律动</div>
+              </div>
+            </div>
+            <input type="radio" name="bgmSelect" value="bgm_tour_de_taiwan" checked class="accent-rose-500 w-4 h-4">
+          </div>
+
+          <!-- Track 2: 周杰伦 ·《稻香》 -->
+          <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_rice_field">
+            <div class="flex items-center space-x-3">
+              <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_rice_field.mp3">
+                <svg class="w-4 h-4 ml-0.5 icon-play" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              </button>
+              <div>
+                <div class="text-sm font-semibold text-white flex items-center space-x-1.5">
+                  <span>周杰伦 · 稻香</span>
                   <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">阳光田园</span>
                 </div>
                 <div class="text-xs text-slate-400">轻快木吉他扫弦 + 蟋蟀微风 · 骑行穿过乡村稻田的治愈天花板</div>
               </div>
             </div>
-            <input type="radio" name="bgmSelect" value="bgm_rice_field" checked class="accent-rose-500 w-4 h-4">
+            <input type="radio" name="bgmSelect" value="bgm_rice_field" class="accent-rose-500 w-4 h-4">
           </div>
 
-          <!-- Track 2: 范逸臣 ·《国境之南》 -->
+          <!-- Track 3: 范逸臣 ·《国境之南》 -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_south_border">
             <div class="flex items-center space-x-3">
               <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_south_border.mp3">
@@ -504,7 +521,7 @@
             <input type="radio" name="bgmSelect" value="bgm_south_border" class="accent-rose-500 w-4 h-4">
           </div>
 
-          <!-- Track 3: 陈绮贞 ·《旅行的意义》 -->
+          <!-- Track 4: 陈绮贞 ·《旅行的意义》 -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_travel_meaning">
             <div class="flex items-center space-x-3">
               <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_travel_meaning.mp3">
@@ -521,7 +538,7 @@
             <input type="radio" name="bgmSelect" value="bgm_travel_meaning" class="accent-rose-500 w-4 h-4">
           </div>
 
-          <!-- Track 4: 苏打绿 ·《当我们一起走过》 -->
+          <!-- Track 5: 苏打绿 ·《当我们一起走过》 -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_together">
             <div class="flex items-center space-x-3">
               <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_together.mp3">
@@ -538,7 +555,7 @@
             <input type="radio" name="bgmSelect" value="bgm_together" class="accent-rose-500 w-4 h-4">
           </div>
 
-          <!-- Track 5: 周杰伦 ·《晴天》 -->
+          <!-- Track 6: 周杰伦 ·《晴天》 -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_sunny_day">
             <div class="flex items-center space-x-3">
               <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_sunny_day.mp3">
@@ -555,7 +572,7 @@
             <input type="radio" name="bgmSelect" value="bgm_sunny_day" class="accent-rose-500 w-4 h-4">
           </div>
 
-          <!-- Track 6: 公路风原声木吉他 (Acoustic Highway) -->
+          <!-- Track 7: 公路风原声木吉他 (Acoustic Highway) -->
           <div class="bgm-card flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 cursor-pointer hover:bg-slate-800/60 transition" data-track="bgm_acoustic_highway">
             <div class="flex items-center space-x-3">
               <button class="bgm-play-btn w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center hover:scale-105 transition" data-audio="./audio/bgm_acoustic_highway.mp3">
@@ -566,7 +583,7 @@
                   <span>公路风原声吉他 (纯音乐)</span>
                   <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-300 border border-slate-500/30">免商用版权</span>
                 </div>
-                <div class="text-xs text-slate-400">轻快木吉他扫弦纯音乐 · 台湾环岛同款原版 BGM · 干净不抢戏</div>
+                <div class="text-xs text-slate-400">轻快木吉他扫弦纯音乐 · 适合长距离巡航背景铺底 · 干净不抢戏</div>
               </div>
             </div>
             <input type="radio" name="bgmSelect" value="bgm_acoustic_highway" class="accent-rose-500 w-4 h-4">
@@ -717,7 +734,7 @@
   </main>
 
   <!-- Audio Player Instance (Hidden) -->
-  <audio id="globalAudioPlayer" preload="auto" src="./audio/bgm_rice_field.mp3" loop></audio>
+  <audio id="globalAudioPlayer" preload="auto" src="./audio/bgm_tour_de_taiwan.mp3" loop></audio>
 
   <!-- Scripts -->
   <script>
@@ -725,7 +742,7 @@
     let gpxData = null;
     let mediaItems = []; // Array of { id, file, isVideo, isLivePhoto, liveActive, thumbUrl, imgEl, videoEl, duration, name, size }
     let livePhotoImportMode = 'on'; // 'on' (打开实况: 播放视频+声音) | 'off' (关闭实况: 仅导入静态照片)
-    let currentBgmPath = './audio/bgm_rice_field.mp3';
+    let currentBgmPath = './audio/bgm_tour_de_taiwan.mp3';
     const audioPlayer = document.getElementById('globalAudioPlayer');
     audioPlayer.src = currentBgmPath;
     let playingBgmBtn = null;
